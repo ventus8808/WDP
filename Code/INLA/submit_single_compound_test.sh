@@ -74,6 +74,7 @@ echo "============================================================"
 # 执行单化合物测试脚本
 # 可以通过修改这些参数来测试不同的化合物和条件
 # 修改化合物ID为5（阿维菌素）
+# 确保参数用双引号包裹
 bash Code/INLA/run_single_compound_test.sh \
     "5" \           # Compound ID (5 = Abamectin)
     "" \            # Compound Name (empty, using ID only)

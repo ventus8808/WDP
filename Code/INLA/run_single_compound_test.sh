@@ -69,7 +69,7 @@ Rscript "${WORK_DIR}/Code/INLA/BYM_INLA_Production.R" \
   --lag-years "${LAG_YEARS}" \
   --model-types "${MODEL_TYPES}" \
   --disease-code "${DISEASE_CODE}" \
-  --output-file "${OUTPUT_DIR}/Results_${DISEASE_CODE}_${COMPOUND_NAME}_${TIMESTAMP}.csv" \
+  --output-file "${OUTPUT_DIR}/Results_${DISEASE_CODE}_compound${COMPOUND_ID}_${TIMESTAMP}.csv" \
   --verbose
 
 # Check if the analysis was successful
@@ -82,7 +82,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "✅ Analysis completed successfully!"
     
     # Check output file
-    OUTPUT_FILE="${OUTPUT_DIR}/Results_${DISEASE_CODE}_${COMPOUND_NAME}_${TIMESTAMP}.csv"
+    OUTPUT_FILE="${OUTPUT_DIR}/Results_${DISEASE_CODE}_compound${COMPOUND_ID}_${TIMESTAMP}.csv"
     if [ -f "$OUTPUT_FILE" ]; then
         NUM_RESULTS=$(wc -l < "$OUTPUT_FILE")
         echo "📊 Results saved: $((NUM_RESULTS - 1)) records"
