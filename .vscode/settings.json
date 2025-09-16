@@ -1,0 +1,19 @@
+{
+  // 为 Pylance / MCP 服务配置备用端口，避免与系统服务（如 AirTunes）冲突
+  // 放置多个可能的键以覆盖不同版本或配置风格
+  "mcp.server.port": 5001,
+  "mcp.port": 5001,
+  "pylance.mcp.server.port": 5001,
+  "pylance.mcp.port": 5001,
+  "python.analysis.mcpServerPort": 5001,
+
+  // 其它建议的工作区设置（可选）
+  "files.watcherExclude": {
+    "**/Result/**": true,
+    "**/Data/Processed/**": true
+  },
+  "search.exclude": {
+    "**/Result/**": true,
+    "**/Data/Processed/**": true
+  }
+}
