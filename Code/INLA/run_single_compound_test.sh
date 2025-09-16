@@ -12,8 +12,8 @@ echo "Start time: $(date)"
 echo ""
 
 # Set default parameters (can be overridden via command line)
-COMPOUND_ID="${1:-2}"           # Default: 2,4-D (compound ID 2)
-COMPOUND_NAME="${2:-2,4-D}"     # Default: 2,4-D name
+COMPOUND_ID="${1:-5}"           # Default: 5, Abamectin
+COMPOUND_NAME="${2:-}"         # Default: empty, using ID only
 DISEASE_CODE="${3:-C81-C96}"    # Default: Lymphoid and Hematopoietic
 MEASURE_TYPES="${4:-Weight,Density}"     # Both weight and density
 ESTIMATE_TYPES="${5:-min,avg,max}"       # All estimates

@@ -31,7 +31,7 @@ mkdir -p slurm_logs
 
 # 加载 R 环境
 echo "Loading R environment..."
-module load R/4.2.2
+module load R/4.3.3
 
 # 检查R环境
 echo "R version:"
@@ -73,9 +73,10 @@ echo "============================================================"
 
 # 执行单化合物测试脚本
 # 可以通过修改这些参数来测试不同的化合物和条件
+# 修改化合物ID为5（阿维菌素）
 bash Code/INLA/run_single_compound_test.sh \
-    "2" \           # Compound ID (2 = 2,4-D)
-    "2,4-D" \       # Compound Name
+    "5" \           # Compound ID (5 = Abamectin)
+    "" \            # Compound Name (empty, using ID only)
     "C81-C96" \     # Disease Code
     "Weight,Density" \     # Measure Types
     "min,avg,max" \        # Estimate Types
