@@ -25,10 +25,10 @@ cat("WDP BYM INLA Production Analysis System\n")
 cat("======================================\n")
 
 # Load utility functions
-source("/project/Code/INLA/utils/data_processing.R")
-source("/project/Code/INLA/utils/model_fitting.R")
-source("/project/Code/INLA/utils/result_extraction.R")
-source("/project/Code/INLA/utils/dashboard_printing.R")
+source("utils/data_processing.R")
+source("utils/model_fitting.R")
+source("utils/result_extraction.R")
+source("utils/dashboard_printing.R")
 
 #' Parse command line arguments
 #' @return List of parsed arguments
@@ -37,7 +37,7 @@ parse_command_args <- function() {
 
   # Input parameters
   parser$add_argument('--config', type = 'character',
-                      default = '/project/Code/INLA/config/analysis_config.yaml',
+                      default = 'config/analysis_config.yaml',
                       help = 'Path to configuration YAML file')
   parser$add_argument('--disease-code', type = 'character', default = 'C81-C96',
                       help = 'Disease code to analyze')
@@ -61,7 +61,7 @@ parse_command_args <- function() {
   if (interactive()) {
     # Default values for interactive testing
     return(list(
-      config = '/project/Code/INLA/config/analysis_config.yaml',
+      config = 'config/analysis_config.yaml',
       disease_code = 'C81-C96',
       measure_type = 'Weight',
       pesticide_category = 'TEST',
