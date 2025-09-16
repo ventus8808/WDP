@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=2G
 #SBATCH --time=00:05:00
-
+#SBATCH --gres=dcu:1
 # 确保日志目录存在
 mkdir -p slurm_logs
 
