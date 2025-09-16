@@ -1,5 +1,23 @@
 #!/bin/bash
+#!/bin/bash
+#SBATCH --job-name=hello_world
+#SBATCH --output=slurm_logs/hello_world-%j.out
+#SBATCH --error=slurm_logs/hello_world-%j.err
+#SBATCH --partition=normal
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=2G
+#SBATCH --time=00:05:00
 
+# 确保日志目录存在
+mkdir -p slurm_logs
+
+# 加载R环境（如果需要）
+module load R/4.2.2
+
+# 运行R脚本（注意路径要写对）
+Rscript Code/INLA/hello_world.R
 #================================================================================
 # Slurm SBATCH Script for the "Hello World" R Test
 #================================================================================
