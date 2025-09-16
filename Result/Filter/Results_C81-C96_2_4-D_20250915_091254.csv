@@ -1,0 +1,2 @@
+Timestamp,Disease,Exposure,Category,Measure,Estimate,Lag,Model,Q1,Q2,Q3,Q4,Q5,P_Value,DIC,RR_SVI,RR_ENV_PC1,RR_ENV_PC2,RR_ENV_PC3,N_Counties,N_Records,Status_Message
+2025-09-15 09:14:04,C81-C96,"2,4-D",Herbicide,Density,min,5,M0,1.0000,1.0377,1.0000,1.0179,1.0179,0.000***,35128.12908004354,NA,NA,NA,NA,422,4111

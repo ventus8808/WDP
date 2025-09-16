@@ -1,0 +1,129 @@
+To install the INLA-package in R, you have to manually add the r-inla repository as we are not on CRAN.
+INLA Installation Troubleshooting
+Usually, when people get errors in INLA, it is due to an issue with the R version. The solution is to either update R to the latest version or update the INLA version itself. Please ensure both R and INLA are up to date to avoid compatibility issues and errors during installation or usage.
+Note for MAC users:
+
+If you are using MacOS and using R from Homebrew, then you need to do:
+
+> opt <- options()
+> options(pkgType="both")
+> ## install or upgrade INLA here
+> options(opt) ## switch back to old options
+Copy
+as the default value for
+pkgType
+is different (it will try to install from source that do not work here).
+
+Installation Steps:
+
+1. To install the stable/testing version, do one of:
+
+install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
+install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/testing"), dep=TRUE)
+2. You can later update the stable/testing version of the package, doing:
+
+inla.upgrade() # for the stable version
+inla.upgrade(testing=TRUE) # for the testing version
+Windows will not update a package already loaded, so then you have to remove the package and install it from scratch. There are two suggested packages, ‘graph’ and ‘Rgraphviz’, that are on Bioconductor, and you can install those with:
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+install.packages("BiocManager")
+BiocManager::install(c("graph", "Rgraphviz"), dep=TRUE)
+For installing alternative builds in Linux:
+
+inla.binary.install()
+
+INLA Version Compatibility Table
+
+Use the
+remotes
+package in R to install the appropriate INLA version for your R version:
+
+R Version	INLA Version	Installation Command
+R 4.5
+25.06.13
+remotes::install_version("INLA", version = "25.06.13",
+repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/testing"), dep = TRUE)
+R 4.4
+24.05.10
+remotes::install_version("INLA", version = "24.05.10",
+repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/testing"), dep = TRUE)
+R 4.3
+24.03.29
+remotes::install_version("INLA", version = "24.03.29",
+repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/testing"), dep = TRUE)
+R 4.2
+23.04.24
+remotes::install_version("INLA", version = "23.04.24",
+repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/testing"), dep = TRUE)
+R 4.1
+22.04.16
+remotes::install_version("INLA", version = "22.04.16",
+repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/testing"), dep = TRUE)
+Update this table as new R versions and INLA releases become available.
+
+Dependency: fmesher R package
+
+From INLA version 23.08.18, INLA depends on the fmesher package that handles meshes for SPDE models, see fmesher on CRAN.
+
+By default, the new methods are used silently instead of the old fmesher standalone binary, and are meant to produce the same meshes etc as before. During a transition period, one can switch between the two code bases, as well as turn on informative deprecation warnings that point to which fmesher R function replaces the existing ones. See INLA to fmesher conversion guide for more details.
+
+If CRAN doesn’t yet have a binary fmesher package built for your platform, you can install it from the inlabru-org r-universe page (binary package) or github (source build) instead:
+
+options(repos=c( inlabruorg = "https://inlabru-org.r-universe.dev", INLA = "https://inla.r-inla-download.org/R/testing", CRAN = "https://cran.rstudio.com") )
+install.packages("fmesher")
+Copy
+For more download options, see fmesher.
+
+
+
+Test this example
+Library Loading:
+
+library(INLA)
+## Loading required package: Matrix
+## Loading required package: sp
+## The legacy packages maptools, rgdal, and rgeos, underpinning the sp package,
+## which was just loaded, will retire in October 2023.
+## Please refer to R-spatial evolution reports for details, especially
+## https://r-spatial.org/r/2023/05/15/evolution4.html.
+## It may be desirable to make the sf package available;
+## package maintainers should consider adding sf to Suggests:.
+## The sp package is now running under evolution status 2
+## (status 2 uses the sf package in place of rgdal)
+## This is INLA_23.06.14 built 2023-06-13 23:16:56 UTC.
+## - See www.r-inla.org/contact-us for how to get help.
+Copy
+Model Specification and Execution:
+
+n = 100; a = 1; b = 1; tau = 100
+z = rnorm(n)
+eta = a + b*z
+
+scale = exp(rnorm(n))
+prec = scale*tau
+y = rnorm(n, mean = eta, sd = 1/sqrt(prec))
+
+data = list(y=y, z=z)
+formula = y ~ 1+z
+result = inla(formula, family = "gaussian", data = data)
+Copy
+Model Summary:
+
+summary(result)
+
+##
+## Call:
+## ...
+## Time used:
+## Pre = 2.52, Running = 0.922, Post = 0.0748, Total = 3.52
+## Fixed effects:
+## ...
+##
+## Model hyperparameters:
+## ...
+##
+## Marginal log-Likelihood: 66.27
+## is computed
+## Posterior summaries for the linear predictor and the fitted values are computed
+## (Posterior marginals needs also 'control.compute=list(return.marginals.predictor=TRUE)')
