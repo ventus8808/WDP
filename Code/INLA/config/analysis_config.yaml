@@ -1,0 +1,193 @@
+# WDP BYM INLA Analysis Configuration
+# Production-level configuration for pesticide exposure and health outcome analysis
+# Author: WDP Analysis Team
+# Date: 2024
+
+# Data paths configuration
+data_paths:
+  base_dir: "/project/Data/Processed"
+  pca_covariates: "PCA/Master_Covariates.csv"
+  cdc_data_template: "CDC/{disease_code}.csv" # {disease_code} will be replaced
+  pesticide_data: "Pesticide/PNSP.csv"
+  pesticide_density_data: "Pesticide/PNSP_Density.csv"
+  adjacency_data: "Socioeconomic/County_Adjacency_List.csv"
+  pesticide_mapping: "Pesticide/mapping.csv"
+
+# Output configuration
+output:
+  base_dir: "/project/Result/Filter"
+  filename_template: "Results_{disease}_{exposure}_{timestamp}.csv"
+  append_mode: true
+  precision:
+    rr: 4 # decimal places for RR values
+    p_value: 2 # decimal places for p-values when >= 0.05
+
+# Analysis parameters
+analysis:
+  # Disease codes to analyze
+  disease_codes:
+    - "C81-C96" # Lymphoid and Hematopoietic
+    - "C50" # Breast Cancer
+    - "C34" # Lung Cancer
+
+  # Lag periods (years)
+  lag_years: [5]
+
+  # Exposure estimates
+  exposure_estimates:
+    - "min" # Minimum exposure
+    - "avg" # Average exposure
+    - "max" # Maximum exposure
+
+  # Model types
+  models:
+    M0:
+      name: "base"
+      description: "Pesticide + spatial + temporal effects only"
+      covariates: []
+    M1:
+      name: "socioeconomic"
+      description: "Base + social vulnerability"
+      covariates: ["SVI_PCA"]
+    M2:
+      name: "environmental"
+      description: "Base + climate factors"
+      covariates: ["Climate_Factor_1", "Climate_Factor_2"]
+    M3:
+      name: "full"
+      description: "Base + all covariates"
+      covariates: ["SVI_PCA", "Climate_Factor_1", "Climate_Factor_2"]
+
+# Exposure grouping configuration
+exposure_grouping:
+  method: "quantile" # "quantile" or "fixed_cutoff"
+  low_quantile: 0.25 # P25 for low exposure group
+  high_quantile: 0.75 # P75 for high exposure group
+  reference_group: "medium" # Reference group for RR calculation
+
+# Data filtering and processing
+data_processing:
+  # Year range for analysis
+  year_range:
+    start: 1999
+    end: 2019
+
+  # Minimum sample size thresholds
+  min_thresholds:
+    records_per_analysis: 100
+    counties_per_analysis: 50
+
+  # Exposure data processing
+  winsorization:
+    enabled: true
+    lower_quantile: 0.005 # Bottom 0.5% winsorized (more aggressive)
+    upper_quantile: 0.995 # Top 0.5% winsorized (more aggressive)
+
+# Model fitting configuration
+model_fitting:
+  # INLA settings
+  inla:
+    verbose: false
+    num_threads: "4:1"
+    control_compute:
+      dic: true
+      waic: true
+      cpo: true
+    control_predictor:
+      compute: true
+
+  # Spatial model configuration
+  spatial:
+    model_type: "bym2"
+    graph_dir: "/tmp"
+    graph_prefix: "spatial_"
+
+  # Temporal model configuration
+  temporal:
+    model_type: "rw1"
+
+  # Non-linear dose-response configuration
+  nonlinear:
+    enabled: false # Set to true to enable non-linear models
+    n_bins: 20 # Number of bins for discretizing continuous exposure
+    model_types: ["M2", "M3"] # Which models should use non-linear dose-response
+
+# Quality control
+quality_control:
+  # Convergence checking
+  convergence:
+    check_enabled: true
+    max_iterations: 1000
+    tolerance: 1e-6
+
+  # Result validation
+  validation:
+    rr_bounds: [0.1, 10.0] # Reasonable RR range
+    p_value_bounds: [0.0, 1.0]
+
+# Logging and monitoring
+logging:
+  level: "INFO" # DEBUG, INFO, WARN, ERROR
+  progress_reporting: true
+  timing_enabled: true
+  memory_monitoring: false
+
+# Pesticide categories configuration
+pesticide_categories:
+  # Special category handling
+  exclude_categories: [] # Categories to skip
+  priority_categories: [] # Categories to analyze first
+
+  # Column naming convention
+  column_template: "cat{category_id}_{estimate}"
+
+# Performance and resource management
+performance:
+  parallel_processing: false # Enable when multiple containers available
+  memory_management:
+    cleanup_intermediate: true
+    gc_frequency: 10 # Run garbage collection every N categories
+
+  # Batch processing
+  batch_size: 5 # Number of categories per batch (for progress reporting)
+
+# Error handling
+error_handling:
+  continue_on_failure: true
+  max_failures_per_run: 10
+  retry_failed: false
+  save_failed_attempts: true
+
+# Output formatting
+output_format:
+  timestamp_format: "%Y-%m-%d %H:%M:%S"
+  p_value_threshold: 0.05 # Threshold for "<0.05" display
+  scientific_notation: false
+
+# Validation rules for results
+result_validation:
+  required_columns:
+    - "Timestamp"
+    - "Disease"
+    - "Exposure"
+    - "Category"
+    - "Measure"
+    - "Estimate"
+    - "Lag"
+    - "Model"
+    - "Q1"
+    - "Q2"
+    - "Q3"
+    - "Q4"
+    - "Q5"
+    - "P_Value"
+    - "N_Counties"
+    - "N_Records"
+
+  optional_columns:
+    - "DIC"
+    - "RR_SVI"
+    - "RR_ENV_PC1"
+    - "RR_ENV_PC2"
+    - "RR_ENV_PC3"
+    - "Status_Message"

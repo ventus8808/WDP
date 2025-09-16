@@ -1,0 +1,117 @@
+# WDP (WONDER Data Pipeline) Configuration File
+# 配置文件 - 只包含路径设置
+
+# 基础路径设置
+base_paths:
+  # WDP根目录（相对于此配置文件）
+  wdp_root: "."
+  # 主WONDER仓库路径（如果需要访问原始数据）
+  wonder_root: ".."
+
+# 数据目录设置
+data_directories:
+  # 原始数据目录
+  original: "Data/Original"
+  # 处理后数据目录
+  processed: "Data/Processed"
+  # 元数据目录
+  metadata: "Data/Metadata"
+
+# 结果目录设置
+result_directories:
+  # 筛选结果
+  filter: "Result/Filter"
+  # 分析结果
+  analysis: "Result/Analysis"
+  # 图表结果
+  figures: "Result/Figures"
+  # 表格结果
+  tables: "Result/Tables"
+
+# 代码目录设置
+code_directories:
+  # 下载脚本
+  download: "Code/Download"
+  # 清洗脚本
+  clean: "Code/Clean"
+  # 筛选脚本
+  filter: "Code/Filter"
+  # 分析脚本
+  analysis: "Code/Analysis"
+  # 测试脚本
+  test: "Code/Test"
+  # 工具函数
+  utils: "Code/Utils"
+
+# 日志目录
+log_directories:
+  # 主日志目录
+  main: "Logs"
+  # 下载日志
+  download: "Logs/Download"
+  # 处理日志
+  processing: "Logs/Processing"
+  # 分析日志
+  analysis: "Logs/Analysis"
+
+# 数据源特定路径
+data_sources:
+  # CDC WONDER数据
+  cdc_wonder:
+    # 注意：为保持与磁盘一致，以下路径保持空格与大小写
+    original: "Data/Original/ CDC WONDER"
+    processed: "Data/Processed/CDC"
+    # CDC WONDER 根目录（带空格），用于逐疾病子目录（如 C00-C97、C91-C95 等）
+    integrity_base_dir: "Data/Original/ CDC WONDER"
+    # CDC WONDER AAMR（年龄调整死亡率）原始数据目录
+    aamr_original: "Data/Original/CDC WONDER AAMR"
+    # AAMR 处理后输出文件命名：AAMR_{ICD}.csv（例如 AAMR_C81-C96.csv）
+    aamr_output_pattern: "Data/Processed/CDC/AAMR_{ICD}.csv"
+    # Location & Urbanization 源与输出
+    location_urbanization_original: "Data/Original/ CDC WONDER/Location and Urbanization"
+    location_output_file: "Data/Processed/CDC/Location.csv"
+    urbanization_output_file: "Data/Processed/CDC/Urbanization.csv"
+    download_urls:
+      base: "https://wonder.cdc.gov/"
+
+  # USGS PNSP农药数据
+  usgs_pnsp:
+    original: "Data/Original/USGS PNSP"
+    processed: "Data/Processed/Pesticide"
+    download_urls:
+      base: "https://water.usgs.gov/nawqa/pnsp/usage/maps/county-level/PesticideUseEstimates/"
+      filename_pattern: "EPest.county.estimates.{year}.txt"
+    years: [1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
+
+  # Environmental Data
+  nldas:
+    original: "Data/Original/NLDAS"
+    processed: "Data/Processed/Environmental"
+    download_urls:
+      base: "https://hydro1.gesdisc.eosdis.nasa.gov/data/NLDAS/"
+  gee:
+    original: "Data/Original/GEE"
+    processed: "Data/Processed/Environmental"
+  air_pollution:
+    original: "Data/Original/CACES LUR"
+    processed: "Data/Processed/Environmental"
+  tiger:
+    shapefile: "Data/Original/County Shapeline/tl_2015_us_county.shp"
+
+  # Socioeconomic Data
+  socioeconomic:
+    saipe:
+      original: "Data/Original/SAIPE"
+      processed: "Data/Processed/Socioeconomic"
+    laus:
+      original: "Data/Original/LAUS"
+      processed: "Data/Processed/Socioeconomic"
+    bea:
+      original: "Data/Original/BEA"
+      processed: "Data/Processed/Socioeconomic"
+    usda_ers:
+      original: "Data/Original/USDA ERS"
+      processed: "Data/Processed/Socioeconomic"
+    seer_population:
+      original: "Data/Original/SEER Population"
+      processed: "Data/Processed/Socioeconomic"

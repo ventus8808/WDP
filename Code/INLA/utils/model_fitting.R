@@ -1,0 +1,471 @@
+#!/usr/bin/env Rscript
+# -*- coding: utf-8 -*-
+# WDP BYM INLA Model Fitting Utilities
+# Functions for spatial structure creation, model fitting, and validation
+# Author: WDP Analysis Team
+# Date: 2024
+
+#' Create spatial adjacency structure for INLA analysis
+#' @param adjacency_data County adjacency data frame
+#' @param counties_in_data Vector of county FIPS codes in analysis
+#' @param category_id Unique identifier for graph file naming
+#' @param config Configuration list
+#' @return INLA graph object and file path
+create_spatial_structure <- function(adjacency_data, counties_in_data, category_id, config) {
+  cat("  🗺️  Creating spatial structure...\n")
+
+  suppressWarnings({
+    # Sort counties for consistent indexing
+    region_ids <- sort(unique(as.character(counties_in_data)))
+    n_regions <- length(region_ids)
+
+    # Create FIPS to index mapping
+    fips_to_index <- setNames(1:n_regions, region_ids)
+
+    # Initialize adjacency matrix
+    adj_matrix <- matrix(0, nrow = n_regions, ncol = n_regions)
+
+    # Filter adjacency data to analysis counties only
+    adj_filtered <- adjacency_data %>%
+      filter(
+        county_from %in% region_ids,
+        county_to %in% region_ids
+      )
+
+    # Fill adjacency matrix
+    if (nrow(adj_filtered) > 0) {
+      from_indices <- fips_to_index[as.character(adj_filtered$county_from)]
+      to_indices <- fips_to_index[as.character(adj_filtered$county_to)]
+
+      # Create adjacency pairs
+      adj_pairs <- cbind(from_indices, to_indices)
+
+      # Set adjacency (symmetric)
+      adj_matrix[adj_pairs] <- 1
+      adj_matrix[adj_pairs[, c(2, 1)]] <- 1
+    }
+
+    # Create INLA graph
+    inla_graph <- inla.read.graph(adj_matrix)
+
+    # Create unique graph file for this analysis
+    graph_filename <- sprintf("%s_%s_%d.graph",
+                              config$model_fitting$spatial$graph_prefix,
+                              "cat", category_id)
+    graph_filepath <- file.path(config$model_fitting$spatial$graph_dir, graph_filename)
+
+    # Write graph file
+    inla.write.graph(inla_graph, filename = graph_filepath)
+
+    # Calculate connectivity statistics
+    n_connections <- sum(adj_matrix) / 2  # Divide by 2 for symmetric matrix
+    connectivity_rate <- n_connections / (n_regions * (n_regions - 1) / 2)
+
+    cat(sprintf("  ✓ Spatial graph: %d counties, %d connections (%.2f%% connectivity)\n",
+                n_regions, n_connections, connectivity_rate * 100))
+
+    return(list(
+      graph = inla_graph,
+      filepath = graph_filepath,
+      n_regions = n_regions,
+      n_connections = n_connections,
+      connectivity_rate = connectivity_rate
+    ))
+  })
+}
+
+#' Build model formula based on model type and available covariates
+#' @param model_type Model identifier (M0, M1, M2, M3)
+#' @param model_data Data frame to check for available covariates
+#' @param spatial_graph_path Path to spatial graph file
+#' @param config Configuration list
+#' @return Formula object for INLA
+build_model_formula <- function(model_type, model_data, spatial_graph_path, config) {
+  cat(sprintf("  🔧 Building %s model formula...\n", model_type))
+
+  # Determine if we should use non-linear model
+  use_nonlinear <- if (!is.null(config$model_fitting$nonlinear$enabled)) {
+    config$model_fitting$nonlinear$enabled && model_type %in% config$model_fitting$nonlinear$model_types
+  } else {
+    FALSE
+  }
+
+  # Base formula components
+  if (use_nonlinear && "pesticide_binned_idx" %in% names(model_data)) {
+    # Non-linear dose-response using random walk on binned exposure
+    base_components <- c(
+      "1",  # Intercept
+      sprintf("f(pesticide_binned_idx, model = 'rw2', hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))")
+    )
+    cat("    Using non-linear (RW2) dose-response model\n")
+  } else {
+    # Linear dose-response model with log-transformed standardized exposure
+    base_components <- c(
+      "1",  # Intercept
+      "pesticide_log_std"  # Linear dose-response on log scale
+    )
+    cat("    Using linear dose-response model\n")
+  }
+
+  # Spatial component
+  spatial_component <- sprintf("f(county_idx, model = '%s', graph = '%s')",
+                               config$model_fitting$spatial$model_type,
+                               spatial_graph_path)
+
+  # Temporal component
+  temporal_component <- sprintf("f(Year, model = '%s')",
+                                config$model_fitting$temporal$model_type)
+
+  # Get model configuration
+  model_config <- config$analysis$models[[model_type]]
+  if (is.null(model_config)) {
+    stop(sprintf("Unknown model type: %s", model_type))
+  }
+
+  # Check availability of covariates and add to formula
+  covariate_components <- c()
+  available_covariates <- names(model_data)
+
+  for (covariate in model_config$covariates) {
+    # Map to standardized column names
+    std_col_name <- switch(covariate,
+      "SVI_PCA" = "SVI_std",
+      "Climate_Factor_1" = "Climate1_std",
+      "Climate_Factor_2" = "Climate2_std",
+      covariate  # Default to original name
+    )
+
+    if (std_col_name %in% available_covariates) {
+      # Check if covariate has variation (not all NA)
+      if (!all(is.na(model_data[[std_col_name]]))) {
+        covariate_components <- c(covariate_components, std_col_name)
+      } else {
+        warning(sprintf("Covariate %s is all NA, excluding from model", std_col_name))
+      }
+    } else {
+      warning(sprintf("Covariate %s not found in data, excluding from model", std_col_name))
+    }
+  }
+
+  # Check if required exposure variables exist in data
+  if (use_nonlinear) {
+    if (!"pesticide_binned_idx" %in% names(model_data)) {
+      stop("Non-linear exposure variable 'pesticide_binned_idx' not found in model data. Ensure prepare_model_data creates this variable.")
+    }
+  } else {
+    if (!"pesticide_log_std" %in% names(model_data)) {
+      stop("Continuous exposure variable 'pesticide_log_std' not found in model data. Ensure prepare_model_data creates this variable.")
+    }
+  }
+
+  # Combine all components
+  formula_components <- c(
+    base_components,
+    covariate_components,
+    spatial_component,
+    temporal_component
+  )
+
+  # Build formula string
+  formula_string <- paste("Deaths ~", paste(formula_components, collapse = " + "))
+
+  # Convert to formula object
+  formula_obj <- as.formula(formula_string)
+
+  cat(sprintf("  ✓ Formula: %s\n", deparse(formula_obj)[1]))
+  cat(sprintf("    Covariates included: %s\n",
+              ifelse(length(covariate_components) > 0,
+                     paste(covariate_components, collapse = ", "),
+                     "None")))
+
+  return(formula_obj)
+}
+
+#' Fit INLA model with comprehensive error handling
+#' @param formula Model formula
+#' @param model_data Data frame for analysis
+#' @param config Configuration list
+#' @return INLA model object or NULL if failed
+fit_inla_model <- function(formula, model_data, config) {
+  cat("  🎯 Fitting INLA model...\n")
+
+  # Prepare INLA control parameters
+  control_compute <- config$model_fitting$inla$control_compute
+  control_predictor <- config$model_fitting$inla$control_predictor
+
+  # Additional convergence controls if specified
+  control_inla <- list()
+  if (!is.null(config$quality_control$convergence$max_iterations)) {
+    control_inla$max.iter <- config$quality_control$convergence$max_iterations
+  }
+
+  # Temporarily sink messages to /dev/null to suppress C-level warnings
+  null_device <- if (.Platform$OS.type == "unix") "/dev/null" else "NUL"
+  sink_connection <- NULL
+
+  # Only redirect messages if we're not already in a sink
+  if (sink.number() == 0) {
+    sink_connection <- file(null_device, open = "wt")
+    sink(sink_connection, type = "message")
+  }
+
+  model <- tryCatch({
+    # The main INLA call
+    inla(
+      formula = formula,
+      data = model_data,
+      family = "poisson",
+      offset = log_expected,
+      control.compute = control_compute,
+      control.predictor = control_predictor,
+      control.inla = if(length(control_inla) > 0) control_inla else list(),
+      verbose = config$model_fitting$inla$verbose
+    )
+  }, error = function(e) {
+    # In case of error, we still need to restore the sink
+    cat(sprintf("  ✗ Model fitting error: %s\n", e$message))
+    return(NULL)
+  })
+
+  # IMPORTANT: Restore the message sink
+  if (!is.null(sink_connection)) {
+    sink(type = "message")
+    close(sink_connection)
+  } else {
+    sink(type = "message")
+  }
+
+  # Log detailed error information if debugging
+  if (is.null(model) && config$logging$level %in% c("DEBUG", "INFO")) {
+      cat(sprintf("    Formula: %s\n", deparse(formula)[1]))
+      cat(sprintf("    Data dimensions: %d x %d\n", nrow(model_data), ncol(model_data)))
+      cat(sprintf("    Missing values check:\n"))
+
+      key_vars <- c("Deaths", "log_expected", "exposure_group", "county_idx", "Year")
+      for (var in key_vars) {
+        if (var %in% names(model_data)) {
+          n_missing <- sum(is.na(model_data[[var]]))
+          cat(sprintf("      %s: %d missing\n", var, n_missing))
+        }
+      }
+  }
+
+  # Validate model fit
+  if (!is.null(model)) {
+    validation_result <- validate_model_fit(model, config)
+    if (!validation_result$valid) {
+      cat(sprintf("  ✗ Model validation failed: %s\n", validation_result$message))
+      return(NULL)
+    }
+    cat("  ✓ Model fitted successfully\n")
+  }
+
+  return(model)
+}
+
+#' Validate INLA model fit quality and convergence
+#' @param model INLA model object
+#' @param config Configuration list
+#' @return List with validation results
+validate_model_fit <- function(model, config) {
+
+  if (is.null(model)) {
+    return(list(valid = FALSE, message = "Model is NULL"))
+  }
+
+  # Check if model has converged
+  if (!is.null(model$mode) && any(!model$mode$mode.status %in% c(0, 1))) {
+    return(list(valid = FALSE, message = "Model did not converge"))
+  }
+
+  # Check for reasonable model diagnostics
+  if (config$quality_control$validation$rr_bounds[1] > 0) {
+    # Only check if we have fixed effects
+    if (!is.null(model$summary.fixed) && nrow(model$summary.fixed) > 0) {
+      # Check if any coefficient produces unreasonable RR
+      fixed_effects <- model$summary.fixed
+      rr_values <- exp(fixed_effects$mean)
+
+      rr_bounds <- config$quality_control$validation$rr_bounds
+      if (any(rr_values < rr_bounds[1] | rr_values > rr_bounds[2], na.rm = TRUE)) {
+        extreme_vars <- rownames(fixed_effects)[
+          rr_values < rr_bounds[1] | rr_values > rr_bounds[2]
+        ]
+        warning(sprintf("Extreme RR values detected for: %s",
+                       paste(extreme_vars, collapse = ", ")))
+      }
+    }
+  }
+
+  # Check model information criteria
+  if (!is.null(model$dic) && !is.finite(model$dic$dic)) {
+    return(list(valid = FALSE, message = "Invalid DIC value"))
+  }
+
+  if (!is.null(model$waic) && !is.finite(model$waic$waic)) {
+    return(list(valid = FALSE, message = "Invalid WAIC value"))
+  }
+
+  return(list(valid = TRUE, message = "Model validation passed"))
+}
+
+#' Extract model diagnostics and information criteria
+#' @param model INLA model object
+#' @param config Configuration list
+#' @return List of diagnostic values
+get_model_diagnostics <- function(model, config) {
+  if (is.null(model)) {
+    return(list(
+      dic = NA,
+      waic = NA,
+      cpo_failure_rate = NA,
+      convergence_status = "FAILED",
+      n_fixed_effects = 0,
+      n_hyperparameters = 0
+    ))
+  }
+
+  # Extract information criteria
+  dic_value <- if (!is.null(model$dic)) model$dic$dic else NA
+  waic_value <- if (!is.null(model$waic)) model$waic$waic else NA
+
+  # Calculate CPO failure rate if available
+  cpo_failure_rate <- NA
+  if (!is.null(model$cpo) && !is.null(model$cpo$failure)) {
+    cpo_failure_rate <- mean(model$cpo$failure, na.rm = TRUE)
+  }
+
+  # Determine convergence status
+  convergence_status <- "SUCCESS"
+  if (!is.null(model$mode) && any(!model$mode$mode.status %in% c(0, 1))) {
+    convergence_status <- "CONVERGENCE_WARNING"
+  }
+  if (is.na(dic_value) && is.na(waic_value)) {
+    convergence_status <- "FAILED"
+  }
+
+  # Count model components
+  n_fixed_effects <- if (!is.null(model$summary.fixed)) nrow(model$summary.fixed) else 0
+  n_hyperparameters <- if (!is.null(model$summary.hyperpar)) nrow(model$summary.hyperpar) else 0
+
+  return(list(
+    dic = dic_value,
+    waic = waic_value,
+    cpo_failure_rate = cpo_failure_rate,
+    convergence_status = convergence_status,
+    n_fixed_effects = n_fixed_effects,
+    n_hyperparameters = n_hyperparameters
+  ))
+}
+
+#' Extract spatial and temporal random effects summaries
+#' @param model INLA model object
+#' @param config Configuration list
+#' @return List with random effect summaries
+get_random_effects_summary <- function(model, config) {
+  if (is.null(model) || is.null(model$summary.random)) {
+    return(list(
+      spatial_variance = NA,
+      spatial_range = NA,
+      temporal_variance = NA,
+      temporal_precision = NA
+    ))
+  }
+
+  random_effects <- list(
+    spatial_variance = NA,
+    spatial_range = NA,
+    temporal_variance = NA,
+    temporal_precision = NA
+  )
+
+  # Extract spatial effects (BYM2 model)
+  if ("county_idx" %in% names(model$summary.random)) {
+    spatial_summary <- model$summary.random$county_idx
+    if (!is.null(spatial_summary)) {
+      random_effects$spatial_variance <- var(spatial_summary$mean, na.rm = TRUE)
+    }
+  }
+
+  # Extract temporal effects (RW1 model)
+  if ("Year" %in% names(model$summary.random)) {
+    temporal_summary <- model$summary.random$Year
+    if (!is.null(temporal_summary)) {
+      random_effects$temporal_variance <- var(temporal_summary$mean, na.rm = TRUE)
+    }
+  }
+
+  # Extract hyperparameters if available
+  if (!is.null(model$summary.hyperpar)) {
+    hyperpar <- model$summary.hyperpar
+
+    # BYM2 hyperparameters
+    if ("Precision for county_idx" %in% rownames(hyperpar)) {
+      random_effects$spatial_precision <- hyperpar["Precision for county_idx", "mean"]
+    }
+
+    # Temporal hyperparameters
+    if ("Precision for Year" %in% rownames(hyperpar)) {
+      random_effects$temporal_precision <- hyperpar["Precision for Year", "mean"]
+    }
+  }
+
+  return(random_effects)
+}
+
+#' Clean up temporary spatial graph files
+#' @param graph_filepath Path to graph file to remove
+cleanup_spatial_files <- function(graph_filepath) {
+  if (file.exists(graph_filepath)) {
+    file.remove(graph_filepath)
+    cat(sprintf("  🧹 Cleaned up spatial graph: %s\n", basename(graph_filepath)))
+  }
+}
+
+#' Perform model comparison using information criteria
+#' @param model_list List of fitted INLA models
+#' @param model_names Names of the models
+#' @param config Configuration list
+#' @return Data frame with model comparison results
+compare_models <- function(model_list, model_names, config) {
+  if (length(model_list) != length(model_names)) {
+    stop("Number of models and names must match")
+  }
+
+  comparison_results <- data.frame(
+    Model = model_names,
+    DIC = NA,
+    WAIC = NA,
+    Delta_DIC = NA,
+    Delta_WAIC = NA,
+    Best_DIC = FALSE,
+    Best_WAIC = FALSE,
+    stringsAsFactors = FALSE
+  )
+
+  # Extract DIC and WAIC values
+  for (i in seq_along(model_list)) {
+    model <- model_list[[i]]
+    if (!is.null(model)) {
+      comparison_results$DIC[i] <- if (!is.null(model$dic)) model$dic$dic else NA
+      comparison_results$WAIC[i] <- if (!is.null(model$waic)) model$waic$waic else NA
+    }
+  }
+
+  # Calculate deltas (difference from best model)
+  if (any(!is.na(comparison_results$DIC))) {
+    min_dic <- min(comparison_results$DIC, na.rm = TRUE)
+    comparison_results$Delta_DIC <- comparison_results$DIC - min_dic
+    comparison_results$Best_DIC <- comparison_results$DIC == min_dic
+  }
+
+  if (any(!is.na(comparison_results$WAIC))) {
+    min_waic <- min(comparison_results$WAIC, na.rm = TRUE)
+    comparison_results$Delta_WAIC <- comparison_results$WAIC - min_waic
+    comparison_results$Best_WAIC <- comparison_results$WAIC == min_waic
+  }
+
+  return(comparison_results)
+}
+
+cat("✓ Model fitting utilities loaded successfully\n")

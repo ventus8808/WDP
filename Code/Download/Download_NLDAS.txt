@@ -1,0 +1,2 @@
+# Bash
+wget --user=ventus8808 --password=kodhin-sukrYk-0ryjha --auth-no-challenge=on --content-disposition -i /Users/ventus/Downloads/subset_NLDAS_FORA0125_M_2.0_20250815_073021_.txt
