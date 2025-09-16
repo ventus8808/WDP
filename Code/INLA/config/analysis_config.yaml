@@ -1,11 +1,11 @@
-# WDP BYM INLA Analysis Configuration
+# WDP BYM INLA Analysis Configuration (Corrected Version)
 # Production-level configuration for pesticide exposure and health outcome analysis
 # Author: WDP Analysis Team
 # Date: 2024
 
 # Data paths configuration
 data_paths:
-  base_dir: "/project/Data/Processed"
+  base_dir: "Data/Processed" # <<< 修正：移除了 /project/ 前缀，使用相对路径
   pca_covariates: "PCA/Master_Covariates.csv"
   cdc_data_template: "CDC/{disease_code}.csv" # {disease_code} will be replaced
   pesticide_data: "Pesticide/PNSP.csv"
@@ -15,7 +15,7 @@ data_paths:
 
 # Output configuration
 output:
-  base_dir: "/project/Result/Filter"
+  base_dir: "Result/Filter" # <<< 修正：移除了 /project/ 前缀，使用相对路径
   filename_template: "Results_{disease}_{exposure}_{timestamp}.csv"
   append_mode: true
   precision:
@@ -79,9 +79,9 @@ data_processing:
 
   # Exposure data processing
   winsorization:
-    enabled: true
-    lower_quantile: 0.005 # Bottom 0.5% winsorized (more aggressive)
-    upper_quantile: 0.995 # Top 0.5% winsorized (more aggressive)
+    enabled: false # <<< 修正：根据R代码注释，该功能已弃用，改为false
+    lower_quantile: 0.005
+    upper_quantile: 0.995
 
 # Model fitting configuration
 model_fitting:
@@ -99,7 +99,7 @@ model_fitting:
   # Spatial model configuration
   spatial:
     model_type: "bym2"
-    graph_dir: "/tmp"
+    graph_dir: "Code/INLA/tmp_graphs" # <<< 修正：使用项目内路径，而不是共享的/tmp
     graph_prefix: "spatial_"
 
   # Temporal model configuration
@@ -166,6 +166,7 @@ output_format:
 
 # Validation rules for results
 result_validation:
+  # <<< 修正：更新为R脚本实际生成的列名
   required_columns:
     - "Timestamp"
     - "Disease"
@@ -175,19 +176,13 @@ result_validation:
     - "Estimate"
     - "Lag"
     - "Model"
-    - "Q1"
-    - "Q2"
-    - "Q3"
-    - "Q4"
-    - "Q5"
     - "P_Value"
     - "N_Counties"
     - "N_Records"
+    - "Status_Message"
 
   optional_columns:
     - "DIC"
-    - "RR_SVI"
-    - "RR_ENV_PC1"
-    - "RR_ENV_PC2"
-    - "RR_ENV_PC3"
-    - "Status_Message"
+    - "WAIC"
+    - "RR_Per_SD"
+    - "RR_P90_vs_P10"
