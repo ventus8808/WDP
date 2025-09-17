@@ -12,9 +12,7 @@
 #SBATCH --time=1:00:00
 #SBATCH --output=%x-%j.log
 #SBATCH --error=%x-%j.err
-
-# --- 已移除DCU申请，因为R/INLA是纯CPU程序 ---
-# #SBATCH --gres=dcu:1
+#SBATCH --gres=dcu:2
 
 # ========================
 # Conda环境设置
