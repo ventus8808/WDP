@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #================================================================================
-# SLURM 资源配置
+# SLURM 资源配置 (已修正内存请求)
 #================================================================================
 #SBATCH --partition=kshdtest                 # 指定分区
 #SBATCH --job-name=WDP_Analysis              # 任务名 (会被提交脚本覆盖)
 #SBATCH --nodes=1                            # 使用 1 个节点
 #SBATCH --ntasks-per-node=1                  # 每个节点运行 1 个任务
-#SBATCH --cpus-per-task=4                    # 为每个任务分配 4 个 CPU 核心 (匹配 R 代码中的 inla.setOption)
-#SBATCH --mem=64G                            # 分配 64GB 内存
+#SBATCH --cpus-per-task=4                    # 为每个任务分配 4 个 CPU 核心
+#SBATCH --mem=16G                            # 修正后的内存请求 (4 CPUs * 4 GB/CPU = 16 GB)
 #SBATCH --time=12:00:00                      # 任务最长运行时间 12 小时
 #SBATCH --output=slurm_logs/%x-%j.out        # 标准输出日志 (%x=任务名, %j=任务ID)
 #SBATCH --error=slurm_logs/%x-%j.err         # 标准错误日志
@@ -39,12 +39,10 @@ echo "  化合物 ID (Compound ID): ${COMPOUND_ID}"
 echo "================================================="
 
 # 加载 R 模块 (重要: 请根据服务器实际情况修改模块名)
-# 您可以使用 'module avail' 命令查看可用的 R 模块
 echo "加载 R 模块..."
 module load R/4.2.2-gfbr-2022b # 这是一个示例，请务必替换为您的服务器上正确的 R 模块
 
 # 定义项目路径和脚本路径
-# SLURM_SUBMIT_DIR 是提交任务时所在的目录，这里应该是 /public/home/acf4pijnzl/WDP
 PROJECT_DIR=$SLURM_SUBMIT_DIR
 SCRIPT_PATH="${PROJECT_DIR}/Code/BYM_INLA_Production.R"
 CONFIG_PATH="${PROJECT_DIR}/config.yaml"
