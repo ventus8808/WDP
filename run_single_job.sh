@@ -5,9 +5,9 @@
 #================================================================================
 #SBATCH --partition=kshdtest                 # 指定分区
 #SBATCH --job-name=WDP_Analysis              # 任务名 (会被提交脚本覆盖)
-#SBATCH --nodes=1                            # 使用 1 个节点
-#SBATCH --ntasks-per-node=1                  # 每个节点运行 1 个任务
-#SBATCH --cpus-per-task=4                    # 为每个任务分配 4 个 CPU 核心
+#SBATCH --nodes=2                            # 使用 1 个节点
+#SBATCH --ntasks-per-node=2                  # 每个节点运行 1 个任务
+#SBATCH --cpus-per-task=8                    # 为每个任务分配 4 个 CPU 核心
 #SBATCH --mem=16G                            # 修正后的内存请求 (4 CPUs * 4 GB/CPU = 16 GB)
 #SBATCH --time=12:00:00                      # 任务最长运行时间 12 小时
 #SBATCH --output=slurm_logs/%x-%j.out        # 标准输出日志 (%x=任务名, %j=任务ID)
