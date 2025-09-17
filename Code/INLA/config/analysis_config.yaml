@@ -5,7 +5,7 @@
 
 # Data paths configuration
 data_paths:
-  base_dir: "Data/Processed" # <<< 修正：移除了 /project/ 前缀，使用相对路径
+  base_dir: "../../Data/Processed"
   pca_covariates: "PCA/Master_Covariates.csv"
   cdc_data_template: "CDC/{disease_code}.csv" # {disease_code} will be replaced
   pesticide_data: "Pesticide/PNSP.csv"
@@ -15,7 +15,7 @@ data_paths:
 
 # Output configuration
 output:
-  base_dir: "Result/Filter" # <<< 修正：移除了 /project/ 前缀，使用相对路径
+  base_dir: "Result/Filter"
   filename_template: "Results_{disease}_{exposure}_{timestamp}.csv"
   append_mode: true
   precision:
