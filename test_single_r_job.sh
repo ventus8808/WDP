@@ -1,20 +1,12 @@
 #!/bin/bash
-# ========================
-# WONDER R分析 单任务CPU测试脚本 (含conda环境激活)
-# ========================
+#SBATCH --partition=kshdtest
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=dcu:1
+#SBATCH --mem-per-cpu=2G      # 8核×2G=16G（通常安全值）
+#SBATCH --time=1:00:00
 
-#SBATCH --partition=kshdtest        # 您的分区
-#SBATCH --job-name=WONDER_R_Test    # 清晰的任务名
-#SBATCH --nodes=1                   # 单节点任务
-#SBATCH --ntasks-per-node=1         # 单个R进程
-#SBATCH --cpus-per-task=8           # 为R分配8个CPU核心 (INLA会使用它们)
-#SBATCH --mem=32G                   # 32GB内存 (每个核心4G，符合集群策略)
-#SBATCH --time=1:00:00              # 测试任务，运行1小时足矣
-#SBATCH --output=%x-%j.log          # 日志文件，例如 WONDER_R_Test-12345.log
-#SBATCH --error=%x-%j.err           # 错误日志
-
-# --- 关键：我们不需要申请DCU，因为R/INLA用不上 ---
-# #SBATCH --gres=dcu:1  <-- 已注释掉此行
 
 # ========================
 # Conda环境设置
