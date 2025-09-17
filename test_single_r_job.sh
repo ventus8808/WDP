@@ -1,24 +1,26 @@
 #!/bin/bash
 # ========================
-# WONDER R分析 单任务CPU测试脚本 (v3 - 最终优化版)
+# WONDER R分析 单任务CPU测试脚本 (v6 - 最终路径修正版)
 # ========================
 
 #SBATCH --partition=kshdtest
 #SBATCH --job-name=WONDER_R_Test
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8           # 维持8个CPU核心
-#SBATCH --mem-per-cpu=2G            # (新) 采纳您的成功配置，共16G内存
+#SBATCH --cpus-per-task=8
+#SBATCH --mem-per-cpu=2G
 #SBATCH --time=1:00:00
 #SBATCH --output=%x-%j.log
 #SBATCH --error=%x-%j.err
-#SBATCH --gres=dcu:2
+#SBATCH --gres=dcu:1
 
 # ========================
 # Conda环境设置
 # ========================
 echo "清理并设置环境模块..."
 module purge
+module load compiler/dtk/23.10
+module load rocm/5.3.3
 
 echo "激活Conda环境..."
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -42,13 +44,17 @@ cd ${SCRIPT_DIR}
 DISEASE_CODE="C81-C96"
 COMPOUND_ID="1"
 
-echo "开始执行R分析脚本，测试参数如下:"
+echo "开始执行R分析脚本..."
 echo "  疾病代码: ${DISEASE_CODE}"
 echo "  化合物ID: ${COMPOUND_ID}"
 echo "-------------------------------------"
 
 R_SCRIPT_NAME="BYM_INLA_Production.R"
-CONFIG_PATH="../../config.yaml"
+# --- 关键变更：修正配置文件路径 ---
+# 从当前工作目录 (Code/INLA) 指向正确的配置文件
+CONFIG_PATH="config/analysis_config.yaml"
+
+echo "使用配置文件: $(realpath ${CONFIG_PATH})"
 
 Rscript ${R_SCRIPT_NAME} \
   --config ${CONFIG_PATH} \
