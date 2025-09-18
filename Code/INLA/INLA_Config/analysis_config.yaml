@@ -1,21 +1,21 @@
-# WDP BYM INLA Analysis Configuration (Corrected Version)
+# WDP BYM INLA Analysis Configuration (Optimized Version)
 # Production-level configuration for pesticide exposure and health outcome analysis
 # Author: WDP Analysis Team
 # Date: 2024
 
-# Data paths configuration
+# Data paths configuration - All paths relative to project root (using here package)
 data_paths:
-  base_dir: "../../Data/Processed"
-  pca_covariates: "PCA/Master_Covariates.csv"
-  cdc_data_template: "CDC/{disease_code}.csv" # {disease_code} will be replaced
-  pesticide_data: "Pesticide/PNSP.csv"
-  pesticide_density_data: "Pesticide/PNSP_Density.csv"
-  adjacency_data: "Socioeconomic/County_Adjacency_List.csv"
-  pesticide_mapping: "Pesticide/mapping.csv"
+  # Core data files (relative to project root)
+  pca_covariates: "Data/Processed/PCA/Master_Covariates.csv"
+  cdc_data_template: "Data/Processed/CDC/{disease_code}.csv" # {disease_code} will be replaced
+  pesticide_data: "Data/Processed/Pesticide/PNSP.csv"
+  pesticide_density_data: "Data/Processed/Pesticide/PNSP_Density.csv"
+  adjacency_data: "Data/Processed/Socioeconomic/County_Adjacency_List.csv"
+  pesticide_mapping: "Data/Processed/Pesticide/mapping.csv"
 
 # Output configuration
 output:
-  base_dir: "Result/Filter"
+  base_dir: "Result/INLA_Results"  # Dedicated results directory for INLA analysis
   filename_template: "Results_{disease}_{exposure}_{timestamp}.csv"
   append_mode: true
   precision:
@@ -48,15 +48,15 @@ analysis:
     M1:
       name: "socioeconomic"
       description: "Base + social vulnerability"
-      covariates: ["SVI_PCA"]
+      covariates: ["SVI_PC1"]
     M2:
       name: "environmental"
-      description: "Base + climate factors"
-      covariates: ["Climate_Factor_1", "Climate_Factor_2"]
+      description: "Base + environmental factors"
+      covariates: ["ENV_PC1", "ENV_PC2", "ENV_PC3"]
     M3:
       name: "full"
       description: "Base + all covariates"
-      covariates: ["SVI_PCA", "Climate_Factor_1", "Climate_Factor_2"]
+      covariates: ["SVI_PC1", "ENV_PC1", "ENV_PC2", "ENV_PC3"]
 
 # Exposure grouping configuration
 exposure_grouping:
@@ -99,7 +99,7 @@ model_fitting:
   # Spatial model configuration
   spatial:
     model_type: "bym2"
-    graph_dir: "Code/INLA/tmp_graphs" # <<< 修正：使用项目内路径，而不是共享的/tmp
+    graph_dir: "Code/INLA/INLA_Temp/graphs"  # New temporary graph directory
     graph_prefix: "spatial_"
 
   # Temporal model configuration

@@ -5,6 +5,14 @@
 # Author: WDP Analysis Team
 # Date: 2024
 
+# Load required libraries
+suppressMessages({
+  if (!require(here, quietly = TRUE)) {
+    install.packages("here")
+    library(here, quietly = TRUE)
+  }
+})
+
 #' Create spatial adjacency structure for INLA analysis
 #' @param adjacency_data County adjacency data frame
 #' @param counties_in_data Vector of county FIPS codes in analysis
@@ -52,7 +60,7 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
     graph_filename <- sprintf("%s_%s_%d.graph",
                               config$model_fitting$spatial$graph_prefix,
                               "cat", category_id)
-    graph_filepath <- file.path(config$model_fitting$spatial$graph_dir, graph_filename)
+    graph_filepath <- here(config$model_fitting$spatial$graph_dir, graph_filename)
 
     # Write graph file
     inla.write.graph(inla_graph, filename = graph_filepath)

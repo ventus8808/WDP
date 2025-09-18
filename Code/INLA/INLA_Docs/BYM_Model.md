@@ -1,26 +1,29 @@
 # Bayesian Spatiotemporal Model (BYM2) Implementation with R-INLA
-# Production System Documentation and Status
+# WDP INLA Analysis System - Model Documentation
 
 ## Executive Summary
 
-This document describes the production implementation of Bayesian spatiotemporal models using R-INLA (Integrated Nested Laplace Approximation) for analyzing pesticide exposure and health outcomes. The system has been fully implemented and tested, supporting both local Docker execution and remote HPC server deployment.
+This document describes the production implementation of Bayesian spatiotemporal models using R-INLA (Integrated Nested Laplace Approximation) for analyzing pesticide exposure and health outcomes. The system has been completely restructured for enhanced reliability, maintainability, and performance.
 
-**Current Status**: ✅ **Production Ready** (Last Updated: 2024-09-15)
+**Current Status**: ✅ **Production Ready - Version 2.0** (Last Updated: 2024-09-18)
 
 ---
 
 ## 1. System Architecture Overview
 
-### 1.1 Core Components
+### 1.1 Core Components (New Structure)
 
-- **Main Script**: `BYM_INLA_Production.R` - Production-level analysis orchestrator
+- **Main Script**: `INLA_Main.R` - Production-level analysis orchestrator
 - **Utility Modules**:
-  - `utils/data_processing.R` - Data loading, transformation, and quality control
-  - `utils/model_fitting.R` - INLA model specification and fitting
-  - `utils/result_extraction.R` - Result extraction and formatting
-  - `utils/dashboard_printing.R` - Real-time progress monitoring
-- **Configuration**: `config/analysis_config.yaml` - Centralized parameter management
-- **Containerization**: `Dockerfile.inla_arm64` - Docker image for reproducible environments
+  - `INLA_Utils/INLA_Utils_Data.R` - Data loading with robust path management
+  - `INLA_Utils/INLA_Utils_Model.R` - INLA model specification and fitting
+  - `INLA_Utils/INLA_Utils_Results.R` - Result extraction and formatting
+  - `INLA_Utils/INLA_Utils_Dashboard.R` - Real-time progress monitoring
+  - `INLA_Utils/INLA_Utils_Validation.R` - Data validation and quality control
+  - `INLA_Utils/INLA_Utils_Logger.R` - Advanced logging and error tracking
+- **Configuration**: `INLA_Config/analysis_config.yaml` - Centralized parameter management
+- **Scripts**: `INLA_Scripts/run_single_compound.sh` - Optimized SLURM execution
+- **Dependencies**: `INLA_Dependencies/` - Automated environment management
 
 ### 1.2 Model Specifications
 
@@ -32,22 +35,25 @@ This document describes the production implementation of Bayesian spatiotemporal
 
 #### Dose-Response Modeling
 - **Linear**: Continuous log-transformed exposure with standardization
-- **Non-linear**: Random walk (RW2) on binned exposure values
+- **Quintile-based**: Categorical analysis with medium as reference
 - **Flexible**: Configuration-driven selection per model type
 
-### 1.3 Key Features
+### 1.3 Key Features (Version 2.0)
 
-1. **Continuous Dose-Response Analysis**
-   - Log transformation with robust outlier detection
-   - Standardized exposure metrics (RR per SD)
-   - P90 vs P10 comparisons for interpretability
+1. **Robust Path Management**
+   - Uses `here` package for absolute path resolution
+   - Eliminates relative path confusion
+   - Works consistently across environments
 
-2. **Performance Optimizations**
+2. **Enhanced Error Handling**
+   - Comprehensive input validation
+   - Detailed error logging with stack traces
+   - Graceful failure handling
+
+3. **Performance Optimizations**
    - Pre-loaded data for multi-measure analyses
-   - Sparse matrix operations for spatial components
-   - Efficient memory management
-
-3. **Production Features**
+   - Efficient temporary file management
+   - Optimized spatial structure creation
    - Real-time progress dashboard
    - Comprehensive error handling
    - Immediate result writing (crash-resistant)
