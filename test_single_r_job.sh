@@ -24,8 +24,8 @@ module load rocm/5.3.3
 
 echo "激活Conda环境..."
 source ~/miniconda3/etc/profile.d/conda.sh
-conda activate WDP
-echo "Conda环境 'WDP' 已激活。"
+conda activate INLA
+echo "Conda环境 'INLA' 已激活。"
 echo "Rscript路径: $(which Rscript)"
 
 # ========================
