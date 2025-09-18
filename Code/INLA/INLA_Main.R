@@ -9,6 +9,12 @@
 # Suppress warnings and load essential libraries
 options(warn = -1)
 suppressMessages({
+  # Load here package for robust path management
+  if (!require(here, quietly = TRUE)) {
+    install.packages("here")
+    library(here, quietly = TRUE)
+  }
+  
   library(INLA, quietly = TRUE)
   library(dplyr, quietly = TRUE)
   library(readr, quietly = TRUE)
@@ -16,6 +22,9 @@ suppressMessages({
   library(argparse, quietly = TRUE)
   library(progress, quietly = TRUE)
 })
+
+# Print project root for verification
+cat(sprintf("📁 Project root identified at: %s\n", here()))
 
 # Configure INLA for production
 inla.setOption(verbose = FALSE)
@@ -25,10 +34,12 @@ cat("WDP BYM INLA Production Analysis System\n")
 cat("======================================\n")
 
 # Load utility functions
-source("utils/data_processing.R")
-source("utils/model_fitting.R")
-source("utils/result_extraction.R")
-source("utils/dashboard_printing.R")
+source("INLA_Utils/INLA_Utils_Data.R")
+source("INLA_Utils/INLA_Utils_Model.R")
+source("INLA_Utils/INLA_Utils_Results.R")
+source("INLA_Utils/INLA_Utils_Dashboard.R")
+source("INLA_Utils/INLA_Utils_Validation.R")
+source("INLA_Utils/INLA_Utils_Logger.R")
 
 #' Parse command line arguments
 #' @return List of parsed arguments
@@ -37,7 +48,7 @@ parse_command_args <- function() {
 
   # Input parameters
   parser$add_argument('--config', type = 'character',
-                      default = 'config/analysis_config.yaml',
+                      default = 'INLA_Config/analysis_config.yaml',
                       help = 'Path to configuration YAML file')
   parser$add_argument('--disease-code', type = 'character', default = 'C81-C96',
                       help = 'Disease code to analyze')
@@ -61,7 +72,7 @@ parse_command_args <- function() {
   if (interactive()) {
     # Default values for interactive testing
     return(list(
-      config = 'config/analysis_config.yaml',
+      config = 'INLA_Config/analysis_config.yaml',
       disease_code = 'C81-C96',
       measure_type = 'Weight',
       pesticide_category = 'TEST',
@@ -78,6 +89,35 @@ parse_command_args <- function() {
     names(args) <- gsub("-", "_", names(args))
     return(args)
   }
+}
+
+#' Create necessary directory structure
+#' @param config Configuration list
+create_directory_structure <- function(config) {
+  cat("📁 Creating necessary directory structure...\n")
+  
+  # Create output directory
+  output_dir <- here(config$output$base_dir)
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+    cat(sprintf("  ✓ Created output directory: %s\n", output_dir))
+  }
+  
+  # Create temp directories
+  temp_dirs <- c(
+    here("Code/INLA/INLA_Temp/graphs"),
+    here("Code/INLA/INLA_Temp/models"),
+    here("Code/INLA/INLA_Temp/logs")
+  )
+  
+  for (temp_dir in temp_dirs) {
+    if (!dir.exists(temp_dir)) {
+      dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
+      cat(sprintf("  ✓ Created temp directory: %s\n", basename(temp_dir)))
+    }
+  }
+  
+  cat("✓ Directory structure ready\n")
 }
 
 #' Load and validate configuration
@@ -475,6 +515,9 @@ main <- function() {
   # Parse arguments and load configuration
   args <- parse_command_args()
   config <- load_config(args$config)
+  
+  # Create necessary directory structure
+  create_directory_structure(config)
 
   # Check if we're analyzing compounds or categories
   analyze_compounds <- grepl("^compound:", args$pesticide_category)

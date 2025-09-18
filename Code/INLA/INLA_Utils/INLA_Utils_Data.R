@@ -5,6 +5,14 @@
 # Author: WDP Analysis Team
 # Date: 2024
 
+# Load required libraries
+suppressMessages({
+  if (!require(here, quietly = TRUE)) {
+    install.packages("here")
+    library(here, quietly = TRUE)
+  }
+})
+
 #' Load and validate all required data files
 #' @param config Configuration list from YAML
 #' @param disease_code Disease code to analyze
@@ -14,9 +22,6 @@ load_all_data <- function(config, disease_code, measure_type = "Weight") {
   cat(sprintf("Loading all data files for disease: %s (Measure: %s)\n", disease_code, measure_type))
 
   tryCatch({
-    # Construct file paths
-    base_dir <- config$data_paths$base_dir
-
     # Choose pesticide data file based on measure_type
     pesticide_file <- if (measure_type == 'Density') {
       config$data_paths$pesticide_density_data
@@ -28,12 +33,13 @@ load_all_data <- function(config, disease_code, measure_type = "Weight") {
         stop(sprintf("Pesticide data path for measure_type '%s' not found in config.", measure_type))
     }
 
+    # Use here() to construct absolute paths from project root
     paths <- list(
-      pca = file.path(base_dir, config$data_paths$pca_covariates),
-      cdc = file.path(base_dir, gsub("\\{disease_code\\}", disease_code, config$data_paths$cdc_data_template)),
-      pesticide = file.path(base_dir, pesticide_file),
-      adjacency = file.path(base_dir, config$data_paths$adjacency_data),
-      mapping = file.path(base_dir, config$data_paths$pesticide_mapping)
+      pca = here(config$data_paths$pca_covariates),
+      cdc = here(gsub("\\{disease_code\\}", disease_code, config$data_paths$cdc_data_template)),
+      pesticide = here(pesticide_file),
+      adjacency = here(config$data_paths$adjacency_data),
+      mapping = here(config$data_paths$pesticide_mapping)
     )
 
     # Validate file existence
