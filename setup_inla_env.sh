@@ -23,9 +23,9 @@ set -e # 如果任何命令失败，立即退出脚本
 
 echo "### 步骤 1/4: 创建 Conda 环境 '$ENV_NAME' 并安装 R 及其依赖包 ###"
 
-# 从 conda-forge 频道创建环境并安装所有依赖
-# 这包括 R 本体，您脚本所需的包，以及 remotes 和 Bioconductor 的基础包
-conda create --name "$ENV_NAME" -c conda-forge -y \
+# 从 conda-forge 和 bioconda 频道创建环境并安装所有依赖
+# <<< 修改之处：添加了 '-c bioconda' 以便找到 Bioconductor 包 >>>
+conda create --name "$ENV_NAME" -c conda-forge -c bioconda -y \
   r-base="$R_VERSION" \
   r-dplyr \
   r-readr \
