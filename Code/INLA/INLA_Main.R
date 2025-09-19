@@ -26,16 +26,36 @@ suppressMessages({
 # Print project root for verification
 cat(sprintf("📁 Project root identified at: %s\n", here()))
 
-# Configure INLA for production with simplified settings
-inla.setOption(verbose = FALSE)
-inla.setOption(num.threads = "4:1")
+# Configure INLA environment first
+Sys.setenv(INLA_DEBUG = "0")  # Reduce INLA debug output
+Sys.setenv(INLA_HOME = system.file(package = "INLA"))
 
-# Create a simple temporary directory in the project
-temp_dir <- here("temp")
-if (!dir.exists(temp_dir)) {
-  dir.create(temp_dir, recursive = TRUE)
-  cat(sprintf("📁 Created temporary directory: %s\n", temp_dir))
+# Check INLA installation
+if (!require("INLA", character.only = TRUE, quietly = TRUE)) {
+  stop("❌ INLA package not found. Please install INLA first.")
 }
+
+# Create temporary directories
+temp_dir <- here("temp")
+graphs_dir <- file.path(temp_dir, "graphs")
+models_dir <- file.path(temp_dir, "models")
+
+for (dir in c(temp_dir, graphs_dir, models_dir)) {
+  if (!dir.exists(dir)) {
+    dir.create(dir, recursive = TRUE)
+    cat(sprintf("📁 Created directory: %s\n", dir))
+  }
+}
+
+# Configure INLA settings step by step
+tryCatch({
+  inla.setOption(verbose = FALSE)
+  inla.setOption(num.threads = "4:1")
+  inla.setOption(inla.mode = "experimental")  # Use experimental mode for better stability
+  cat("✅ INLA basic configuration complete\n")
+}, error = function(e) {
+  cat(sprintf("⚠️ INLA configuration warning: %s\n", e$message))
+})
 
 cat("🔧 INLA configured for HPC environment\n")
 
