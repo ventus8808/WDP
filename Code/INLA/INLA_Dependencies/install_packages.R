@@ -8,6 +8,10 @@
 cat("🚀 WDP INLA Environment Setup\n")
 cat("============================\n\n")
 
+# Configure CRAN mirror to avoid installation errors
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+cat("🌐 CRAN mirror configured: https://cloud.r-project.org/\n\n")
+
 # Required packages for WDP INLA analysis
 required_packages <- c(
   "here",           # Robust path management
@@ -37,17 +41,24 @@ install_if_missing <- function(package_name, from_cran = TRUE) {
     
     tryCatch({
       if (package_name == "INLA") {
-        # INLA requires special installation - see INLA_Installation_Guide.md
-        cat("  📖 For detailed INLA installation instructions, see:\n")
-        cat("     INLA_Docs/INLA_Installation_Guide.md\n")
-        cat("  🔧 Attempting standard installation...\n")
-        install.packages("INLA", repos = c(getOption("repos"), INLA = "https://inla.r-inla-download.org/R/stable"), dep = TRUE)
+        # INLA requires special installation from dedicated repository
+        cat("  🔧 Installing INLA from official repository...\n")
+        install.packages("INLA", 
+                        repos = c(getOption("repos"), 
+                                 INLA = "https://inla.r-inla-download.org/R/stable"), 
+                        dep = TRUE)
       } else if (from_cran) {
         install.packages(package_name, dependencies = TRUE)
       }
       
-      cat(sprintf("  ✅ %s installed successfully\n", package_name))
-      return(TRUE)
+      # Verify installation by loading the package
+      if (require(package_name, character.only = TRUE, quietly = TRUE)) {
+        cat(sprintf("  ✅ %s installed successfully\n", package_name))
+        return(TRUE)
+      } else {
+        cat(sprintf("  ❌ %s installation verification failed\n", package_name))
+        return(FALSE)
+      }
     }, error = function(e) {
       cat(sprintf("  ❌ Failed to install %s: %s\n", package_name, e$message))
       return(FALSE)
