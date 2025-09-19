@@ -30,6 +30,18 @@ cat(sprintf("📁 Project root identified at: %s\n", here()))
 Sys.setenv(INLA_DEBUG = "0")  # Reduce INLA debug output
 Sys.setenv(INLA_HOME = system.file(package = "INLA"))
 
+# Create a project-specific temporary directory to avoid disk space issues
+project_temp <- here("temp", "inla_temp")
+if (!dir.exists(project_temp)) {
+  dir.create(project_temp, recursive = TRUE)
+  cat(sprintf("📁 Created INLA temp directory: %s\n", project_temp))
+}
+
+# Set TMPDIR to our project directory to avoid system /tmp issues  
+Sys.setenv(TMPDIR = project_temp)
+Sys.setenv(TMP = project_temp)
+Sys.setenv(TEMP = project_temp)
+
 # Check INLA installation
 if (!require("INLA", character.only = TRUE, quietly = TRUE)) {
   stop("❌ INLA package not found. Please install INLA first.")
