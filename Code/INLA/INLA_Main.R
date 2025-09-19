@@ -26,9 +26,18 @@ suppressMessages({
 # Print project root for verification
 cat(sprintf("📁 Project root identified at: %s\n", here()))
 
-# Configure INLA for production
+# Configure INLA for production with simplified settings
 inla.setOption(verbose = FALSE)
 inla.setOption(num.threads = "4:1")
+
+# Create a simple temporary directory in the project
+temp_dir <- here("temp")
+if (!dir.exists(temp_dir)) {
+  dir.create(temp_dir, recursive = TRUE)
+  cat(sprintf("📁 Created temporary directory: %s\n", temp_dir))
+}
+
+cat("🔧 INLA configured for HPC environment\n")
 
 cat("WDP BYM INLA Production Analysis System\n")
 cat("======================================\n")

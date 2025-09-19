@@ -223,7 +223,7 @@ fit_inla_model <- function(formula, model_data, config) {
       formula = formula,
       data = model_data,
       family = "poisson",
-      offset = log_expected,
+      offset = model_data$log_expected,
       control.compute = control_compute,
       control.predictor = control_predictor,
       control.inla = if(length(control_inla) > 0) control_inla else list(),
