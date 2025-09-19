@@ -4,16 +4,16 @@
 # Robust script for running individual compound analysis
 # ========================
 
-#SBATCH --partition=kshdtest
+#SBATCH --partition=kshctest
 #SBATCH --job-name=WDP_INLA_Analysis
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem-per-cpu=2G
-#SBATCH --time=2:00:00
+#SBATCH --cpus-per-task=16
+#SBATCH --mem-per-cpu=4G
+#SBATCH --time=3:00:00
 #SBATCH --output=%x-%j.log
 #SBATCH --error=%x-%j.err
-#SBATCH --gres=dcu:1
+#SBATCH --exclude=a02r3n03,e08r3n02,e08r3n05,e08r3n09,e08r3n15,e10r3n00,e10r3n12,e10r4n11
 
 # ========================
 # Environment Setup
@@ -89,6 +89,16 @@ echo "📁 Working directory: $(pwd)"
 if [ ! -f "INLA_Main.R" ]; then
     echo "❌ ERROR: Main script not found: INLA_Main.R"
     exit 1
+fi
+
+# Check available disk space
+echo "💾 Checking disk space..."
+df -h . | tail -1 | awk '{print "Available space: " $4 " (Used: " $5 ")"}'
+
+# Warn if less than 5GB available
+AVAIL_KB=$(df . | tail -1 | awk '{print $4}')
+if [ "$AVAIL_KB" -lt 5242880 ]; then  # 5GB in KB
+    echo "⚠️  WARNING: Low disk space. INLA may fail if less than 5GB available."
 fi
 
 # Check dependencies
