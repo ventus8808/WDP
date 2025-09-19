@@ -7,6 +7,7 @@
 
 # Load required libraries
 suppressMessages({
+  library(here, quietly = TRUE)
   library(stringr)
 })
 
@@ -41,11 +42,11 @@ print_analysis_setup <- function(args, config, compounds_to_analyze, total_combi
 
   # Section 2: Data Sources
   cat("\n[2] DATA SOURCES\n")
-  cat(sprintf("- Health Data: %s\n", file.path(config$data_paths$base_dir, gsub("\\{disease_code\\}", args$disease_code, config$data_paths$cdc_data_template))))
-  cat(sprintf("- Exposure (Weight): %s\n", file.path(config$data_paths$base_dir, config$data_paths$pesticide_data)))
-  cat(sprintf("- Exposure (Density): %s\n", file.path(config$data_paths$base_dir, config$data_paths$pesticide_density_data)))
-  cat(sprintf("- Covariates: %s\n", file.path(config$data_paths$base_dir, config$data_paths$pca_covariates)))
-  cat(sprintf("- Adjacency: %s\n", file.path(config$data_paths$base_dir, config$data_paths$adjacency_data)))
+  cat(sprintf("- Health Data: %s\n", here(gsub("\\{disease_code\\}", args$disease_code, config$data_paths$cdc_data_template))))
+  cat(sprintf("- Exposure (Weight): %s\n", here(config$data_paths$pesticide_data)))
+  cat(sprintf("- Exposure (Density): %s\n", here(config$data_paths$pesticide_density_data)))
+  cat(sprintf("- Covariates: %s\n", here(config$data_paths$pca_covariates)))
+  cat(sprintf("- Adjacency: %s\n", here(config$data_paths$adjacency_data)))
 }
 
 #' Prints a header for a specific compound being processed
