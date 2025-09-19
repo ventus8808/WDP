@@ -550,7 +550,7 @@ main <- function() {
   # Data is now loaded inside the loop for each measure type
 
   # Load mapping data separately to determine which categories/compounds to run
-  mapping_path <- file.path(config$data_paths$base_dir, config$data_paths$pesticide_mapping)
+  mapping_path <- here(config$data_paths$pesticide_mapping)
   if (!file.exists(mapping_path)) {
     cat(sprintf("❌ Critical error: Pesticide mapping file not found at %s\n", mapping_path))
     return(1)
