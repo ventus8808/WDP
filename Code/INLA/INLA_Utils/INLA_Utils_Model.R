@@ -196,15 +196,41 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
 #' @return INLA model object or NULL if failed
 fit_inla_model <- function(formula, model_data, config) {
   cat("  🎯 Fitting INLA model...\n")
+  
+  # Pre-flight checks
+  if (nrow(model_data) < 100) {
+    cat("  ⚠️ Warning: Very small dataset (< 100 observations)\n")
+  }
+  
+  # Check for data issues that could cause INLA to fail
+  numeric_vars <- c("Deaths", "log_expected", "pesticide_log_std")
+  for (var in numeric_vars) {
+    if (var %in% names(model_data)) {
+      if (any(is.infinite(model_data[[var]]) | is.nan(model_data[[var]]))) {
+        cat(sprintf("  ❌ Found infinite/NaN values in %s\n", var))
+        return(NULL)
+      }
+    }
+  }
 
-  # Prepare INLA control parameters
-  control_compute <- config$model_fitting$inla$control_compute
-  control_predictor <- config$model_fitting$inla$control_predictor
+  # Use conservative INLA settings
+  control_compute <- list(
+    dic = TRUE,
+    waic = FALSE,  # Disable WAIC to reduce computation
+    cpo = FALSE    # Disable CPO to reduce computation
+  )
+  
+  control_predictor <- list(compute = FALSE)  # Disable predictor computation
+  
+  # Conservative INLA control
+  control_inla <- list(
+    strategy = "gaussian",  # Use Gaussian approximation for stability
+    int.strategy = "eb"     # Use empirical Bayes for hyperparameters
+  )
 
   # Additional convergence controls if specified
-  control_inla <- list()
   if (!is.null(config$quality_control$convergence$max_iterations)) {
-    control_inla$max.iter <- config$quality_control$convergence$max_iterations
+    control_inla$max.iter <- min(config$quality_control$convergence$max_iterations, 100)  # Cap iterations
   }
 
   # Temporarily sink messages to /dev/null to suppress C-level warnings
@@ -218,20 +244,39 @@ fit_inla_model <- function(formula, model_data, config) {
   }
 
   model <- tryCatch({
-    # The main INLA call
-    inla(
+    # Ensure clean environment for INLA
+    gc()  # Garbage collection before model fitting
+    
+    # The main INLA call with conservative settings
+    result <- inla(
       formula = formula,
       data = model_data,
       family = "poisson",
       offset = model_data$log_expected,
       control.compute = control_compute,
       control.predictor = control_predictor,
-      control.inla = if(length(control_inla) > 0) control_inla else list(),
-      verbose = config$model_fitting$inla$verbose
+      control.inla = control_inla,
+      verbose = FALSE,
+      keep = FALSE,  # Don't keep intermediate results
+      working.directory = tempdir()  # Use system temp directory
     )
+    
+    # Clean up after INLA
+    gc()
+    result
+    
   }, error = function(e) {
-    # In case of error, we still need to restore the sink
     cat(sprintf("  ✗ Model fitting error: %s\n", e$message))
+    
+    # Additional diagnostic information
+    if (grepl("file.exists", e$message)) {
+      cat("  💡 This appears to be an INLA temporary file issue\n")
+      cat("  💡 Suggestions:\n")
+      cat("    - Check disk space and permissions\n")
+      cat("    - Try reducing model complexity\n")
+      cat("    - Verify INLA installation\n")
+    }
+    
     return(NULL)
   })
 
