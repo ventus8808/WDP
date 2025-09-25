@@ -253,7 +253,7 @@ fit_inla_model <- function(formula, model_data, config) {
     # List files in graph directory for visibility
     gdir <- dirname(graph_path)
     if (dir.exists(gdir)) {
-      files <- tryCatch(list.files(gdir, pattern = "\\\.graph$", full.names = TRUE), error = function(e) character(0))
+          files <- tryCatch(list.files(gdir, pattern = "\\.graph$", full.names = TRUE), error = function(e) character(0))
       cat(sprintf("    [diag] Graph dir: %s, count=%d\n", gdir, length(files)))
     }
   } else {
