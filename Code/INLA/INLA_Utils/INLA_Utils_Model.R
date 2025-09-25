@@ -146,10 +146,8 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
     cat("    Using linear dose-response model\n")
   }
 
-  # Spatial component
-  spatial_component <- sprintf("f(county_idx, model = '%s', graph = '%s')",
-                               config$model_fitting$spatial$model_type,
-                               spatial_graph_path)
+  # 空间项自动降级为 iid（不依赖 graph 文件，便于定位 graph 格式问题）
+  spatial_component <- "f(county_idx, model = 'iid')"
 
   # Temporal component
   temporal_component <- sprintf("f(Year, model = '%s')",
@@ -229,6 +227,13 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
 #' @param config Configuration list
 #' @return INLA model object or NULL if failed
 fit_inla_model <- function(formula, model_data, config) {
+  # 打印 graph 文件内容和 md5，便于诊断格式问题
+  graph_path <- attr(formula, "_graph_path")
+  if (!is.null(graph_path) && file.exists(graph_path)) {
+    cat("    [diag] Graph file md5:", tryCatch(tools::md5sum(graph_path), error=function(e) "md5 error"), "\n")
+    cat("    [diag] Graph file head:\n")
+    cat(paste(tryCatch(readLines(graph_path, n=10), error=function(e) "read error"), collapse="\n"), "\n")
+  }
   cat("  🎯 Fitting INLA model...\n")
   # Diagnostics: show and verify working directory and graph file accessibility
   wd_opt <- tryCatch(inla.getOption("working.directory"), error = function(e) NA)
