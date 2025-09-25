@@ -74,9 +74,27 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
     }
     graph_filepath <- file.path(graph_dir, graph_filename)
 
-  # Write graph file
-  inla.write.graph(inla_graph, filename = graph_filepath)
-  cat(sprintf("  🗂️  Graph file path: %s (will write/read)\n", graph_filepath))
+    # Write graph file
+    inla.write.graph(inla_graph, filename = graph_filepath)
+    cat(sprintf("  🗂️  Graph file path: %s (will write/read)\n", graph_filepath))
+
+    # Also ensure a copy exists inside INLA working.directory to avoid cross-dir issues
+    wd_dir <- tryCatch(inla.getOption("working.directory"), error = function(e) NA)
+    if (!is.na(wd_dir) && nzchar(wd_dir)) {
+      if (!dir.exists(wd_dir)) dir.create(wd_dir, recursive = TRUE, showWarnings = FALSE)
+      wd_graph_path <- file.path(wd_dir, basename(graph_filepath))
+      # Copy and ensure permissions
+      ok_copy <- tryCatch({
+        file.copy(graph_filepath, wd_graph_path, overwrite = TRUE)
+      }, error = function(e) FALSE)
+      if (ok_copy && file.exists(wd_graph_path)) {
+        Sys.chmod(wd_graph_path, mode = "0644", use_umask = TRUE)
+        graph_filepath <- wd_graph_path
+        cat(sprintf("  📎 Graph also placed in working.dir: %s\n", wd_graph_path))
+      } else {
+        cat("  ⚠️  Failed to copy graph into working.directory; will use original path.\n")
+      }
+    }
 
     # Calculate connectivity statistics
     n_connections <- sum(adj_matrix) / 2  # Divide by 2 for symmetric matrix
@@ -192,6 +210,9 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
 
   # Convert to formula object
   formula_obj <- as.formula(formula_string)
+  # Attach graph path for diagnostics and use basename to avoid cross-dir issues
+  attr(formula_obj, "_graph_path") <- spatial_graph_path
+  attr(formula_obj, "_graph_basename") <- basename(spatial_graph_path)
 
   cat(sprintf("  ✓ Formula: %s\n", deparse(formula_obj)[1]))
   cat(sprintf("    Covariates included: %s\n",
@@ -209,6 +230,42 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
 #' @return INLA model object or NULL if failed
 fit_inla_model <- function(formula, model_data, config) {
   cat("  🎯 Fitting INLA model...\n")
+  # Diagnostics: show and verify working directory and graph file accessibility
+  wd_opt <- tryCatch(inla.getOption("working.directory"), error = function(e) NA)
+  if (is.na(wd_opt) || !nzchar(wd_opt)) wd_opt <- tempdir()
+  if (!dir.exists(wd_opt)) {
+    dir.create(wd_opt, recursive = TRUE, showWarnings = FALSE)
+  }
+  can_write_wd <- tryCatch({
+    tf <- file.path(wd_opt, sprintf("_wdp_inla_probe_%s", as.integer(Sys.time())))
+    ok <- TRUE
+    writeLines("ok", tf)
+    ok <- ok && file.exists(tf)
+    unlink(tf, force = TRUE)
+    ok
+  }, error = function(e) FALSE)
+  cat(sprintf("    [diag] INLA working.directory=%s, writable=%s\n", wd_opt, as.character(can_write_wd)))
+
+  # Extract graph path from formula attribute (set in build_model_formula)
+  graph_path <- attr(formula, "_graph_path")
+  if (!is.null(graph_path)) {
+    cat(sprintf("    [diag] Graph file exists=%s at %s\n", as.character(file.exists(graph_path)), graph_path))
+    # List files in graph directory for visibility
+    gdir <- dirname(graph_path)
+    if (dir.exists(gdir)) {
+      files <- tryCatch(list.files(gdir, pattern = "\\\.graph$", full.names = TRUE), error = function(e) character(0))
+      cat(sprintf("    [diag] Graph dir: %s, count=%d\n", gdir, length(files)))
+    }
+  } else {
+    cat("    [diag] Graph path attribute not found on formula\n")
+  }
+
+  # Show current working directory from R side and ensure it's not on NFS
+  cat(sprintf("    [diag] R getwd()=%s\n", getwd()))
+  cat(sprintf("    [diag] R tempdir()=%s\n", tempdir()))
+  # Print a shallow tree of working.directory for debugging
+  wd_ls <- tryCatch(list.files(wd_opt, all.files = TRUE), error = function(e) character(0))
+  cat(sprintf("    [diag] workdir file count=%d\n", length(wd_ls)))
   
   # Pre-flight checks
   if (nrow(model_data) < 100) {
@@ -260,6 +317,20 @@ fit_inla_model <- function(formula, model_data, config) {
     # Ensure clean environment for INLA
     gc()  # Garbage collection before model fitting
     
+    # Ensure we run in the INLA working directory so C-side resolves relative paths properly
+    owd <- getwd()
+    setwd(wd_opt)
+    cat(sprintf("    [diag] setwd to working.directory: %s (old=%s)\n", wd_opt, owd))
+
+    # Replace graph path in formula with basename to ensure INLA reads from cwd
+    gbase <- attr(formula, "_graph_basename")
+    if (!is.null(gbase)) {
+      # Rebuild formula string swapping the graph path occurrence, then re-parse
+      f_str <- deparse(formula)
+      f_str <- gsub("graph = '.*?'", sprintf("graph = '%s'", gbase), f_str)
+      formula <- as.formula(f_str)
+    }
+
     # The main INLA call with conservative settings
     result <- inla(
       formula = formula,
@@ -270,12 +341,14 @@ fit_inla_model <- function(formula, model_data, config) {
       control.predictor = control_predictor,
       control.inla = control_inla,
       verbose = FALSE,
-      keep = FALSE,  # Don't keep intermediate results
-      working.directory = tempdir()  # Use system temp directory
+      keep = TRUE,  # Keep intermediate results for stability/diagnostics
+      working.directory = wd_opt  # Use INLA global working directory (node-local)
     )
     
     # Clean up after INLA
     gc()
+  setwd(owd)
+  cat(sprintf("    [diag] restored setwd to: %s\n", owd))
     result
     
   }, error = function(e) {
