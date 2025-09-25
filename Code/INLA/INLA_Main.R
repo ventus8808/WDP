@@ -75,7 +75,12 @@ tryCatch({
   threads <- if (!is.na(cpus) && cpus > 0) paste0(cpus, ":1") else "4:1"
   inla.setOption(num.threads = threads)
   inla.setOption(inla.mode = "experimental")  # Use experimental mode for better stability
-  cat(sprintf("✅ INLA basic configuration complete (threads=%s)\n", threads))
+  # Force INLA to keep and use a local working directory on node-local storage
+  local_work_dir <- file.path(project_temp, "inla_work")
+  if (!dir.exists(local_work_dir)) dir.create(local_work_dir, recursive = TRUE, showWarnings = FALSE)
+  inla.setOption(keep = TRUE)
+  inla.setOption(work.directory = local_work_dir)
+  cat(sprintf("✅ INLA basic configuration complete (threads=%s, workdir=%s)\n", threads, local_work_dir))
 }, error = function(e) {
   cat(sprintf("⚠️ INLA configuration warning: %s\n", e$message))
 })
@@ -567,6 +572,14 @@ main <- function() {
   # Parse arguments and load configuration
   args <- parse_command_args()
   config <- load_config(args$config)
+  
+  # Override graph_dir to node-local tmp to avoid NFS issues
+  local_graph_dir <- file.path(project_temp, "graphs")
+  if (!dir.exists(local_graph_dir)) dir.create(local_graph_dir, recursive = TRUE, showWarnings = FALSE)
+  if (!is.null(config$model_fitting) && !is.null(config$model_fitting$spatial)) {
+    config$model_fitting$spatial$graph_dir <- local_graph_dir
+  }
+  cat(sprintf("🗂️  Spatial graphs directory set to: %s\n", local_graph_dir))
   
   # Create necessary directory structure
   create_directory_structure(config)
