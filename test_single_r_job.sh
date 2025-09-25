@@ -3,16 +3,15 @@
 # WONDER R分析 单任务CPU测试脚本 (v6 - 最终路径修正版)
 # ========================
 
-#SBATCH --partition=kshdtest
+#SBATCH --partition=kshctest
 #SBATCH --job-name=WONDER_R_Test
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem-per-cpu=2G
+#SBATCH --mem-per-cpu=3G
 #SBATCH --time=1:00:00
 #SBATCH --output=%x-%j.log
 #SBATCH --error=%x-%j.err
-#SBATCH --gres=dcu:1
 
 # ========================
 # Conda环境设置
@@ -20,7 +19,6 @@
 echo "清理并设置环境模块..."
 module purge
 module load compiler/dtk/23.10
-module load rocm/5.3.3
 
 echo "激活Conda环境..."
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -49,10 +47,10 @@ echo "  疾病代码: ${DISEASE_CODE}"
 echo "  化合物ID: ${COMPOUND_ID}"
 echo "-------------------------------------"
 
-R_SCRIPT_NAME="BYM_INLA_Production.R"
-# --- 关键变更：修正配置文件路径 ---
+R_SCRIPT_NAME="INLA_Main.R"
+# --- 修正配置文件路径 ---
 # 从当前工作目录 (Code/INLA) 指向正确的配置文件
-CONFIG_PATH="config/analysis_config.yaml"
+CONFIG_PATH="INLA_Config/analysis_config.yaml"
 
 echo "使用配置文件: $(realpath ${CONFIG_PATH})"
 
