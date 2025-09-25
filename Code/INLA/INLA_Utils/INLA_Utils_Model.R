@@ -60,10 +60,23 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
     graph_filename <- sprintf("%s_%s_%d.graph",
                               config$model_fitting$spatial$graph_prefix,
                               "cat", category_id)
-    graph_filepath <- here(config$model_fitting$spatial$graph_dir, graph_filename)
+    # Resolve graph_dir: if absolute path, use as-is; else resolve relative to project root
+    graph_dir <- config$model_fitting$spatial$graph_dir
+    if (!dir.exists(graph_dir)) {
+      # If it doesn't exist as absolute, try relative to project root
+      candidate <- here(graph_dir)
+      if (dir.exists(candidate)) {
+        graph_dir <- candidate
+      }
+    }
+    if (!dir.exists(graph_dir)) {
+      dir.create(graph_dir, recursive = TRUE, showWarnings = FALSE)
+    }
+    graph_filepath <- file.path(graph_dir, graph_filename)
 
-    # Write graph file
-    inla.write.graph(inla_graph, filename = graph_filepath)
+  # Write graph file
+  inla.write.graph(inla_graph, filename = graph_filepath)
+  cat(sprintf("  🗂️  Graph file path: %s (will write/read)\n", graph_filepath))
 
     # Calculate connectivity statistics
     n_connections <- sum(adj_matrix) / 2  # Divide by 2 for symmetric matrix

@@ -79,8 +79,15 @@ tryCatch({
   local_work_dir <- file.path(project_temp, "inla_work")
   if (!dir.exists(local_work_dir)) dir.create(local_work_dir, recursive = TRUE, showWarnings = FALSE)
   inla.setOption(keep = TRUE)
-  inla.setOption(work.directory = local_work_dir)
-  cat(sprintf("✅ INLA basic configuration complete (threads=%s, workdir=%s)\n", threads, local_work_dir))
+  inla.setOption(working.directory = local_work_dir)
+  inla.setOption(safe = TRUE)
+  # Diagnostics: show INLA options and binary path
+  iwdir <- inla.getOption("working.directory")
+  ickeep <- inla.getOption("keep")
+  ithreads <- inla.getOption("num.threads")
+  icall <- inla.getOption("inla.call")
+  cat(sprintf("✅ INLA basic configuration complete (threads=%s, workdir=%s, keep=%s)\n", ithreads, iwdir, as.character(ickeep)))
+  cat(sprintf("🔎 INLA binary: %s (exists=%s)\n", icall, file.exists(icall)))
 }, error = function(e) {
   cat(sprintf("⚠️ INLA configuration warning: %s\n", e$message))
 })
