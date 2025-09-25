@@ -53,6 +53,10 @@ R_SCRIPT_NAME="INLA_Main.R"
 CONFIG_PATH="INLA_Config/analysis_config.yaml"
 
 echo "使用配置文件: $(realpath ${CONFIG_PATH})"
+# 优先使用节点本地临时目录，避免网络文件系统导致的INLA临时文件问题
+export TMPDIR="${SLURM_TMPDIR:-/tmp}/${USER}/wdp_inla_${SLURM_JOB_ID:-manual}"
+mkdir -p "$TMPDIR"
+echo "使用临时目录: $TMPDIR"
 
 Rscript ${R_SCRIPT_NAME} \
   --config ${CONFIG_PATH} \

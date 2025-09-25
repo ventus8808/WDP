@@ -30,17 +30,25 @@ cat(sprintf("📁 Project root identified at: %s\n", here()))
 Sys.setenv(INLA_DEBUG = "0")  # Reduce INLA debug output
 Sys.setenv(INLA_HOME = system.file(package = "INLA"))
 
-# Create a project-specific temporary directory to avoid disk space issues
-project_temp <- here("temp", "inla_temp")
+# Prefer node-local temporary directory (SLURM_TMPDIR or system TMPDIR), fallback to project temp
+tmp_base <- if (nzchar(Sys.getenv("SLURM_TMPDIR"))) {
+  Sys.getenv("SLURM_TMPDIR")
+} else if (nzchar(Sys.getenv("TMPDIR"))) {
+  Sys.getenv("TMPDIR")
+} else {
+  here("temp")
+}
+project_temp <- file.path(tmp_base, "inla_temp")
 if (!dir.exists(project_temp)) {
-  dir.create(project_temp, recursive = TRUE)
+  dir.create(project_temp, recursive = TRUE, showWarnings = FALSE)
   cat(sprintf("📁 Created INLA temp directory: %s\n", project_temp))
 }
 
-# Set TMPDIR to our project directory to avoid system /tmp issues  
+# Set TMP env vars to the selected directory
 Sys.setenv(TMPDIR = project_temp)
 Sys.setenv(TMP = project_temp)
 Sys.setenv(TEMP = project_temp)
+cat(sprintf("🧊 Using temporary directory: %s\n", project_temp))
 
 # Check INLA installation
 if (!require("INLA", character.only = TRUE, quietly = TRUE)) {
@@ -62,9 +70,12 @@ for (dir in c(temp_dir, graphs_dir, models_dir)) {
 # Configure INLA settings step by step
 tryCatch({
   inla.setOption(verbose = FALSE)
-  inla.setOption(num.threads = "4:1")
+  # Respect SLURM CPU allocation when available
+  cpus <- suppressWarnings(as.integer(Sys.getenv("SLURM_CPUS_PER_TASK")))
+  threads <- if (!is.na(cpus) && cpus > 0) paste0(cpus, ":1") else "4:1"
+  inla.setOption(num.threads = threads)
   inla.setOption(inla.mode = "experimental")  # Use experimental mode for better stability
-  cat("✅ INLA basic configuration complete\n")
+  cat(sprintf("✅ INLA basic configuration complete (threads=%s)\n", threads))
 }, error = function(e) {
   cat(sprintf("⚠️ INLA configuration warning: %s\n", e$message))
 })
