@@ -25,6 +25,9 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate INLA
 echo "Conda环境 'INLA' 已激活。"
 echo "Rscript路径: $(which Rscript)"
+echo "[诊断] Rscript环境与INLA包可用性："
+Rscript -e "cat('INLA available:', suppressMessages(require(INLA, quietly=TRUE)), '\n')"
+Rscript -e "INLA:::inla.version()"
 
 # ========================
 # 运行R分析命令
