@@ -360,19 +360,24 @@ fit_inla_model <- function(formula, model_data, config) {
     }
   }
 
-  # Use conservative INLA settings
+  # Use ultra-conservative INLA settings for HPC compatibility
   control_compute <- list(
-    dic = TRUE,
-    waic = FALSE,  # Disable WAIC to reduce computation
-    cpo = FALSE    # Disable CPO to reduce computation
+    dic = FALSE,   # Disable DIC to reduce computation load
+    waic = FALSE,  # Disable WAIC
+    cpo = FALSE,   # Disable CPO
+    config = FALSE # Disable config sampling
   )
   
   control_predictor <- list(compute = FALSE)  # Disable predictor computation
   
-  # Conservative INLA control
+  # Ultra-conservative INLA control for HPC
   control_inla <- list(
-    strategy = "gaussian",  # Use Gaussian approximation for stability
-    int.strategy = "eb"     # Use empirical Bayes for hyperparameters
+    strategy = "gaussian",     # Use Gaussian approximation for maximum stability
+    int.strategy = "eb",       # Use empirical Bayes
+    optimizer = "default",     # Use default optimizer
+    h = 0.005,                # Conservative step size
+    dz = 1,                   # Conservative integration steps
+    diff.logdens = 4          # Conservative density difference
   )
 
   # Additional convergence controls if specified
