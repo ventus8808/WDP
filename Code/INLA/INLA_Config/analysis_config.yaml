@@ -176,13 +176,18 @@ result_validation:
     - "Estimate"
     - "Lag"
     - "Model"
+    - "Dose_Response_Type"
+    - "RR_Per_SD"
+    - "RR_Per_SD_Lower"
+    - "RR_Per_SD_Upper"
+    - "RR_P90_vs_P10"
+    - "RR_P90_vs_P10_Lower"
+    - "RR_P90_vs_P10_Upper"
     - "P_Value"
+    - "DIC"
+    - "WAIC"
     - "N_Counties"
     - "N_Records"
     - "Status_Message"
 
-  optional_columns:
-    - "DIC"
-    - "WAIC"
-    - "RR_Per_SD"
-    - "RR_P90_vs_P10"
+  optional_columns: []  # 所有重要列都已在required_columns中
