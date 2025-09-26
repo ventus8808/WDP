@@ -315,25 +315,73 @@ process_single_combination <- function(data_list, analysis_info, config) {
     cat("--- [DEBUG] End of check ---\n\n")
     # <<<<<<<  新增诊断代码结束  >>>>>>>
 
-    spatial_structure <- create_spatial_structure(
-      data_list$adjacency, counties_in_data, analysis_info$category_id, config)
+    # 添加错误处理
+    if(length(counties_in_data) == 0) {
+      cat("  ❌ Error: counties_in_data is empty!\n")
+      return(list(
+        success = FALSE,
+        result = create_failed_result_row(analysis_info, "No counties in data", config),
+        error = "No counties in data"
+      ))
+    }
+    
+    spatial_structure <- tryCatch({
+      create_spatial_structure(
+        data_list$adjacency, counties_in_data, analysis_info$category_id, config)
+    }, error = function(e) {
+      cat(sprintf("  ❌ Error in create_spatial_structure: %s\n", e$message))
+      return(NULL)
+    })
+    
+    if(is.null(spatial_structure)) {
+      cat("  ❌ Error: spatial_structure is NULL\n")
+      return(list(
+        success = FALSE,
+        result = create_failed_result_row(analysis_info, "Spatial structure creation failed", config),
+        error = "Spatial structure creation failed"
+      ))
+    }
       
     cat("  📊 Spatial structure created successfully\n")
 
     # Build model formula
-    formula <- build_model_formula(
-      analysis_info$model_type, model_data, spatial_structure$filepath, config)
+    cat("  📊 About to build model formula...\n")
+    formula <- tryCatch({
+      build_model_formula(
+        analysis_info$model_type, model_data, spatial_structure$filepath, config)
+    }, error = function(e) {
+      cat(sprintf("  ❌ Error in build_model_formula: %s\n", e$message))
+      return(NULL)
+    })
+    
+    if(is.null(formula)) {
+      cat("  ❌ Error: formula is NULL\n")
+      return(list(
+        success = FALSE,
+        result = create_failed_result_row(analysis_info, "Model formula creation failed", config),
+        error = "Model formula creation failed"
+      ))
+    }
+    cat("  📊 Model formula built successfully\n")
 
     # Fit INLA model
-    model <- fit_inla_model(formula, model_data, config)
-
-    if (is.null(model)) {
+    cat("  📊 About to fit INLA model...\n")
+    model <- tryCatch({
+      fit_inla_model(formula, model_data, config)
+    }, error = function(e) {
+      cat(sprintf("  ❌ Error in fit_inla_model: %s\n", e$message))
+      return(NULL)
+    })
+    
+    if(is.null(model)) {
+      cat("  ❌ Error: model is NULL\n")
       return(list(
         success = FALSE,
         result = create_failed_result_row(analysis_info, "Model fitting failed", config),
-        error = "INLA model fitting failed"
+        error = "Model fitting failed"
       ))
     }
+    cat("  📊 INLA model fitting completed\n")
 
     # Create result row
     result_row <- create_result_row(analysis_info, model, model_data, config)

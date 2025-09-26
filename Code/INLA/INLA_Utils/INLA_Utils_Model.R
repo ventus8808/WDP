@@ -42,21 +42,31 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
     # <<<<<<<  新增诊断代码结束  >>>>>>>
     
     # Sort counties for consistent indexing
+    cat("  📊 About to sort counties...\n")
     region_ids <- sort(unique(as.character(counties_in_data)))
+    cat(sprintf("  📊 Sorted counties: %d unique regions\n", length(region_ids)))
     n_regions <- length(region_ids)
+    cat(sprintf("  📊 Number of regions: %d\n", n_regions))
 
     # Create FIPS to index mapping
+    cat("  📊 Creating FIPS to index mapping...\n")
     fips_to_index <- setNames(1:n_regions, region_ids)
+    cat("  📊 FIPS to index mapping created\n")
 
     # Initialize adjacency matrix
+    cat("  📊 Initializing adjacency matrix...\n")
     adj_matrix <- matrix(0, nrow = n_regions, ncol = n_regions)
+    cat(sprintf("  📊 Adjacency matrix initialized with dimensions %d x %d\n", 
+                nrow(adj_matrix), ncol(adj_matrix)))
 
     # Filter adjacency data to analysis counties only
+    cat("  📊 Filtering adjacency data...\n")
     adj_filtered <- adjacency_data %>%
       filter(
         county_from %in% region_ids,
         county_to %in% region_ids
       )
+    cat(sprintf("  📊 Filtered adjacency data has %d rows\n", nrow(adj_filtered)))
 
     # Fill adjacency matrix
     if (nrow(adj_filtered) > 0) {
@@ -81,8 +91,21 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
     # <<<<<<<  新增诊断代码开始  >>>>>>>
     cat(sprintf("  📊 About to create INLA graph with adj_matrix of size %d x %d\n", 
                 nrow(adj_matrix), ncol(adj_matrix)))
+    # 检查邻接矩阵是否为空
+    if(nrow(adj_matrix) == 0 || ncol(adj_matrix) == 0) {
+      cat("  ❌ Error: Adjacency matrix is empty!\n")
+      stop("Adjacency matrix is empty")
+    }
     # <<<<<<<  新增诊断代码结束  >>>>>>>
-    inla_graph <- inla.read.graph(adj_matrix)
+    
+    inla_graph <- tryCatch({
+      inla.read.graph(adj_matrix)
+    }, error = function(e) {
+      cat(sprintf("  ❌ Error in inla.read.graph: %s\n", e$message))
+      cat("  📊 Adjacency matrix content:\n")
+      print(adj_matrix[1:min(5, nrow(adj_matrix)), 1:min(5, ncol(adj_matrix))])
+      stop(e$message)
+    })
     cat("  📊 INLA graph created successfully\n")
 
     # Create unique graph file for this analysis
@@ -104,8 +127,17 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
     graph_filepath <- file.path(graph_dir, graph_filename)
 
     # Write graph file
+    cat(sprintf("  📊 About to write graph file to: %s\n", graph_filepath))
+    # 确保目录存在
+    graph_dir <- dirname(graph_filepath)
+    if (!dir.exists(graph_dir)) {
+      dir.create(graph_dir, recursive = TRUE, showWarnings = FALSE)
+      cat(sprintf("  📊 Created directory: %s\n", graph_dir))
+    }
+    
     inla.write.graph(inla_graph, filename = graph_filepath)
     cat(sprintf("  🗂️  Graph file path: %s (will write/read)\n", graph_filepath))
+    cat("  📊 Graph file written successfully\n")
 
     # Also ensure a copy exists inside INLA working.directory to avoid cross-dir issues
     wd_dir <- tryCatch(inla.getOption("working.directory"), error = function(e) NA)
@@ -132,13 +164,18 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
     cat(sprintf("  ✓ Spatial graph: %d counties, %d connections (%.2f%% connectivity)\n",
                 n_regions, n_connections, connectivity_rate * 100))
 
-    return(list(
+    # <<<<<<<  新增诊断代码开始  >>>>>>>
+    cat("  📊 About to return spatial structure...\n")
+    result <- list(
       graph = inla_graph,
       filepath = graph_filepath,
       n_regions = n_regions,
       n_connections = n_connections,
       connectivity_rate = connectivity_rate
-    ))
+    )
+    cat("  📊 Spatial structure created successfully\n")
+    return(result)
+    # <<<<<<<  新增诊断代码结束  >>>>>>>
   })
 }
 
