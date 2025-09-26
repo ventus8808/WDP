@@ -23,6 +23,24 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
   cat("  🗺️  Creating spatial structure...\n")
 
   suppressWarnings({
+    # <<<<<<<  新增诊断代码开始  >>>>>>>
+    cat("\n--- [DEBUG] Checking input parameters in create_spatial_structure ---\n")
+    cat(sprintf("Length of counties_in_data: %d\n", length(counties_in_data)))
+    cat(sprintf("Class of counties_in_data: %s\n", class(counties_in_data)))
+    cat("First 10 county FIPS in counties_in_data:\n")
+    if(length(counties_in_data) > 0) {
+      print(head(counties_in_data, 10))
+    }
+    cat(sprintf("NROW of adjacency_data: %d\n", nrow(adjacency_data)))
+    cat(sprintf("Class of adjacency_data: %s\n", class(adjacency_data)))
+    if(nrow(adjacency_data) > 0) {
+      cat("First few rows of adjacency_data:\n")
+      print(head(adjacency_data, 3))
+    }
+    cat(sprintf("Category ID: %s\n", category_id))
+    cat("--- [DEBUG] End of input parameters check ---\n\n")
+    # <<<<<<<  新增诊断代码结束  >>>>>>>
+    
     # Sort counties for consistent indexing
     region_ids <- sort(unique(as.character(counties_in_data)))
     n_regions <- length(region_ids)
@@ -52,9 +70,20 @@ create_spatial_structure <- function(adjacency_data, counties_in_data, category_
       adj_matrix[adj_pairs] <- 1
       adj_matrix[adj_pairs[, c(2, 1)]] <- 1
     }
+    
+    # <<<<<<<  新增诊断代码开始  >>>>>>>
+    cat(sprintf("  📊 Adjacency matrix created with dimensions %d x %d\n", 
+                nrow(adj_matrix), ncol(adj_matrix)))
+    cat(sprintf("  📊 Number of connections in adjacency matrix: %d\n", sum(adj_matrix)))
+    # <<<<<<<  新增诊断代码结束  >>>>>>>
 
     # Create INLA graph
+    # <<<<<<<  新增诊断代码开始  >>>>>>>
+    cat(sprintf("  📊 About to create INLA graph with adj_matrix of size %d x %d\n", 
+                nrow(adj_matrix), ncol(adj_matrix)))
+    # <<<<<<<  新增诊断代码结束  >>>>>>>
     inla_graph <- inla.read.graph(adj_matrix)
+    cat("  📊 INLA graph created successfully\n")
 
     # Create unique graph file for this analysis
     graph_filename <- sprintf("%s_%s_%d.graph",

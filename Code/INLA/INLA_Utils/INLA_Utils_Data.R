@@ -382,6 +382,10 @@ prepare_model_data <- function(data_list, pesticide_col_name, lag_years, config)
     # 只有在确认所有县都有效后，才创建和加入索引
     if (nrow(model_data) > 0) {
         counties <- sort(unique(model_data$COUNTY_FIPS))
+        cat(sprintf("  📊 Final model data has %d records across %d counties\n",
+                    nrow(model_data), length(counties)))
+        cat("  📊 First 10 county FIPS in final model data:\n")
+        print(head(counties, 10))
         county_map <- data.frame(
           COUNTY_FIPS = counties,
           county_idx = 1:length(counties)

@@ -302,6 +302,7 @@ process_single_combination <- function(data_list, analysis_info, config) {
     }
 
     # Create spatial structure
+    cat("  📊 About to create spatial structure...\n")
     counties_in_data <- unique(model_data$COUNTY_FIPS)
     
     # <<<<<<<  新增诊断代码开始  >>>>>>>
@@ -316,6 +317,8 @@ process_single_combination <- function(data_list, analysis_info, config) {
 
     spatial_structure <- create_spatial_structure(
       data_list$adjacency, counties_in_data, analysis_info$category_id, config)
+      
+    cat("  📊 Spatial structure created successfully\n")
 
     # Build model formula
     formula <- build_model_formula(
