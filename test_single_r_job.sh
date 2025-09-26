@@ -1,24 +1,9 @@
 #!/bin/bash
 # ========================
-# WONDER R分析 单任务CPU测试脚本 (v7 - 路径完全修正版)
-# ======================# --- 如需恢复全组合，请改用下方命令并注释掉上方"最小化组合" ---
-# Rscript ${R_SCRIPT_PATH} \
-#   --config ${CONFIG_PATH} \
-#   --disease-code "${DISEASE_CODE}" \
-#   --pesticide-category "compound:${COMPOUND_ID}" \
-#   --measure-type "Weight,Density" \
-#   --estimate-types "avg" \
-#   --lag-years "5,10" \
-#   --model-types "M0,M1,M2,M3" \
-#   --verbose
+# WONDER R分析 单任务CPU测试脚本 (v8 - 最终修正版)
+# ========================
 
-status=$?
-if [ $status -ne 0 ]; then
-    echo "！！！R脚本执行失败，请检查错误日志: ${PROJECT_ROOT}/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.err"
-else
-    echo "--- R脚本执行成功 ---"
-    echo "请检查项目根目录下的日志文件: ${PROJECT_ROOT}/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.log"
-fiition=kshctest
+#SBATCH --partition=kshctest
 #SBATCH --job-name=WONDER_R_Test
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -48,7 +33,7 @@ Rscript -e "INLA:::inla.version()"
 # 运行R分析命令
 # ========================
 
-# 原始项目根目录
+# 项目根目录
 PROJECT_ROOT="/public/home/acf4pijnzl/WDP"
 # R脚本位置
 R_SCRIPT_PATH="${PROJECT_ROOT}/Code/INLA/INLA_Main.R"
@@ -65,8 +50,7 @@ echo "  疾病代码: ${DISEASE_CODE}"
 echo "  化合物ID: ${COMPOUND_ID}"
 echo "-------------------------------------"
 
-# --- 修正配置文件路径 ---
-# 使用项目根目录构建配置文件的绝对路径，确保总能找到它
+# --- 配置文件路径 ---
 CONFIG_PATH="${PROJECT_ROOT}/Code/INLA/INLA_Config/analysis_config.yaml"
 
 echo "使用配置文件: $(realpath ${CONFIG_PATH})"
@@ -115,8 +99,8 @@ Rscript ${R_SCRIPT_PATH} \
   --model-types "M0" \
   --verbose
 
-# --- 如需恢复全组合，请改用下方命令并注释掉上方“最小化组合” ---
-# Rscript ${R_SCRIPT_NAME} \
+# --- 如需恢复全组合，请改用下方命令并注释掉上方"最小化组合" ---
+# Rscript ${R_SCRIPT_PATH} \
 #   --config ${CONFIG_PATH} \
 #   --disease-code "${DISEASE_CODE}" \
 #   --pesticide-category "compound:${COMPOUND_ID}" \
