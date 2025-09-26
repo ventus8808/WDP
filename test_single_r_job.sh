@@ -52,8 +52,8 @@ echo "-------------------------------------"
 
 R_SCRIPT_NAME="INLA_Main.R"
 # --- 修正配置文件路径 ---
-# 从当前工作目录 (Code/INLA) 指向正确的配置文件
-CONFIG_PATH="INLA_Config/analysis_config.yaml"
+# 使用项目根目录构建配置文件的绝对路径，确保总能找到它
+CONFIG_PATH="${PROJECT_ROOT}/Code/INLA/INLA_Config/analysis_config.yaml"
 
 echo "使用配置文件: $(realpath ${CONFIG_PATH})"
 # 优先使用节点本地临时目录，避免网络文件系统导致的INLA临时文件问题

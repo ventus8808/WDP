@@ -170,10 +170,10 @@ create_directory_structure <- function(config) {
     cat(sprintf("  ✓ Created output directory: %s\n", output_dir))
   }
   
-  # Create temp directories
+  # Create temp directories using configuration
   temp_dirs <- c(
-    here("Code/INLA/INLA_Temp/graphs"),
-    here("Code/INLA/INLA_Temp/models"),
+    here(config$model_fitting$spatial$graph_dir),
+    here("Code/INLA/INLA_Temp/models"),  # 保留models和logs目录
     here("Code/INLA/INLA_Temp/logs")
   )
   
@@ -289,8 +289,9 @@ process_single_combination <- function(data_list, analysis_info, config) {
     # Prepare model data
     model_data <- prepare_model_data(
       data_list, pesticide_col, analysis_info$lag_years, config)
-    # 保存模型数据以便debug
-    saveRDS(model_data, file = file.path(config$result_directories$filter, "debug_model_data.rds"))
+    # 保存模型数据以便debug（使用正确的路径）
+    debug_path <- file.path(project_temp, "debug_model_data.rds")
+    saveRDS(model_data, file = debug_path)
 
     # Check minimum sample size
     if (nrow(model_data) < config$data_processing$min_thresholds$records_per_analysis) {
@@ -596,44 +597,8 @@ analyze_single_category <- function(category_info, args, config, output_path, pr
   ))
 }
 
-#' Validate result row against configuration requirements
-#' @param result_row Data frame with result row
-#' @param config Configuration list
-#' @return List with validation results
-validate_result_row <- function(result_row, config) {
-  validation_results <- list(valid = TRUE, messages = character(0))
-
-  # Check required columns (updated for new format with separate quintile columns)
-  required_cols <- c(
-    "Timestamp", "Disease", "Exposure", "Category", "Measure", "Estimate", "Lag", "Model",
-    "Q1", "Q2", "Q3", "Q4", "Q5", "P_Value", "N_Counties", "N_Records"
-  )
-  missing_cols <- setdiff(required_cols, names(result_row))
-
-  if (length(missing_cols) > 0) {
-    validation_results$valid <- FALSE
-    validation_results$messages <- c(
-      validation_results$messages,
-      sprintf("Missing required columns: %s", paste(missing_cols, collapse = ", "))
-    )
-  }
-
-  # Check P-value bounds
-  if (!is.na(result_row$P_Value)) {
-    # Extract numeric part of p-value (remove stars)
-    p_numeric <- suppressWarnings(as.numeric(gsub("\\*+", "", result_row$P_Value)))
-    p_bounds <- config$quality_control$validation$p_value_bounds
-
-    if (!is.na(p_numeric) && (p_numeric < p_bounds[1] || p_numeric > p_bounds[2])) {
-      validation_results$messages <- c(
-        validation_results$messages,
-        sprintf("P-value outside valid bounds: %.4f", p_numeric)
-      )
-    }
-  }
-
-  return(validation_results)
-}
+# 注释：删除了过时的validate_result_row函数，
+# 现在使用INLA_Utils_Results.R中的正确版本
 
 #' Main execution function
 #' @return Exit status
