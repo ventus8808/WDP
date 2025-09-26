@@ -67,20 +67,26 @@ for (dir in c(temp_dir, graphs_dir, models_dir)) {
   }
 }
 
-# Configure INLA settings step by step
+# Configure INLA settings with conservative options for HPC compatibility
 tryCatch({
+  # 设置INLA为经典模式，提高兼容性
+  inla.setOption(inla.mode = "classic")
   inla.setOption(verbose = FALSE)
-  # Respect SLURM CPU allocation when available
-  cpus <- suppressWarnings(as.integer(Sys.getenv("SLURM_CPUS_PER_TASK")))
-  threads <- if (!is.na(cpus) && cpus > 0) paste0(cpus, ":1") else "4:1"
-  inla.setOption(num.threads = threads)
-  inla.setOption(inla.mode = "experimental")  # Use experimental mode for better stability
+  
+  # 使用保守的线程设置 - 在HPC环境中单线程更稳定
+  inla.setOption(num.threads = "1:1")
+  
+  # 使用pardiso求解器（通常更稳定）
+  inla.setOption(smtp = "pardiso")
+  
+  # 禁用可能导致问题的优化
+  inla.setOption(safe = TRUE)
+  inla.setOption(keep = TRUE)
+  
   # Force INLA to keep and use a local working directory on node-local storage
   local_work_dir <- file.path(project_temp, "inla_work")
   if (!dir.exists(local_work_dir)) dir.create(local_work_dir, recursive = TRUE, showWarnings = FALSE)
-  inla.setOption(keep = TRUE)
   inla.setOption(working.directory = local_work_dir)
-  inla.setOption(safe = TRUE)
   # Diagnostics: show INLA options and binary path
   iwdir <- inla.getOption("working.directory")
   ickeep <- inla.getOption("keep")
