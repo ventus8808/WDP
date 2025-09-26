@@ -369,13 +369,29 @@ prepare_model_data <- function(data_list, pesticide_col_name, lag_years, config)
         is.finite(log_expected)
       )
 
+    # 最终的、最关键的清理步骤：确保所有用于模型的行都没有关键的NA值
+    model_data <- model_data %>%
+        filter(
+            !is.na(COUNTY_FIPS),
+            !is.na(Deaths),
+            !is.na(Population),
+            !is.na(pesticide_log_std) # 确保暴露变量不是NA
+        )
+
     # Add county indices for spatial modeling
-    counties <- sort(unique(model_data$COUNTY_FIPS))
-    county_map <- data.frame(
-      COUNTY_FIPS = counties,
-      county_idx = 1:length(counties)
-    )
-    model_data <- model_data %>% left_join(county_map, by = "COUNTY_FIPS")
+    # 只有在确认所有县都有效后，才创建和加入索引
+    if (nrow(model_data) > 0) {
+        counties <- sort(unique(model_data$COUNTY_FIPS))
+        county_map <- data.frame(
+          COUNTY_FIPS = counties,
+          county_idx = 1:length(counties)
+        )
+        model_data <- model_data %>% left_join(county_map, by = "COUNTY_FIPS")
+    } else {
+        # 如果没有数据剩下，提前警告并返回一个空的数据框
+        warning("No valid data remained after final filtering step.")
+        return(data.frame()) 
+    }
 
     # Quality control checks
     validate_model_data(model_data, config)
