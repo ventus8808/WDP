@@ -97,12 +97,26 @@ cat("🔧 INLA configured for HPC environment\n")
 cat("WDP BYM INLA Production Analysis System\n")
 cat("======================================\n")
 
-source("INLA_Utils/INLA_Utils_Data.R")
-source("INLA_Utils/INLA_Utils_Model.R")
-source("INLA_Utils/INLA_Utils_Results.R")
-source("INLA_Utils/INLA_Utils_Dashboard.R")
-source("INLA_Utils/INLA_Utils_Validation.R")
-source("INLA_Utils/INLA_Utils_Logger.R")
+# 使用here包确保正确的文件路径
+utils_dir <- here("Code", "INLA", "INLA_Utils")
+cat(sprintf("📂 Loading utilities from: %s\n", utils_dir))
+
+# 检查每个工具文件是否存在
+util_files <- c("INLA_Utils_Data.R", "INLA_Utils_Model.R", "INLA_Utils_Results.R", 
+                "INLA_Utils_Dashboard.R", "INLA_Utils_Validation.R", "INLA_Utils_Logger.R")
+
+for (util_file in util_files) {
+  util_path <- file.path(utils_dir, util_file)
+  if (file.exists(util_path)) {
+    cat(sprintf("  ✓ Loading %s\n", util_file))
+    source(util_path)
+  } else {
+    cat(sprintf("  ❌ Missing %s at %s\n", util_file, util_path))
+    stop(sprintf("Required utility file not found: %s", util_file))
+  }
+}
+
+cat("✅ All utilities loaded successfully\n")
 
 # 全局debug开关
 debug <- TRUE
