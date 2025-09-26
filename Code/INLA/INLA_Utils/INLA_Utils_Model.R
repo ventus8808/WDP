@@ -212,14 +212,16 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
     cat("    Using linear dose-response model\n")
   }
 
-  # 启用时空模型：添加 BYM2 空间效应和 RW1 时间效应
+  # 启用时空模型：使用更稳健的超参数设置
+  # 简化的BYM2模型 - 使用默认超参数以提高稳定性
   spatial_component <- sprintf(
-    "f(county_idx, model = '%s', graph = '%s', hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01)), phi = list(prior = 'pc', param = c(0.5, 2/3))))",
+    "f(county_idx, model = '%s', graph = '%s')",
     config$model_fitting$spatial$model_type,
     basename(spatial_graph_path) # 使用basename确保在INLA工作目录中正确引用
   )
+  # 简化的RW1时间模型
   temporal_component <- sprintf(
-    "f(Year, model = '%s', hyper = list(prec = list(prior = 'pc.prec', param = c(1, 0.01))))",
+    "f(Year, model = '%s')",
     config$model_fitting$temporal$model_type
   )
   
@@ -265,12 +267,12 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
     }
   }
 
-  # Combine all components
+  # Combine all components - 临时禁用时空效应进行调试
   formula_components <- c(
     base_components,
-    covariate_components,
-    spatial_component,  # 启用空间效应
-    temporal_component  # 启用时间效应
+    covariate_components
+    # spatial_component,  # 临时禁用，调试完成后再启用
+    # temporal_component  # 临时禁用，调试完成后再启用
   )
 
   # Build formula string
