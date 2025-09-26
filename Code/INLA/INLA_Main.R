@@ -303,6 +303,17 @@ process_single_combination <- function(data_list, analysis_info, config) {
 
     # Create spatial structure
     counties_in_data <- unique(model_data$COUNTY_FIPS)
+    
+    # <<<<<<<  新增诊断代码开始  >>>>>>>
+    cat("\n--- [DEBUG] Checking counties_in_data ---\n")
+    cat(sprintf("Number of unique counties found: %d\n", length(counties_in_data)))
+    cat("First 10 county FIPS:\n")
+    print(head(counties_in_data, 10))
+    cat("Structure of the vector:\n")
+    print(str(counties_in_data))
+    cat("--- [DEBUG] End of check ---\n\n")
+    # <<<<<<<  新增诊断代码结束  >>>>>>>
+
     spatial_structure <- create_spatial_structure(
       data_list$adjacency, counties_in_data, analysis_info$category_id, config)
 
