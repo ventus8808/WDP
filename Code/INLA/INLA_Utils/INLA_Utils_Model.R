@@ -146,14 +146,10 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
     cat("    Using linear dose-response model\n")
   }
 
-  # 空间项自动降级为 iid（不依赖 graph 文件，便于定位 graph 格式问题）
-  spatial_component <- "f(county_idx, model = 'iid')"
-
-  # Temporal component
-  temporal_component <- sprintf("f(Year, model = '%s')",
-                                config$model_fitting$temporal$model_type)
-
-  # Get model configuration
+  # 极简模型：不加空间和时间项，只保留固定效应和协变量
+  # spatial_component <- "f(county_idx, model = 'iid')" # 注释掉
+  # temporal_component <- sprintf("f(Year, model = '%s')", config$model_fitting$temporal$model_type) # 注释掉
+  # Get model配置
   model_config <- config$analysis$models[[model_type]]
   if (is.null(model_config)) {
     stop(sprintf("Unknown model type: %s", model_type))
@@ -198,9 +194,9 @@ build_model_formula <- function(model_type, model_data, spatial_graph_path, conf
   # Combine all components
   formula_components <- c(
     base_components,
-    covariate_components,
-    spatial_component,
-    temporal_component
+    covariate_components
+    # spatial_component, # 注释掉
+    # temporal_component # 注释掉
   )
 
   # Build formula string
@@ -308,15 +304,7 @@ fit_inla_model <- function(formula, model_data, config) {
     control_inla$max.iter <- min(config$quality_control$convergence$max_iterations, 100)  # Cap iterations
   }
 
-  # Temporarily sink messages to /dev/null to suppress C-level warnings
-  null_device <- if (.Platform$OS.type == "unix") "/dev/null" else "NUL"
-  sink_connection <- NULL
-
-  # Only redirect messages if we're not already in a sink
-  if (sink.number() == 0) {
-    sink_connection <- file(null_device, open = "wt")
-    sink(sink_connection, type = "message")
-  }
+  # 暂时注释sink()，让所有INLA/C端错误直接输出到日志
 
   model <- tryCatch({
     # Ensure clean environment for INLA
@@ -345,7 +333,7 @@ fit_inla_model <- function(formula, model_data, config) {
       control.compute = control_compute,
       control.predictor = control_predictor,
       control.inla = control_inla,
-      verbose = FALSE,
+      verbose = TRUE,
       keep = TRUE,  # Keep intermediate results for stability/diagnostics
       working.directory = wd_opt  # Use INLA global working directory (node-local)
     )
@@ -371,13 +359,7 @@ fit_inla_model <- function(formula, model_data, config) {
     return(NULL)
   })
 
-  # IMPORTANT: Restore the message sink
-  if (!is.null(sink_connection)) {
-    sink(type = "message")
-    close(sink_connection)
-  } else {
-    sink(type = "message")
-  }
+  # 暂不恢复sink
 
   # Log detailed error information if debugging
   if (is.null(model) && config$logging$level %in% c("DEBUG", "INFO")) {
