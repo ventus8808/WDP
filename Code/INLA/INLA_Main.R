@@ -97,13 +97,16 @@ cat("🔧 INLA configured for HPC environment\n")
 cat("WDP BYM INLA Production Analysis System\n")
 cat("======================================\n")
 
-# Load utility functions
 source("INLA_Utils/INLA_Utils_Data.R")
 source("INLA_Utils/INLA_Utils_Model.R")
 source("INLA_Utils/INLA_Utils_Results.R")
 source("INLA_Utils/INLA_Utils_Dashboard.R")
 source("INLA_Utils/INLA_Utils_Validation.R")
 source("INLA_Utils/INLA_Utils_Logger.R")
+
+# 全局debug开关
+debug <- TRUE
+if (exists("config")) config$logging$level <- "DEBUG"
 
 #' Parse command line arguments
 #' @return List of parsed arguments
@@ -286,6 +289,8 @@ process_single_combination <- function(data_list, analysis_info, config) {
     # Prepare model data
     model_data <- prepare_model_data(
       data_list, pesticide_col, analysis_info$lag_years, config)
+    # 保存模型数据以便debug
+    saveRDS(model_data, file = file.path(config$result_directories$filter, "debug_model_data.rds"))
 
     # Check minimum sample size
     if (nrow(model_data) < config$data_processing$min_thresholds$records_per_analysis) {
