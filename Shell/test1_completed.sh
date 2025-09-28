@@ -7,16 +7,31 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu=3G
 #SBATCH --time=12:00:00
-#SBATCH --output=logs/WONDER_OneChem_%j.out
-#SBATCH --error=logs/WONDER_OneChem_%j.err
+#SBATCH --output=%x-%j.out
+#SBATCH --error=%x-%j.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
-# 切到项目根目录
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$PROJECT_ROOT"
+# 切到项目根目录（以脚本所在目录的上一级为准；支持 PROJECT_ROOT 覆盖）
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-"$(cd "${SCRIPT_DIR}/.." && pwd)"}"
+cd "$PROJECT_ROOT" || { log ERROR "无法切换到项目根目录: $PROJECT_ROOT"; exit 1; }
 log INFO "项目根目录: $PROJECT_ROOT"
+
+# 将 Slurm 的默认 .out/.err 在作业结束时移动到项目根目录
+move_logs_to_root() {
+  if [ -n "${SLURM_JOB_ID-}" ] && [ -n "${SLURM_JOB_NAME-}" ]; then
+    local submit_dir="${SLURM_SUBMIT_DIR:-$PWD}"
+    local out_src="${submit_dir}/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.out"
+    local err_src="${submit_dir}/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.err"
+    local out_dst="${PROJECT_ROOT}/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.out"
+    local err_dst="${PROJECT_ROOT}/${SLURM_JOB_NAME}-${SLURM_JOB_ID}.err"
+    [ -f "$out_src" ] && mv -f "$out_src" "$out_dst" || true
+    [ -f "$err_src" ] && mv -f "$err_src" "$err_dst" || true
+  fi
+}
+trap move_logs_to_root EXIT
 
 # 激活conda（稳健处理：避免hook未绑定变量；已在pymc则跳过）
 set +u || true
@@ -34,7 +49,7 @@ if [ "${CONDA_DEFAULT_ENV-}" != "pymc" ]; then
 fi
 log INFO "Conda Python: $(which python)"
 
-mkdir -p logs
+
 
 DISEASE=${DISEASE:-"C81-C96"}
 COMPOUND=${COMPOUND:-"2"}
