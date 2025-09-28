@@ -29,14 +29,14 @@ log() {
 DISEASE_CODE=${DISEASE_CODE:-"C81-C96"}
 # 使用ID指定具体化合物 (如 "2"), 使用 "cat" 前缀指定类别 (如 "cat21")
 COMPOUND=${COMPOUND:-"2,9,cat21,cat33"} 
-MODEL_TYPE=${MODEL_TYPE:-"M0,M3"}
+MODEL_TYPE=${MODEL_TYPE:-"M0,M1,M2,M3,M5_SVI,M6_ENV1"}
 LAG_YEARS=${LAG_YEARS:-"5,10"}
 MEASURE_TYPE=${MEASURE_TYPE:-"Weight"}
 # <--- 新增：控制使用 min, avg, 还是 max 估算值 --->
 ESTIMATE_TYPE=${ESTIMATE_TYPE:-"avg,max"} # 支持逗号分隔
 
 # 生产级采样设置
-SAMPLING_MODE="production"
+SAMPLING_MODE=${SAMPLING_MODE:-"production"}
 DRAWS=${DRAWS:-"4000"}
 TUNE=${TUNE:-"2000"}
 TARGET_ACCEPT=${TARGET_ACCEPT:-"0.95"}
@@ -58,6 +58,7 @@ while [[ $# -gt 0 ]]; do
     --target-accept) TARGET_ACCEPT="$1"; shift ;;
     --chains) CHAINS="$1"; shift ;;
     --cores) CORES="$1"; shift ;;
+  --sampling-mode) SAMPLING_MODE="$1"; shift ;;
     *) log "WARN" "未知参数: $key" ;;
   esac
 done
@@ -82,13 +83,24 @@ conda activate pymc || { log "ERROR" "激活 'pymc' 环境失败。"; exit 1; }
 log "INFO" "Conda 环境激活成功. Python路径: $(which python)"
 
 # --- 2. 路径设置 ---
-# 假设此脚本位于 WDP/Code/PYMC/ 目录下
-PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# 解析项目根目录：兼容脚本位于仓库根或 Code/PYMC 目录两种情况
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "${SCRIPT_DIR}/config.yaml" ]; then
+  PROJECT_ROOT="${SCRIPT_DIR}"
+elif [ -f "${SCRIPT_DIR}/../config.yaml" ]; then
+  PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+elif [ -f "${SCRIPT_DIR}/../../config.yaml" ]; then
+  PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+else
+  PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${SCRIPT_DIR}")"
+fi
 PYMC_DIR="${PROJECT_ROOT}/Code/PYMC"
 CONFIG_PATH="${PROJECT_ROOT}/config.yaml"
 
 cd "${PROJECT_ROOT}"
 log "INFO" "项目根目录: ${PROJECT_ROOT}"
+log "INFO" "配置文件:   ${CONFIG_PATH}"
+log "INFO" "PyMC目录:   ${PYMC_DIR}"
 
 # --- 3. 打印分析摘要 ---
 log "INFO" "========== 分析参数摘要 =========="

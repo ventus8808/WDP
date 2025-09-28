@@ -12,6 +12,7 @@ import pytensor.tensor as pt
 import arviz as az
 from scipy import sparse
 from typing import Dict, Optional, Tuple
+import os
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -268,15 +269,30 @@ class BYM2ModelFitter:
         """
         print(f"开始MCMC采样...")
         print(f"采样配置: {self.sampling_config}")
+        # 根据运行环境自动选择初始化策略与并行度
+        try:
+            cpu_env = int(os.environ.get('SLURM_CPUS_PER_TASK') or 0)
+        except Exception:
+            cpu_env = 0
+        cpu_count = cpu_env if cpu_env > 0 else (os.cpu_count() or 1)
+        # 初始化策略：CPU较多时使用 jitter+adapt_diag，提高初始点探索；CPU较少时使用 adapt_diag 更稳健
+        init_strategy = 'jitter+adapt_diag' if cpu_count >= 8 else 'adapt_diag'
+        # 限制并行度不过度超配
+        req_chains = int(self.sampling_config.get('chains', 2))
+        req_cores = int(self.sampling_config.get('cores', 2))
+        sample_chains = max(1, min(req_chains, cpu_count))
+        sample_cores = max(1, min(req_cores, cpu_count))
+        print(f"检测到CPU: {cpu_count}，使用初始化: {init_strategy}，chains={sample_chains}，cores={sample_cores}")
         
         with model:
             # 运行MCMC采样
             trace = pm.sample(
                 draws=self.sampling_config['draws'],
                 tune=self.sampling_config['tune'],
-                chains=self.sampling_config['chains'],
-                cores=self.sampling_config['cores'],
+                chains=sample_chains,
+                cores=sample_cores,
                 target_accept=self.sampling_config['target_accept'],
+                init=init_strategy,
                 return_inferencedata=True
             )
             
