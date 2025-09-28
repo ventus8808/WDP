@@ -10,7 +10,7 @@
 #SBATCH --output=logs/WONDER_Smoke-%j.out
 #SBATCH --error=logs/WONDER_Smoke-%j.err
 
-set -euo pipefail
+set -eo pipefail
 
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
@@ -19,15 +19,21 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
 log INFO "项目根目录: $PROJECT_ROOT"
 
-# 激活conda
-if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
-  source "$HOME/miniconda3/etc/profile.d/conda.sh"
-elif [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]; then
-  source "/opt/anaconda3/etc/profile.d/conda.sh"
-else
-  log ERROR "找不到conda初始化脚本"; exit 1
+# 激活conda（稳健处理：避免hook未绑定变量；已在pymc则跳过）
+set +u || true
+export ADDR2LINE="${ADDR2LINE-}"
+export CONDA_BACKUP_CXX="${CONDA_BACKUP_CXX-}"
+if [ "${CONDA_DEFAULT_ENV-}" != "pymc" ]; then
+  if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+    source "$HOME/miniconda3/etc/profile.d/conda.sh"
+  elif [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]; then
+    source "/opt/anaconda3/etc/profile.d/conda.sh"
+  else
+    log ERROR "找不到conda初始化脚本"; exit 1
+  fi
+  conda activate pymc || { log ERROR "激活pymc失败"; exit 1; }
 fi
-conda activate pymc || { log ERROR "激活pymc失败"; exit 1; }
+log INFO "Conda Python: $(which python)"
 
 mkdir -p logs
 
