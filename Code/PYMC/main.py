@@ -433,7 +433,7 @@ def main():
         
         # 解析参数
         compounds = parse_compound_list(args.compound)
-        model_types = parse_model_list(args.model)
+        model_types = parse_model_list(args.model, config_path)
         lag_years_list = parse_lag_years(args.lag)
         measure_types = [m.strip() for m in args.measure.split(',')]
         

@@ -177,33 +177,30 @@ def parse_compound_list(compound_input: str) -> List[str]:
     return list(set(processed_compounds))  # 去重
 
 
-def parse_model_list(model_input: str) -> List[str]:
+def parse_model_list(model_input: str, config_path: Optional[Union[str, Path]] = None) -> List[str]:
     """
-    解析模型类型输入参数
-    
-    Parameters
-    ----------
-    model_input : str
-        模型输入字符串
-        
-    Returns
-    -------
-    List[str]
-        模型类型列表
+    解析模型类型输入参数（根据config.yaml动态校验）。
     """
-    models = [m.strip().upper() for m in model_input.split(',')]
-    
-    # 验证模型类型
-    valid_models = ['M0', 'M1', 'M2', 'M3']
-    validated_models = []
-    
-    for model in models:
-        if model in valid_models:
-            validated_models.append(model)
+    models = [m.strip() for m in model_input.split(',') if m.strip()]
+    # 动态读取有效模型集合（大小写不敏感比较，输出保留原大小写）
+    try:
+        pymc_cfg = get_pymc_config(config_path)
+        valid_keys = set(map(str, pymc_cfg.get('models', {}).keys()))
+    except Exception:
+        valid_keys = set(['M0', 'M1', 'M2', 'M3'])
+
+    validated = []
+    for m in models:
+        m_upper = m.upper()
+        # 接受与配置键同名（区分大小写），或大小写无关匹配
+        if m in valid_keys:
+            validated.append(m)
+        elif m_upper in valid_keys:
+            validated.append(m_upper)
         else:
-            print(f"⚠️  忽略无效的模型类型: {model}")
-    
-    return validated_models if validated_models else ['M0']
+            print(f"⚠️  忽略无效的模型类型: {m}")
+
+    return validated if validated else ['M0']
 
 
 def parse_lag_years(lag_input: Union[str, int, List]) -> List[int]:

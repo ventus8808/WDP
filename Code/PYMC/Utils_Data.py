@@ -444,41 +444,14 @@ class WDPDataLoader:
     
     def get_model_covariates(self, model_type: str) -> List[str]:
         """
-        获取指定模型的协变量列表
-        
-        Parameters
-        ----------
-        model_type : str
-            模型类型 (M0, M1, M2, M3)
-            
-        Returns
-        -------
-        List[str]
-            协变量列名列表
+        获取指定模型的协变量"显示名称"列表（保持与config一致，包含交互表达式）。
         """
         models = self.pymc_config.get('models', {})
-        
         if model_type not in models:
             raise ValueError(f"未知的模型类型: {model_type}")
-        
         model_config = models[model_type]
         covariates = model_config.get('covariates', [])
-        
-        # 根据PCA诊断结果映射协变量名称
-        covariate_mapping = {
-            'SVI_std': 'SVI_PC1',
-            'Climate1_std': 'ENV_PC1', 
-            'Climate2_std': 'ENV_PC2'
-        }
-        
-        actual_covariates = []
-        for covar in covariates:
-            if covar in covariate_mapping:
-                actual_covariates.append(covariate_mapping[covar])
-            else:
-                actual_covariates.append(covar)
-        
-        return actual_covariates
+        return list(covariates)
     
     def prepare_model_data(self, disease_code: str, compound: str, 
                           model_type: str = 'M0', lag_years: int = 5,
@@ -538,7 +511,7 @@ class WDPDataLoader:
         # 合并滞后暴露数据（inner）
         prev_rows = len(merged_df)
         merged_df = pd.merge(merged_df, lagged_exposure_df,
-                           on=['COUNTY_FIPS', 'Year'], how='inner')
+                             on=['COUNTY_FIPS', 'Year'], how='inner')
         print(f"合并暴露后: {prev_rows} -> {len(merged_df)} 行 (排除 {prev_rows - len(merged_df)} 行)")
         
         # 6. 过滤有效数据
@@ -547,9 +520,46 @@ class WDPDataLoader:
         merged_df = merged_df[merged_df['COUNTY_FIPS'].isin(valid_counties)]
         
         # 移除缺失暴露数据的记录
-        exposure_col = f'{compound}_lag{lag_years}'
+        # 注意：calculate_lagged_exposure 生成的列名包含估计类型 (min/avg/max)
+        exposure_col = f"{compound}_{estimate_type_found}_lag{lag_years}"
         merged_df = merged_df.dropna(subset=[exposure_col])
+
+        # 移除人口为缺失或非正数的记录（偏移项需要正人口）
+        merged_df = merged_df.copy()
+        merged_df['Population'] = pd.to_numeric(merged_df['Population'], errors='coerce')
+        before_pop = len(merged_df)
+        merged_df = merged_df[merged_df['Population'] > 0]
+        after_pop = len(merged_df)
+        if after_pop < before_pop:
+            print(f"过滤人口<=0或缺失: {before_pop} -> {after_pop} 行 (排除 {before_pop - after_pop} 行)")
         
+        # 根据模型需要的协变量，移除NaN行
+        model_covariates_display_early = self.get_model_covariates(model_type)
+        covariate_mapping_early = {
+            'SVI_std': 'SVI_PC1',
+            'Climate1_std': 'ENV_PC1',
+            'Climate2_std': 'ENV_PC2',
+            'Climate3_std': 'ENV_PC3'
+        }
+        required_cov_cols = []
+        for covar_disp in model_covariates_display_early:
+            name = str(covar_disp).strip()
+            if ' * ' in name and name.endswith('exposure'):
+                base_name = name.split('*')[0].strip()
+                actual_col = covariate_mapping_early.get(base_name, base_name)
+                if actual_col in merged_df.columns:
+                    required_cov_cols.append(actual_col)
+            else:
+                actual_col = covariate_mapping_early.get(name, name)
+                if actual_col in merged_df.columns:
+                    required_cov_cols.append(actual_col)
+        if required_cov_cols:
+            before_cov = len(merged_df)
+            merged_df = merged_df.dropna(subset=required_cov_cols)
+            after_cov = len(merged_df)
+            if after_cov < before_cov:
+                print(f"过滤协变量缺失: {before_cov} -> {after_cov} 行 (排除 {before_cov - after_cov} 行)")
+
         if len(merged_df) == 0:
             raise ValueError(f"合并后无有效数据记录")
         
@@ -565,27 +575,19 @@ class WDPDataLoader:
         merged_df['is_censored'] = merged_df['Deaths_Type'] == 'censored'
         observed_mask = ~merged_df['is_censored']
         censored_mask = merged_df['is_censored']
-        
+
         obs_data = merged_df[observed_mask].copy()
         cens_data = merged_df[censored_mask].copy()
-        
-        # 9. 准备协变量矩阵
-        model_covariates = self.get_model_covariates(model_type)
-        
-        if model_covariates:
-            missing_covars = [col for col in model_covariates if col not in merged_df.columns]
-            if missing_covars:
-                print(f"⚠️  警告: 缺少协变量列 {missing_covars}，将被忽略")
-                model_covariates = [col for col in model_covariates if col in merged_df.columns]
-            
-            if model_covariates:
-                X = merged_df[model_covariates].values
-            else:
-                X = np.empty((len(merged_df), 0))
-        else:
-            X = np.empty((len(merged_df), 0))
-        
-        # 10. 对数变换和标准化暴露
+
+        # 确保计数为整数类型（Poisson支持集为非负整数）
+        if 'Deaths_Observed' in obs_data.columns:
+            obs_data['Deaths_Observed'] = pd.to_numeric(obs_data['Deaths_Observed'], errors='coerce').fillna(0).round().astype('int64')
+        if 'Deaths_Censored_Lower' in cens_data.columns:
+            cens_data['Deaths_Censored_Lower'] = pd.to_numeric(cens_data['Deaths_Censored_Lower'], errors='coerce').fillna(1).round().astype('int64')
+        if 'Deaths_Censored_Upper' in cens_data.columns:
+            cens_data['Deaths_Censored_Upper'] = pd.to_numeric(cens_data['Deaths_Censored_Upper'], errors='coerce').fillna(9).round().astype('int64')
+
+        # 9. 对数变换和标准化暴露（先于构建设计矩阵，以便交互项使用）
         exposure_values = merged_df[exposure_col].values
         
         # 更合理的零值处理
@@ -600,6 +602,44 @@ class WDPDataLoader:
         log_exposure_mean = float(np.mean(log_exposure))
         log_exposure_std = float(np.std(log_exposure)) if np.std(log_exposure) > 0 else 1.0
         log_exposure_stdized = (log_exposure - log_exposure_mean) / log_exposure_std
+
+        # 10. 准备协变量矩阵（支持交互项）
+        model_covariates_display = self.get_model_covariates(model_type)
+        covariate_mapping = {
+            'SVI_std': 'SVI_PC1',
+            'Climate1_std': 'ENV_PC1', 
+            'Climate2_std': 'ENV_PC2',
+            'Climate3_std': 'ENV_PC3'
+        }
+        X_cols = []
+        kept_display_names = []
+
+        for covar_disp in model_covariates_display:
+            name = str(covar_disp).strip()
+            if ' * ' in name and name.endswith('exposure'):
+                # 交互项: <base> * exposure
+                base_name = name.split('*')[0].strip()
+                actual_col = covariate_mapping.get(base_name, base_name)
+                if actual_col not in merged_df.columns:
+                    print(f"⚠️  交互项基础列缺失，跳过: {base_name} -> {actual_col}")
+                    continue
+                base_vec = merged_df[actual_col].values.astype(float)
+                inter_vec = base_vec * log_exposure_stdized  # 使用标准化后的暴露
+                X_cols.append(inter_vec.reshape(-1, 1))
+                kept_display_names.append(name)
+            else:
+                # 主效应
+                actual_col = covariate_mapping.get(name, name)
+                if actual_col not in merged_df.columns:
+                    print(f"⚠️  主效应列缺失，跳过: {name} -> {actual_col}")
+                    continue
+                X_cols.append(merged_df[actual_col].values.astype(float).reshape(-1, 1))
+                kept_display_names.append(name)
+
+        if len(X_cols) > 0:
+            X = np.hstack(X_cols)
+        else:
+            X = np.empty((len(merged_df), 0))
         
         # 读取农药类别映射 & 显示名（优先使用mapping）
         category = 'Unknown'
@@ -662,7 +702,7 @@ class WDPDataLoader:
             
             # 协变量
             'X': X,
-            'covariate_names': model_covariates,
+            'covariate_names': kept_display_names,
             'n_covariates': X.shape[1],
             
             # 数据计数

@@ -72,7 +72,7 @@ class BYM2ModelFitter:
         county_cens = model_data['county_cens']
         time_cens = model_data['time_cens']
         
-        # 协变量数据
+        # 协变量数据（与 full_data 行顺序对齐的设计矩阵）
         X = model_data['X']
         
         print(f"构建BYM2模型 - {model_data['model_type']}")
@@ -95,8 +95,8 @@ class BYM2ModelFitter:
         print(f"n_obs: {model_data['n_obs']}")
         print(f"n_cens: {model_data['n_cens']}")
         
-    # 使用偏移项方案后，不需要对 n_obs / n_cens 做归一化；保留原始规模
-    # （之前的归一化会与使用原始人口规模的似然定义不一致，导致数值问题）
+        # 使用偏移项方案后，不需要对 n_obs / n_cens 做归一化；保留原始规模
+        # （之前的归一化会与使用原始人口规模的似然定义不一致，导致数值问题）
         
         with pm.Model() as model:
             
@@ -124,7 +124,7 @@ class BYM2ModelFitter:
             adj_no_diag.setdiag(0)
             adj_no_diag.eliminate_zeros()
             # 使用PyMC的标准ICAR实现，默认alpha=1.0通常更稳定
-            u_spatial_raw = pm.CAR('u_spatial_raw', mu=pt.zeros(n_counties), W=adj_no_diag, tau=1.0, shape=n_counties) # 使用默认 alpha=1.0
+            u_spatial_raw = pm.CAR('u_spatial_raw', mu=pt.zeros(n_counties), W=adj_no_diag, tau=1.0, alpha=0.999, shape=n_counties)  # alpha 需在(-1,1)
             u_spatial = u_spatial_raw - pt.mean(u_spatial_raw) # 中心化约束仍然是好的实践
 
             # 非结构化空间效应（标准正态），并中心化
@@ -162,19 +162,38 @@ class BYM2ModelFitter:
             idx_all = model_data['full_data']['county_idx'].values
             idx_year_all = model_data['full_data']['time_idx'].values
             exposure = model_data.get('exposure_log_stdized', model_data['exposure_log'])
-            population_full = model_data['full_data']['Population'].values
+            # 转换为NumPy浮点数组并做清洗，避免 NaN/Inf 传播到似然
+            population_full = model_data['full_data']['Population'].to_numpy(dtype='float64')
+            # 将缺失/无穷替换为合理的最小值，并裁剪到安全范围内
+            population_full = np.nan_to_num(population_full, nan=1.0, posinf=1e12, neginf=1.0)
+            population_full = np.clip(population_full, 1.0, 1e12)
 
             # --- 使用对数偏移项的稳定实现 ---
             # 对数偏移：log(population)，并对0做保护
-            log_offset = pt.log(pt.maximum(population_full, 1.0))
+            log_offset = pt.log(population_full)
 
-            # 基础log-rate（不含offset）
-            log_rate_base = (
-                intercept +
-                beta_exposure * exposure +
-                phi_spatial[idx_all] +
-                phi_temporal[idx_year_all]
-            )
+            # 基础 log-rate（不含 offset）
+            exposure_tensor = pt.as_tensor_variable(exposure)
+            log_rate_base = intercept + beta_exposure * exposure_tensor
+
+            # 协变量效应（若存在）：X · beta_covariates
+            if n_covariates > 0:
+                # 形状与对齐检查
+                assert hasattr(X, 'shape'), "X 必须是NumPy数组或可转换为张量的矩阵"
+                assert X.ndim == 2, f"X 应为二维矩阵，当前维度: {X.ndim}"
+                assert X.shape[1] == n_covariates, (
+                    f"X列数({X.shape[1]})应与协变量数({n_covariates})一致"
+                )
+                assert X.shape[0] == len(idx_all), (
+                    f"X行数({X.shape[0]})应与full_data长度({len(idx_all)})一致"
+                )
+                # 确保 X 的行数与 full_data 对齐
+                # 这里假设 prepare_model_data 已构造与 full_data 同长度的 X
+                X_tensor = pt.as_tensor_variable(X)
+                log_rate_base = log_rate_base + pt.dot(X_tensor, beta_covariates)
+
+            # 加入时空随机效应
+            log_rate_base = log_rate_base + phi_spatial[idx_all] + phi_temporal[idx_year_all]
 
             # 完整的 log(lambda) = log_offset + log_rate_base
             log_lambda_full = log_offset + log_rate_base
@@ -196,8 +215,9 @@ class BYM2ModelFitter:
             
             # 观测数据似然（使用长度判断，避免布尔歧义）
             if len(y_obs) > 0:
+                y_obs_tensor = pt.as_tensor_variable(y_obs)
                 pm.Potential('y_obs_likelihood', 
-                    pt.sum(pm.logp(pm.Poisson.dist(mu=lambda_obs), y_obs))
+                    pt.sum(pm.logp(pm.Poisson.dist(mu=lambda_obs), y_obs_tensor))
                 )
 
             # 审查数据似然：使用对区间内精确质量的 logsumexp 聚合，避免 CDF 差导致的灾难性抵消
@@ -284,9 +304,13 @@ class BYM2ModelFitter:
         """
         print("\n=== 收敛诊断 ===")
         
-        # R-hat统计量（兼容xarray Dataset/DataArray）
+        # 仅对核心参数计算 R-hat，避免在大型潜变量上造成内存压力
         try:
-            rhat_ds = az.rhat(trace)
+            core_vars = [
+                'intercept', 'beta_exposure', 'beta_covariates',
+                'sigma_spatial', 'rho', 'sigma_temporal'
+            ]
+            rhat_ds = az.rhat(trace, var_names=[v for v in core_vars if v in trace.posterior])
             # 将所有变量堆叠为单向量后取最大值
             if hasattr(rhat_ds, 'to_array'):
                 max_rhat_val = rhat_ds.to_array().max().values
@@ -305,8 +329,12 @@ class BYM2ModelFitter:
         
         # 有效样本量（bulk/tail），对Dataset取最小值
         try:
-            ess_bulk_ds = az.ess(trace, method="bulk")
-            ess_tail_ds = az.ess(trace, method="tail")
+            core_vars = [
+                'intercept', 'beta_exposure', 'beta_covariates',
+                'sigma_spatial', 'rho', 'sigma_temporal'
+            ]
+            ess_bulk_ds = az.ess(trace, method="bulk", var_names=[v for v in core_vars if v in trace.posterior])
+            ess_tail_ds = az.ess(trace, method="tail", var_names=[v for v in core_vars if v in trace.posterior])
             if hasattr(ess_bulk_ds, 'to_array'):
                 min_ess_bulk_val = ess_bulk_ds.to_array().min().values
             else:

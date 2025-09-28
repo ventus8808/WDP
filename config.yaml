@@ -120,7 +120,7 @@ data_sources:
 pymc_analysis:
   # 核心数据文件路径
   data_files:
-    pca_covariates: "Data/Processed/PCA/Master_Covariates.csv"
+    pca_covariates: "Data/Processed/PCA/PCA_Master_Covariables.csv"
     cdc_data_template: "Data/Processed/CDC/AAMR_{disease_code}.csv"
     pesticide_data: "Data/Processed/Pesticide/PNSP.csv"
     pesticide_density_data: "Data/Processed/Pesticide/PNSP_Density.csv"
@@ -146,11 +146,19 @@ pymc_analysis:
     M2:
       name: "environmental"
       description: "Base + environmental factors"
-      covariates: ["Climate1_std", "Climate2_std"]
+      covariates: ["Climate1_std", "Climate2_std", "Climate3_std"]
     M3:
       name: "full"
       description: "Base + all covariates"
-      covariates: ["SVI_std", "Climate1_std", "Climate2_std"]
+      covariates: ["SVI_std", "Climate1_std", "Climate2_std", "Climate3_std"]
+    M5_SVI:
+      name: "svi_interaction"
+      description: "Full main effects + SVI * exposure interaction"
+      covariates: ["SVI_std", "Climate1_std", "Climate2_std", "Climate3_std", "SVI_std * exposure"]
+    M6_ENV1:
+      name: "env1_interaction"
+      description: "Full main effects + Climate1 * exposure interaction"
+      covariates: ["SVI_std", "Climate1_std", "Climate2_std", "Climate3_std", "Climate1_std * exposure"]
 
   # 分析参数
   analysis:

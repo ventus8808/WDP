@@ -83,7 +83,7 @@ class BYM2ResultExtractor:
         }
 
     def create_result_row(self, trace: az.InferenceData, model: object, model_data: Dict) -> Dict:
-        """创建结果表的一行数据, 包含格式化和诊断。"""
+        """创建结果表的一行数据, 包含格式化和诊断。 (v2.0, 支持协变量和交互项)"""
         effects = self.extract_exposure_effects(trace, model_data)
 
         def format_rr(samples: np.ndarray) -> str:
@@ -91,21 +91,29 @@ class BYM2ResultExtractor:
             ci_l, ci_u = np.percentile(samples, [2.5, 97.5])
             return f"{mean:.3f} ({ci_l:.3f}, {ci_u:.3f})"
 
-        # Diagnostics for beta_exposure
+        def format_coef(summary_row: pd.Series) -> str:
+            # 兼容不同版本的HDI列名
+            mean = float(summary_row.get('mean', np.nan))
+            hdi_l = float(summary_row.get('hdi_3%', summary_row.get('hdi_2.5%', np.nan)))
+            hdi_u = float(summary_row.get('hdi_97%', summary_row.get('hdi_97.5%', np.nan)))
+            return f"{mean:.3f} ({hdi_l:.3f}, {hdi_u:.3f})"
+
+        # 诊断 (主暴露变量)
         try:
-            summary = az.summary(trace, var_names=['beta_exposure'])
-            r_hat = float(summary.loc['beta_exposure', 'r_hat'])
-            ess_bulk = float(summary.loc['beta_exposure', 'ess_bulk'])
+            summary_exposure = az.summary(trace, var_names=['beta_exposure'])
+            r_hat = float(summary_exposure.loc['beta_exposure', 'r_hat'])
+            ess_bulk = float(summary_exposure.loc['beta_exposure', 'ess_bulk'])
         except Exception:
             r_hat, ess_bulk = np.nan, np.nan
 
-        # Fit metric
+        # 拟合指标
         try:
             waic = az.waic(trace, scale="deviance")
             waic_val = float(waic.waic)
         except Exception:
             waic_val = np.nan
 
+        # 基础结果行
         result_row = {
             'Timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'Disease': model_data['disease_code'],
@@ -132,49 +140,96 @@ class BYM2ResultExtractor:
             'N_Records': model_data['n_total_points'],
             'Status_Message': 'SUCCESS'
         }
+
+        # --- 新增核心逻辑：提取协变量和交互项的效应 ---
+        covariate_names = model_data.get('covariate_names', [])
+        if covariate_names:
+            try:
+                summary_cov = az.summary(trace, var_names=['beta_covariates'])
+            except Exception:
+                summary_cov = None
+            for i, name in enumerate(covariate_names):
+                # 交互项名称规范化: "A * B" -> "A_B"
+                norm_name = name.replace(' * ', '_').replace('*', '_')
+                if summary_cov is not None and f'beta_covariates[{i}]' in summary_cov.index:
+                    summary_row = summary_cov.loc[f'beta_covariates[{i}]']
+                else:
+                    summary_row = pd.Series({'mean': np.nan, 'hdi_3%': np.nan, 'hdi_97%': np.nan})
+
+                if "*" in name:
+                    # 对于交互项，直接报告原始系数
+                    col_name = f"Coef_{norm_name}"
+                    result_row[col_name] = format_coef(summary_row)
+                else:
+                    # 对于主效应协变量，报告 RR per SD = exp(beta)
+                    col_name = f"RR_per_SD_{name}"
+                    try:
+                        beta_samples = trace.posterior['beta_covariates'].sel(beta_covariates_dim_0=i).values.flatten()
+                    except Exception:
+                        # 兼容不同维度名称
+                        beta_arr = trace.posterior['beta_covariates'].values
+                        beta_samples = beta_arr[..., i].reshape(-1)
+                    rr_samples = np.exp(beta_samples)
+                    result_row[col_name] = format_rr(rr_samples)
+
         return result_row
 
     def save_results(self, result_rows: list, disease_code: str, compound: str) -> Path:
-        """将结果保存到CSV文件，使用最终定义的列顺序。"""
+        """将结果保存到CSV文件，使用动态扩展的列顺序。"""
         filename = f"{disease_code}_{compound}_Results.csv"
         output_file = self.output_dir / filename
         results_df = pd.DataFrame(result_rows)
 
-        column_order = [
+        # --- 修改列顺序逻辑 ---
+        # 核心固定列
+        core_columns = [
             'Timestamp', 'Disease', 'Exposure', 'Lag', 'Model',
             'RR_per_SD', 'RR_per_IQR',
             'RR_Q1_vs_Q1', 'RR_Q2_vs_Q1', 'RR_Q3_vs_Q1', 'RR_Q4_vs_Q1',
-            'P_Value', 'R_hat', 'ESS_bulk', 'WAIC',
-            'N_Counties', 'N_Records', 'Status_Message',
-            'Category', 'Measure', 'Estimate'
+            'P_Value'
+        ]
+        
+        # 动态生成的效应列 (协变量和交互项)
+        effect_columns = sorted([col for col in results_df.columns if col.startswith(('RR_per_SD_', 'Coef_'))])
+
+        # 诊断和元数据列
+        diag_columns = [
+            'R_hat', 'ESS_bulk', 'WAIC', 'N_Counties', 'N_Records', 
+            'Status_Message', 'Category', 'Measure', 'Estimate'
         ]
 
-        for col in column_order:
+        # 组合成最终顺序
+        final_column_order = core_columns + effect_columns + diag_columns
+        
+        # 确保所有预期的列都存在，不存在的用NA填充
+        for col in final_column_order:
             if col not in results_df.columns:
                 results_df[col] = 'NA'
-        results_df = results_df[column_order]
+        
+        # 过滤掉不在最终顺序里的列，并按最终顺序排序
+        results_df = results_df[[col for col in final_column_order if col in results_df.columns]]
 
         if output_file.exists():
             try:
                 existing_df = pd.read_csv(output_file)
                 
-                # --- START: 新增的去重逻辑 ---
+                # --- START: 去重逻辑 (保持不变) ---
                 unique_keys = ['Disease', 'Exposure', 'Lag', 'Model', 'Measure', 'Estimate']
                 # 确保新旧DF都有这些键
                 results_df_keys = results_df[unique_keys].apply(tuple, axis=1)
                 existing_keys = set(existing_df[unique_keys].apply(tuple, axis=1))
                 
-                # 只保留那些不在现有文件中的新行
                 new_rows_mask = ~results_df_keys.isin(existing_keys)
                 results_df_to_append = results_df[new_rows_mask]
                 
                 if results_df_to_append.empty:
                     print(f"结果已存在，无需追加: {output_file}")
                     return output_file
-                # --- END: 新增的去重逻辑 ---
+                # --- END: 去重逻辑 ---
 
                 combined_df = pd.concat([existing_df, results_df_to_append], ignore_index=True)
-            except Exception:
+            except Exception as e:
+                print(f"⚠️  追加结果失败，将覆盖文件。错误: {e}")
                 combined_df = results_df
             combined_df.to_csv(output_file, index=False)
             print(f"结果已追加到: {output_file}")
