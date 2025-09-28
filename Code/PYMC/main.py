@@ -116,7 +116,8 @@ class WDPPyMCAnalysis:
     
     def run_single_analysis(self, disease_code: str, compound: str, 
                           model_type: str, lag_years: int,
-                          measure_type: str = 'Weight') -> Optional[Path]:
+                          measure_type: str = 'Weight',
+                          estimate_type: str = 'avg') -> Optional[Path]: # <--- 修改
         """
         运行单个分析
         
@@ -162,7 +163,8 @@ class WDPPyMCAnalysis:
                 compound=compound,
                 model_type=model_type,
                 lag_years=lag_years,
-                measure_type=measure_type
+                measure_type=measure_type,
+                estimate_type=estimate_type  # <--- 修改
             )
             
             # 3. 拟合模型
@@ -189,7 +191,8 @@ class WDPPyMCAnalysis:
     def run_batch_analysis(self, disease_codes: List[str], 
                           compounds: List[str], model_types: List[str],
                           lag_years_list: List[int],
-                          measure_types: List[str] = ['Weight']) -> Dict:
+                          measure_types: List[str] = ['Weight'],
+                          estimate_types: List[str] = ['avg']) -> Dict: # <--- 修改
         """
         运行批量分析
         
@@ -219,11 +222,12 @@ class WDPPyMCAnalysis:
         print(f"模型: {', '.join(model_types)}")
         print(f"滞后: {', '.join(map(str, lag_years_list))}")
         print(f"测量: {', '.join(measure_types)}")
+        print(f"估算: {', '.join(estimate_types)}")
         
         # 计算总分析数
         total_analyses = (len(disease_codes) * len(compounds) * 
                          len(model_types) * len(lag_years_list) * 
-                         len(measure_types))
+                         len(measure_types) * len(estimate_types)) # <--- 修改
         print(f"总分析数: {total_analyses}")
         
         # 结果统计
@@ -244,30 +248,42 @@ class WDPPyMCAnalysis:
             compounds,
             model_types,
             lag_years_list,
-            measure_types
+            measure_types,
+            estimate_types # <--- 修改
         ))
         
-        for i, (disease, compound, model_type, lag_years, measure_type) in enumerate(combinations):
+        for i, (disease, compound, model_type, lag_years, measure_type, estimate_type) in enumerate(combinations): # <--- 修改
             results['total'] += 1
             
-            print(f"\n进度: {i+1}/{len(combinations)}")
+            # --- START: 添加的日志 ---
+            print(f"\n{'='*40}")
+            print(f"===> 开始分析 [{i+1}/{len(combinations)}]: {disease}, {compound}, {model_type}, lag={lag_years}, measure={measure_type}, estimate={estimate_type}")
+            print(f"{'='*40}")
+            # --- END: 添加的日志 ---
             
             output_file = self.run_single_analysis(
                 disease, compound, model_type, 
-                lag_years, measure_type
+                lag_years, measure_type, estimate_type # <--- 修改
             )
             
             if output_file:
+                # --- START: 添加的日志 ---
+                print(f"===> 分析 [{i+1}/{len(combinations)}] 成功完成")
+                # --- END: 添加的日志 ---
                 results['successful'] += 1
                 results['output_files'].append(output_file)
             else:
+                # --- START: 添加的日志 ---
+                print(f"===> 分析 [{i+1}/{len(combinations)}] 失败")
+                # --- END: 添加的日志 ---
                 results['failed'] += 1
                 results['errors'].append({
                     'disease': disease,
                     'compound': compound,
                     'model': model_type,
                     'lag': lag_years,
-                    'measure': measure_type
+                    'measure': measure_type,
+                    'estimate': estimate_type # <--- 新增
                 })
         
         # 打印批量分析摘要
@@ -321,69 +337,73 @@ def create_parser() -> argparse.ArgumentParser:
         """
     )
     
-    # 必需参数
+    # Required arguments
     parser.add_argument('--disease', '--disease-code', 
                        type=str, required=True,
-                       help='疾病编码 (如: C81-C96, C50, C34)')
+                       help='Disease code (e.g., C81-C96, C50, C34)')
     
     parser.add_argument('--compound', '--exposure',
                        type=str, required=True, 
-                       help='化合物名称 (如: 24D, Atrazine, Glyphosate)')
+                       help='Compound name (e.g., 24D, Atrazine, Glyphosate)')
     
-    # 可选参数
+    # Optional arguments
     parser.add_argument('--model', '--model-type',
                        type=str, default='M0',
-                       help='模型类型，逗号分隔 (默认: M0)')
+                       help='Model type, comma-separated (default: M0)')
     
     parser.add_argument('--lag', '--lag-years',
                        type=str, default='5',
-                       help='滞后年份，逗号分隔 (默认: 5)')
+                       help='Lag years, comma-separated (default: 5)')
     
     parser.add_argument('--measure', '--measure-type',
                        type=str, default='Weight',
                        choices=['Weight', 'Density', 'Weight,Density'],
-                       help='测量类型 (默认: Weight)')
+                       help='Measure type (default: Weight)')
+    
+    parser.add_argument('--estimate', '--estimate-types',
+                       type=str, default='avg',
+                       help='Exposure estimate types, comma-separated (e.g., min,avg,max)')
     
     parser.add_argument('--sampling-mode', 
                        type=str, default='test',
                        choices=['test', 'production'],
-                       help='采样模式 (默认: test)')
+                       help='Sampling mode (default: test)')
     
     parser.add_argument('--cores',
                         type=str, default=None,
-                        help='并行核心数，整数或auto (默认: auto=全部可用核心)')
+                        help='Number of cores, integer or auto (default: auto=all available)')
     
     parser.add_argument('--chains',
                         type=str, default=None,
-                        help='采样链数，整数或auto (默认: auto=与cores相同)')
+                        help='Number of chains, integer or auto (default: auto=same as cores)')
     
     parser.add_argument('--draws',
                         type=int, default=None,
-                        help='每条链的保留样本数')
+                        help='Number of draws per chain')
     
     parser.add_argument('--tune',
                         type=int, default=None,
-                        help='每条链的调优步数')
+                        help='Number of tuning steps per chain')
     
     parser.add_argument('--target-accept',
                         type=float, default=None,
-                        help='目标接受率 (例如 0.9)')
+                        help='Target acceptance rate (e.g., 0.9)')
     
     parser.add_argument('--output-dir',
                        type=str, default=None,
-                       help='输出目录 (默认: Result/PyMC_Results)')
+                       help='Output directory (default: Result/PyMC_Results)')
     
     parser.add_argument('--config-path',
                        type=str, default=None,
-                       help='配置文件路径 (默认: 项目根目录/config.yaml)')
+                       help='Config file path (default: project_root/config.yaml)')
     
     parser.add_argument('--verbose', '-v',
                        action='store_true',
-                       help='详细输出')
+                       help='Verbose output')
     
     parser.add_argument('--dry-run',
                        action='store_true',
-                       help='仅检查数据可用性，不运行分析')
+                       help='Check data availability only, do not run analysis')
     
     return parser
 
@@ -417,6 +437,9 @@ def main():
         lag_years_list = parse_lag_years(args.lag)
         measure_types = [m.strip() for m in args.measure.split(',')]
         
+        # <--- 新增：解析 estimate 参数 --->
+        estimate_types = [e.strip().lower() for e in args.estimate.split(',')]
+        
         # 验证模型类型
         for model_type in model_types:
             if not validate_model_type(model_type, config_path):
@@ -432,14 +455,44 @@ def main():
         
         # Dry run 模式
         if args.dry_run:
-            print("\n=== 数据可用性检查 (Dry Run) ===")
-            for disease in disease_codes:
-                for compound in compounds:
-                    report = check_data_availability(disease, compound, config_path)
-                    status = "✅" if report['data_available'] else "❌"
-                    print(f"{status} {disease}-{compound}: {len(report.get('issues', []))} 个问题")
-                    for issue in report.get('issues', []):
-                        print(f"   - {issue}")
+            print("\n=== 数据可用性与暴露列名解析 (Dry Run) ===")
+            loader = WDPDataLoader(
+                config_path=config_path
+            )
+            try:
+                pesticide_df_weight = loader.load_pesticide_data("Weight")
+                pesticide_df_density = loader.load_pesticide_data("Density")
+            except Exception as e:
+                print(f"❌ 无法加载农药数据: {e}")
+                pesticide_df_weight = None
+                pesticide_df_density = None
+            
+            # 使用第一个lag年份进行测试
+            first_lag_year = lag_years_list[0]
+            print(f"使用滞后年份 {first_lag_year} 进行列名解析测试")
+            
+            from itertools import product
+            combinations = list(product(disease_codes, compounds, measure_types, estimate_types))
+
+            for disease, compound, measure, estimate in combinations:
+                print(f"\n--- 检查: Disease={disease}, Compound={compound}, Measure={measure}, Estimate={estimate} ---")
+                report = check_data_availability(disease, compound, config_path)
+                status = "✅" if report.get('data_available', False) else "❌"
+                print(f"  数据可用性: {status}")
+                if report.get('issues'):
+                    for issue in report['issues']:
+                        print(f"    - 问题: {issue}")
+
+                pesticide_df = pesticide_df_weight if measure == 'Weight' else pesticide_df_density
+                if pesticide_df is not None and report.get('pesticide_available', True):
+                    try:
+                        # 使用第一个lag年份进行测试
+                        _lagged_df, found_col, _est_type = loader.calculate_lagged_exposure(
+                            pesticide_df, compound, lag_years=first_lag_year, estimate_type=estimate
+                        )
+                        print(f"  解析结果: 输入 '{compound}' (estimate='{estimate}') 将使用数据列 '{found_col}'")
+                    except ValueError as e:
+                        print(f"  解析结果: ❌ 无法解析 '{compound}' (estimate='{estimate}'): {e}")
             return
         
         # 初始化分析系统
@@ -457,12 +510,12 @@ def main():
         # 运行分析
         if (len(disease_codes) == 1 and len(compounds) == 1 and 
             len(model_types) == 1 and len(lag_years_list) == 1 and 
-            len(measure_types) == 1):
+            len(measure_types) == 1 and len(estimate_types) == 1): # <--- 修改此条件
             
             # 单个分析
             output_file = analysis.run_single_analysis(
                 disease_codes[0], compounds[0], model_types[0],
-                lag_years_list[0], measure_types[0]
+                lag_years_list[0], measure_types[0], estimate_types[0] # <--- 传递新参数
             )
             
             if output_file:
@@ -476,7 +529,7 @@ def main():
             # 批量分析
             results = analysis.run_batch_analysis(
                 disease_codes, compounds, model_types,
-                lag_years_list, measure_types
+                lag_years_list, measure_types, estimate_types # <--- 传递新参数
             )
             
             if results['successful'] > 0:

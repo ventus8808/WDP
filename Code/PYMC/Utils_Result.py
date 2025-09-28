@@ -109,7 +109,7 @@ class BYM2ResultExtractor:
         result_row = {
             'Timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'Disease': model_data['disease_code'],
-            'Exposure': model_data['compound'],
+            'Exposure': model_data.get('compound_display', model_data['compound']),
             'Category': model_data.get('category', 'Unknown'),
             'Measure': model_data['measure_type'],
             'Estimate': model_data.get('estimate_type', 'avg'),
@@ -157,7 +157,23 @@ class BYM2ResultExtractor:
         if output_file.exists():
             try:
                 existing_df = pd.read_csv(output_file)
-                combined_df = pd.concat([existing_df, results_df], ignore_index=True)
+                
+                # --- START: 新增的去重逻辑 ---
+                unique_keys = ['Disease', 'Exposure', 'Lag', 'Model', 'Measure', 'Estimate']
+                # 确保新旧DF都有这些键
+                results_df_keys = results_df[unique_keys].apply(tuple, axis=1)
+                existing_keys = set(existing_df[unique_keys].apply(tuple, axis=1))
+                
+                # 只保留那些不在现有文件中的新行
+                new_rows_mask = ~results_df_keys.isin(existing_keys)
+                results_df_to_append = results_df[new_rows_mask]
+                
+                if results_df_to_append.empty:
+                    print(f"结果已存在，无需追加: {output_file}")
+                    return output_file
+                # --- END: 新增的去重逻辑 ---
+
+                combined_df = pd.concat([existing_df, results_df_to_append], ignore_index=True)
             except Exception:
                 combined_df = results_df
             combined_df.to_csv(output_file, index=False)

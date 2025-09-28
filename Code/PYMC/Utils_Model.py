@@ -123,9 +123,9 @@ class BYM2ModelFitter:
             adj_no_diag = adj_matrix.copy().tocsr()
             adj_no_diag.setdiag(0)
             adj_no_diag.eliminate_zeros()
-            # 对于ICAR模型，我们可以设置alpha接近1但不等于1
-            u_spatial_raw = pm.CAR('u_spatial_raw', mu=pt.zeros(n_counties), W=adj_no_diag, tau=1.0, alpha=0.99, shape=n_counties)
-            u_spatial = u_spatial_raw - pt.mean(u_spatial_raw) # 中心化
+            # 使用PyMC的标准ICAR实现，默认alpha=1.0通常更稳定
+            u_spatial_raw = pm.CAR('u_spatial_raw', mu=pt.zeros(n_counties), W=adj_no_diag, tau=1.0, shape=n_counties) # 使用默认 alpha=1.0
+            u_spatial = u_spatial_raw - pt.mean(u_spatial_raw) # 中心化约束仍然是好的实践
 
             # 非结构化空间效应（标准正态），并中心化
             v_spatial_raw = pm.Normal('v_spatial_raw', mu=0, sigma=1.0, shape=n_counties)

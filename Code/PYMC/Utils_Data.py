@@ -91,7 +91,17 @@ class WDPDataLoader:
             raise FileNotFoundError(f"疾病数据文件不存在: {cdc_file}")
         
         print(f"加载疾病数据: {cdc_file}")
-        df = pd.read_csv(cdc_file)
+        
+        # --- START: 修改建议 ---
+        # 为关键列指定更节省内存的类型
+        dtype_spec = {
+            'COUNTY_FIPS': str, # 始终以字符串形式读取FIPS以保留前导零
+            'Year': 'int16',
+            'Population': 'float64', # 先读为浮点数以处理可能的空值
+            'Deaths_Type': 'category', # 如果类型不多，category很高效
+        }
+        df = pd.read_csv(cdc_file, dtype=dtype_spec)
+        # --- END: 修改建议 ---
         
         # 验证必需的列
         required_cols = ['COUNTY_FIPS', 'Year', 'Deaths_Type', 'Population']
@@ -103,10 +113,11 @@ class WDPDataLoader:
         # 处理审查数据
         df = self._process_censored_data(df)
         
-        # 数据类型转换（安全处理NaN值）
-        df['COUNTY_FIPS'] = pd.to_numeric(df['COUNTY_FIPS'], errors='coerce').astype('int64')
-        df['Year'] = pd.to_numeric(df['Year'], errors='coerce').astype('int32')
-        df['Population'] = pd.to_numeric(df['Population'], errors='coerce').fillna(0).astype('int32')
+        # 将FIPS转换为可空整数
+        df['COUNTY_FIPS'] = pd.to_numeric(df['COUNTY_FIPS'], errors='coerce').astype('Int64')
+        df['Year'] = pd.to_numeric(df['Year'], errors='coerce').astype('int16')
+        # 将Population转换为可空整数
+        df['Population'] = df['Population'].astype('Int32')
         
         print(f"加载了 {len(df)} 条记录，覆盖 {df['COUNTY_FIPS'].nunique()} 个县，{df['Year'].nunique()} 个年份")
         
@@ -273,67 +284,109 @@ class WDPDataLoader:
         df = pd.read_csv(pesticide_file)
         
         return df
+
+    # --- Mapping helpers ---
+    def _load_mapping_df(self) -> Optional[pd.DataFrame]:
+        try:
+            mapping_path = self.get_data_path('pesticide_mapping')
+            if mapping_path.exists():
+                return pd.read_csv(mapping_path)
+        except Exception as e:
+            print(f"⚠️  农药mapping读取失败: {e}")
+        return None
+
+    @staticmethod
+    def _norm_name(s: str) -> str:
+        # 小写 + 去除空格、逗号、连字符和下划线
+        import re
+        return re.sub(r"[\s,_\-]", "", str(s).strip().lower())
+
+    def _resolve_from_mapping(self, compound_input: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+        """根据mapping将输入名字解析为 (compound_id, compound_display, category1_name)"""
+        mapping_df = self._load_mapping_df()
+        if mapping_df is None:
+            return None, None, None
+
+        lower_cols = {c.lower(): c for c in mapping_df.columns}
+        col_cid = lower_cols.get('compound_id')
+        col_cname = lower_cols.get('compound_name')
+        col_cat = lower_cols.get('category1_name') or lower_cols.get('category')
+        if not (col_cid and col_cname):
+            return None, None, None
+
+        # 规范化匹配
+        norm_target = self._norm_name(compound_input)
+        mapping_df['_norm'] = mapping_df[col_cname].astype(str).map(self._norm_name)
+        matched = mapping_df[mapping_df['_norm'] == norm_target]
+        if len(matched) == 0:
+            # 回退：尝试直接按ID匹配
+            if compound_input.isdigit():
+                matched = mapping_df[mapping_df[col_cid].astype(str) == compound_input]
+        if len(matched) == 0:
+            return None, None, None
+
+        cid = str(matched.iloc[0][col_cid])
+        cname = str(matched.iloc[0][col_cname])
+        cat = str(matched.iloc[0][col_cat]) if col_cat in mapping_df.columns else 'Unknown'
+        return cid, cname, cat
     
-    def calculate_lagged_exposure(self, pesticide_df: pd.DataFrame, 
-                                 compound: str, lag_years: int = 5) -> Tuple[pd.DataFrame, str, str]:
+    def calculate_lagged_exposure(self, pesticide_df: pd.DataFrame,
+                                 compound: str, lag_years: int,
+                                 estimate_type: str) -> Tuple[pd.DataFrame, str, str]:
         """
-        计算滞后暴露
+        计算滞后暴露 (v2.2，支持 estimate_type 选择 min/avg/max)。
         
-        Parameters
-        ----------
-        pesticide_df : pd.DataFrame
-            农药使用数据
-        compound : str
-            化合物名称或列名模式
-        lag_years : int
-            滞后年份
-            
-        Returns
-        -------
-        pd.DataFrame
-            包含滞后暴露的数据框
+        接受的 `compound` 格式: "2", "cat21", "Atrazine"
+        接受的 `estimate_type` 格式: "min", "avg", "max"
         """
-        # 查找匹配的化合物列
-        if compound in pesticide_df.columns:
-            compound_col = compound
+        compound_input = str(compound).strip().lower()
+        exposure_type = ''
+        exposure_id = ''
+
+        # 1. 解析输入，确定是 chem 还是 cat
+        if compound_input.startswith('cat'):
+            exposure_type = 'cat'
+            exposure_id = compound_input[3:]
+            if not exposure_id.isdigit():
+                raise ValueError(f"类别格式错误: '{compound}'. 应为 'cat' + 数字 (例如 'cat21').")
+        elif compound_input.isdigit():
+            exposure_type = 'chem'
+            exposure_id = compound_input
         else:
-            # 尝试多种匹配模式
-            potential_cols = []
-            
-            # 1. 直接匹配
-            potential_cols.extend([col for col in pesticide_df.columns 
-                                 if compound.lower() == col.lower()])
-            
-            # 2. 化学编号匹配 (如 24D -> chem24 或 cat24)
-            if compound.upper().endswith('D'):
-                chem_num = compound[:-1]
-                potential_cols.extend([col for col in pesticide_df.columns 
-                                     if f"chem{chem_num}_" in col.lower() or f"cat{chem_num}_" in col.lower()])
-            
-            # 3. 模糊匹配
-            if not potential_cols:
-                potential_cols.extend([col for col in pesticide_df.columns 
-                                     if compound.lower() in col.lower()])
-            
-            if not potential_cols:
-                raise ValueError(f"未找到匹配的化合物列: {compound}")
-            
-            # 优先选择avg估计值
-            avg_cols = [col for col in potential_cols if 'avg' in col]
-            compound_col = avg_cols[0] if avg_cols else potential_cols[0]
-            print(f"使用化合物列: {compound_col}")
-        # 估计类型推断
-        col_lower = compound_col.lower()
-        if 'avg' in col_lower:
-            estimate_type = 'avg'
-        elif 'mean' in col_lower:
-            estimate_type = 'mean'
-        elif 'median' in col_lower:
-            estimate_type = 'median'
-        else:
-            estimate_type = 'value'
+            cid, _, _ = self._resolve_from_mapping(compound_input)
+            if cid is None:
+                raise ValueError(f"无法从 mapping.csv 中解析化合物名称: '{compound}'")
+            exposure_type = 'chem'
+            exposure_id = cid
         
-        # 标准化关键列名（Year 与 COUNTY_FIPS）
+        # 2. 根据 estimate_type 构造后缀候选项
+        selected_estimate = estimate_type.lower()
+        if selected_estimate in ['avg', 'mean', 'median']:
+            suffixes = ['_avg', '_mean', '_median']
+            actual_estimate_type = 'avg'
+        elif selected_estimate == 'min':
+            suffixes = ['_min']
+            actual_estimate_type = 'min'
+        elif selected_estimate == 'max':
+            suffixes = ['_max']
+            actual_estimate_type = 'max'
+        else:
+            raise ValueError(f"不支持的 estimate_type: '{estimate_type}'. 请使用 'min', 'avg', 或 'max'.")
+
+        candidates = [f"{exposure_type}{exposure_id}{suffix}" for suffix in suffixes]
+        
+        compound_col = None
+        for c in candidates:
+            if c in pesticide_df.columns:
+                compound_col = c
+                break
+        
+        if compound_col is None:
+            raise ValueError(f"在 PNSP.csv 中未找到与 '{compound}' (estimate='{estimate_type}') 匹配的数据列。尝试查找: {candidates}")
+
+        print(f"输入 '{compound}' (estimate='{estimate_type}') 被解析为列: '{compound_col}'")
+
+        # 4. 标准化关键列名
         year_candidates = ['Year', 'YEAR', 'year', 'CalendarYear', 'calendar_year', 'yr']
         county_candidates = ['COUNTY_FIPS', 'county_fips', 'FIPS', 'FIPS_COUNTY', 'CountyFIPS', 'county']
 
@@ -345,34 +398,49 @@ class WDPDataLoader:
         if county_col is None:
             raise KeyError(f"未找到县FIPS列。可接受的列名: {county_candidates}；实际列: {list(pesticide_df.columns)}")
 
+        # --- 修正后的滞后计算逻辑 ---
         print(f"识别到年份列: {year_col}，县列: {county_col}")
+        print(f"正在计算 {lag_years} 年滞后暴露，请稍候...")
 
-        # 创建滞后暴露数据并统一列名
-        exposure_col_name = f'{compound}_lag{lag_years}'
-        lagged_df = pesticide_df[[county_col, year_col, compound_col]].copy()
-        lagged_df = lagged_df.rename(columns={county_col: 'COUNTY_FIPS', year_col: 'Year', compound_col: exposure_col_name})
-        
-        # 年份为数值，排序
-        lagged_df['Year'] = pd.to_numeric(lagged_df['Year'], errors='coerce')
-        lagged_df = lagged_df.sort_values(by=['COUNTY_FIPS', 'Year'])
+        # 确保数据类型正确并按县、年排序
+        df = pesticide_df[[county_col, year_col, compound_col]].copy()
+        df[year_col] = pd.to_numeric(df[year_col], errors='coerce')
+        df = df.sort_values(by=[county_col, year_col])
 
-        # 将年份整体平移 lag_years，用于与死亡年份对齐
-        lagged_df['Year'] = lagged_df['Year'] + lag_years
-        
-        # 计算按县的滚动平均（仅基于历史数据，不包含当前年）
-        rolling_avg = (
-            lagged_df
-            .groupby('COUNTY_FIPS')[exposure_col_name]
-            .rolling(window=lag_years, min_periods=1)
-            .mean()
-            .shift(1)  # 确保只使用历史数据
-            .reset_index(level=0, drop=True)
+        # 创建一个包含所有县和完整年份范围的 MultiIndex
+        all_counties = df[county_col].unique()
+        year_range = range(df[year_col].min(), df[year_col].max() + 1 + lag_years)
+        multi_index = pd.MultiIndex.from_product([all_counties, year_range], names=[county_col, year_col])
+
+        # 扩展 DataFrame 以填补缺失的年份，用0填充暴露值
+        df_full = df.set_index([county_col, year_col]).reindex(multi_index).fillna(0).reset_index()
+
+        # 使用 rolling 计算过去 lag_years 年的平均值
+        # closed='left' 确保窗口是 [t-lag_years, t-1]
+        df_full['rolling_avg'] = df_full.groupby(county_col)[compound_col].transform(
+            lambda x: x.rolling(window=lag_years, closed='left').mean()
         )
-        lagged_df[exposure_col_name] = rolling_avg
+
+        # 生成最终的滞后暴露列名
+        exposure_col_name = f'{compound}_{actual_estimate_type}_lag{lag_years}'
+        df_full = df_full.rename(columns={'rolling_avg': exposure_col_name})
+
+        # 滞后暴露的年份应该与死亡年份对齐，所以将年份加 lag_years 是不正确的。
+        # 正确的做法是直接在原始年份上计算历史暴露。
+        # 我们需要的是 `mortality_year` 对应的 `exposure_year` 的历史平均。
+        # 因此，我们直接返回带有 `exposure_col_name` 的 df_full，在合并时，
+        # `mortality_df` 中的 `Year` 会自动匹配 `df_full` 中计算好的 `Year` 的滞后值。
+
+        # 统一列名
+        lagged_df = df_full[[county_col, year_col, exposure_col_name]].copy()
+        lagged_df = lagged_df.rename(columns={county_col: 'COUNTY_FIPS', year_col: 'Year'})
+
+        # 移除全为NA的行（这些是窗口期不足导致的）
+        lagged_df = lagged_df.dropna(subset=[exposure_col_name])
         
-        print(f"计算滞后暴露: {compound} -> lag{lag_years}年")
+        print(f"计算滞后暴露: {compound} -> 列 {compound_col} -> lag{lag_years}年")
         
-        return lagged_df, compound_col, estimate_type
+        return lagged_df, compound_col, actual_estimate_type
     
     def get_model_covariates(self, model_type: str) -> List[str]:
         """
@@ -414,7 +482,8 @@ class WDPDataLoader:
     
     def prepare_model_data(self, disease_code: str, compound: str, 
                           model_type: str = 'M0', lag_years: int = 5,
-                          measure_type: str = 'Weight') -> Dict:
+                          measure_type: str = 'Weight',
+                          estimate_type: str = 'avg') -> Dict: # <--- 修改
         """
         准备完整的模型数据
         
@@ -453,8 +522,8 @@ class WDPDataLoader:
         
         # 4. 加载农药数据并计算滞后暴露
         pesticide_df = self.load_pesticide_data(measure_type)
-        lagged_exposure_df, selected_exposure_column, estimate_type = self.calculate_lagged_exposure(
-            pesticide_df, compound, lag_years
+        lagged_exposure_df, selected_exposure_column, estimate_type_found = self.calculate_lagged_exposure(
+            pesticide_df, compound, lag_years, estimate_type # <--- 修改
         )
         
         # 5. 合并数据
@@ -532,55 +601,25 @@ class WDPDataLoader:
         log_exposure_std = float(np.std(log_exposure)) if np.std(log_exposure) > 0 else 1.0
         log_exposure_stdized = (log_exposure - log_exposure_mean) / log_exposure_std
         
-        # 读取农药类别映射（可选）
+        # 读取农药类别映射 & 显示名（优先使用mapping）
         category = 'Unknown'
-        try:
-            mapping_path = self.get_data_path('pesticide_mapping')
-            if mapping_path.exists():
-                mapping_df = pd.read_csv(mapping_path)
-
-                # 支持两种列名风格：旧(Compound/Category) 与 新(compound_name/category1_name)
-                col_compound = None
-                col_category = None
-                lower_cols = {c.lower(): c for c in mapping_df.columns}
-
-                if 'compound' in lower_cols and 'category' in lower_cols:
-                    col_compound = lower_cols['compound']
-                    col_category = lower_cols['category']
-                elif 'compound_name' in lower_cols and 'category1_name' in lower_cols:
-                    col_compound = lower_cols['compound_name']
-                    col_category = lower_cols['category1_name']
-
-                if col_compound and col_category:
-                    def normalize_name(s: str) -> str:
-                        s = str(s).strip().lower()
-                        # 常见别名归一化
-                        aliases = {
-                            '24d': '2,4-d',
-                            '2,4d': '2,4-d',
-                            '2,4-d': '2,4-d',
-                            'glyphosate': 'glyphosate',
-                            'atrazine': 'atrazine',
-                        }
-                        return aliases.get(s, s)
-
-                    target = normalize_name(compound)
-                    mapping_df['_norm'] = mapping_df[col_compound].astype(str).map(normalize_name)
-                    matched = mapping_df[mapping_df['_norm'] == target]
-                    if len(matched) > 0:
-                        category = str(matched.iloc[0][col_category])
-        except Exception as e:
-            print(f"⚠️  农药类别映射读取失败: {e}")
+        compound_display = compound
+        cid, cname, cat = self._resolve_from_mapping(compound)
+        if cname:
+            compound_display = cname
+        if cat:
+            category = cat
 
         # 构建最终数据字典
         model_data = {
             # 基本信息
             'disease_code': disease_code,
             'compound': compound,
+            'compound_display': compound_display,
             'model_type': model_type,
             'lag_years': lag_years,
             'measure_type': measure_type,
-            'estimate_type': estimate_type,
+            'estimate_type': estimate_type_found, # 使用函数返回的实际找到的类型
             'category': category,
             
             # 原始数据
