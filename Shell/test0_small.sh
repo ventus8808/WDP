@@ -46,7 +46,7 @@ sbatch_args=(
 )
 
 log INFO "提交最小测试：C81-C96 | compound=2 | models=M5_SVI,M6_ENV1"
-srun python Code/PYMC/main.py \
+python Code/PYMC/main.py \
   --disease "C81-C96" \
   --compound "2" \
   --model "M5_SVI,M6_ENV1" \
