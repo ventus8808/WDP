@@ -112,6 +112,139 @@ data_sources:
     usda_ers:
       original: "Data/Original/USDA ERS"
       processed: "Data/Processed/Socioeconomic"
-    seer_population:
-      original: "Data/Original/SEER Population"
-      processed: "Data/Processed/Socioeconomic"
+  seer_population:
+    original: "Data/Original/SEER Population"
+    processed: "Data/Processed/Socioeconomic"
+
+# PyMC分析配置
+pymc_analysis:
+  # 核心数据文件路径
+  data_files:
+    pca_covariates: "Data/Processed/PCA/Master_Covariates.csv"
+    cdc_data_template: "Data/Processed/CDC/AAMR_{disease_code}.csv"
+    pesticide_data: "Data/Processed/Pesticide/PNSP.csv"
+    pesticide_density_data: "Data/Processed/Pesticide/PNSP_Density.csv"
+    adjacency_data: "Data/Processed/Socioeconomic/County_Adjacency_List.csv"
+    pesticide_mapping: "Data/Processed/Pesticide/mapping.csv"
+
+  # 输出配置
+  output:
+    base_dir: "Result/PyMC_Results"
+    filename_template: "Results_{disease}_{exposure}_{timestamp}.csv"
+    append_mode: true
+
+  # 模型配置
+  models:
+    M0:
+      name: "base"
+      description: "Pesticide + spatial + temporal effects only"
+      covariates: []
+    M1:
+      name: "socioeconomic"
+      description: "Base + social vulnerability"
+      covariates: ["SVI_std"]
+    M2:
+      name: "environmental"
+      description: "Base + environmental factors"
+      covariates: ["Climate1_std", "Climate2_std"]
+    M3:
+      name: "full"
+      description: "Base + all covariates"
+      covariates: ["SVI_std", "Climate1_std", "Climate2_std"]
+
+  # 分析参数
+  analysis:
+    disease_codes: ["C81-C96", "C50", "C34"]
+    lag_years: [5, 10]
+    exposure_estimates: ["min", "avg", "max"]
+    measure_types: ["Weight", "Density"]
+    defaults:
+      disease_code: "C81-C96"
+      measure_type: "Weight"
+      estimate_types: "avg"
+      lag_years: 5
+      model_types: "M0,M1,M2,M3"
+      pesticide_category: "TEST"
+
+  # 数据处理参数
+  data_processing:
+    year_range:
+      start: 1999
+      end: 2019
+    min_thresholds:
+      records_per_analysis: 100
+      counties_per_analysis: 50
+    exposure_processing:
+      log_transform: true
+      standardize: true
+      outlier_detection: true
+      outlier_method: "iqr"
+      outlier_multiplier: 3.0
+
+  # PyMC采样配置
+  sampling:
+    test:
+      draws: 1000
+      tune: 500
+      chains: 2
+      cores: 2
+      target_accept: 0.8
+    production:
+      draws: 4000
+      tune: 2000
+      chains: 4
+      cores: 4
+      target_accept: 0.95
+    default_mode: "test"
+
+  # 模型拟合配置
+  fitting:
+    spatial:
+      model_type: "bym2"
+      use_car: true
+      car_alpha_prior: 1.0
+      spatial_sigma_prior: 1.0
+    temporal:
+      model_type: "rw1"
+      temporal_sigma_prior: 1.0
+    priors:
+      intercept_sigma: 10.0
+      exposure_sigma: 1.0
+      covariate_sigma: 1.0
+
+  # 输出格式配置
+  output_format:
+    timestamp_format: "%Y-%m-%d %H:%M:%S"
+    precision:
+      rr: 4
+      p_value: 3
+    p_value_threshold: 0.05
+    significant_markers:
+      0.001: "***"
+      0.01: "**"
+      0.05: "*"
+
+  # 质量控制
+  quality_control:
+    convergence:
+      rhat_threshold: 1.01
+      ess_threshold: 400
+      check_enabled: true
+    validation:
+      rr_bounds: [0.1, 10.0]
+      p_value_bounds: [0.0, 1.0]
+
+  # 日志配置
+  logging:
+    level: "INFO"
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    progress_reporting: true
+    save_log: false
+
+  # 农药类别配置
+  pesticide:
+    exclude_categories: []
+    priority_categories: []
+    column_template: "cat{category_id}_{estimate}"
+    test_categories: ["TEST"]
+    batch_size: 5

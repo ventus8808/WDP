@@ -1,0 +1,32 @@
+# WDP PyMC Analysis System Requirements
+# Python dependencies for Bayesian spatiotemporal modeling with PyMC
+# Compatible with conda-forge and pip installation
+
+# Core PyMC stack
+pymc>=5.8.0
+arviz>=0.16.0
+pytensor>=2.17.0
+
+# Numerical computing
+numpy>=1.24.0
+scipy>=1.10.0
+pandas>=2.0.0
+
+# Spatial analysis
+networkx>=3.0
+geopandas>=0.13.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Progress and utilities
+tqdm>=4.64.0
+pyyaml>=6.0
+
+# Development and testing
+jupyter>=1.0.0
+notebook>=6.5.0
+
+# Statistical utilities
+statsmodels>=0.14.0
