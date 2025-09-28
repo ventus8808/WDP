@@ -13,9 +13,9 @@
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
-# 切到项目根目录（以脚本所在目录的上一级为准；支持 PROJECT_ROOT 覆盖）
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="${PROJECT_ROOT:-"$(cd "${SCRIPT_DIR}/.." && pwd)"}"
+# 切到项目根目录（严格以脚本所在目录的上一级为准）
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
 cd "$PROJECT_ROOT" || { log ERROR "无法切换到项目根目录: $PROJECT_ROOT"; exit 1; }
 log INFO "项目根目录: $PROJECT_ROOT"
 
@@ -48,6 +48,11 @@ if [ "${CONDA_DEFAULT_ENV-}" != "pymc" ]; then
   conda activate pymc || { log ERROR "激活pymc失败"; exit 1; }
 fi
 log INFO "Conda Python: $(which python)"
+
+# 基础文件检查
+if [ ! -f "Code/PYMC/main.py" ]; then
+  log ERROR "未找到 Code/PYMC/main.py，请检查项目根目录是否正确: $PROJECT_ROOT"; exit 1;
+fi
 
 
 
