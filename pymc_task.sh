@@ -75,6 +75,7 @@ log "INFO" "激活 Conda 环境: pymc"
 set +u || true
 # 预定义可能被钩子引用的变量，避免未绑定
 export ADDR2LINE="${ADDR2LINE-}"
+export CONDA_BACKUP_CXX="${CONDA_BACKUP_CXX-}"
 if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
   source "$HOME/miniconda3/etc/profile.d/conda.sh"
 elif [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]; then
@@ -84,7 +85,6 @@ else
   exit 1
 fi
 conda activate pymc || { log "ERROR" "激活 'pymc' 环境失败。"; exit 1; }
-set -u || true
 log "INFO" "Conda 环境激活成功. Python路径: $(which python)"
 
 # --- 2. 路径设置 ---
