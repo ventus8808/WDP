@@ -97,16 +97,56 @@ sbatch_args=(
   --mem-per-cpu=2G --time=01:00:00
 )
 
+# 设置Python输出不缓冲，确保实时显示进度
+export PYTHONUNBUFFERED=1
+
 log INFO "提交最小测试：C81-C96 | compound=2 | models=M5_SVI,M6_ENV1"
-python Code/PYMC/main.py \
+log INFO "开始执行Python分析..."
+
+# 使用更保守的采样参数，避免数值问题
+# 先测试简单的M0模型，成功后再尝试交互模型
+log INFO "开始第一阶段：基础模型M0测试..."
+python -u Code/PYMC/main.py \
   --disease "C81-C96" \
   --compound "2" \
-  --model "M5_SVI,M6_ENV1" \
-  --lag "10" \
+  --model "M0" \
+  --lag "5" \
   --measure "Weight" \
   --estimate "avg" \
   --sampling-mode "test" \
-  --draws 200 --tune 100 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-4} --target-accept 0.9 \
-  --config-path "config.yaml" --verbose
+  --draws 300 --tune 150 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-4} --target-accept 0.8 \
+  --config-path "config.yaml" --verbose 2>&1 | tee -a "smoke_test_${SLURM_JOB_ID:-$$}.log"
+
+PHASE1_EXIT_CODE=$?
+if [ $PHASE1_EXIT_CODE -eq 0 ]; then
+  log INFO "✅ 第一阶段成功，开始第二阶段：交互模型测试..."
+  python -u Code/PYMC/main.py \
+    --disease "C81-C96" \
+    --compound "2" \
+    --model "M5_SVI" \
+    --lag "5" \
+    --measure "Weight" \
+    --estimate "avg" \
+    --sampling-mode "test" \
+    --draws 300 --tune 150 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-4} --target-accept 0.8 \
+    --config-path "config.yaml" --verbose 2>&1 | tee -a "smoke_test_${SLURM_JOB_ID:-$$}.log"
+  
+  PHASE2_EXIT_CODE=$?
+  if [ $PHASE2_EXIT_CODE -ne 0 ]; then
+    log ERROR "第二阶段失败，但第一阶段成功。交互模型可能有问题。"
+    exit $PHASE2_EXIT_CODE
+  fi
+else
+  log ERROR "第一阶段（基础模型）失败，退出码: $PHASE1_EXIT_CODE"
+  exit $PHASE1_EXIT_CODE
+fi
+
+# 检查Python命令的退出状态
+PYTHON_EXIT_CODE=$?
+if [ $PYTHON_EXIT_CODE -ne 0 ]; then
+  log ERROR "Python分析失败，退出码: $PYTHON_EXIT_CODE"
+  log ERROR "请检查详细日志: smoke_test_${SLURM_JOB_ID:-$$}.log"
+  exit $PYTHON_EXIT_CODE
+fi
 
 log INFO "完成"

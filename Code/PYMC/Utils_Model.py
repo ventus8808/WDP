@@ -267,8 +267,13 @@ class BYM2ModelFitter:
         az.InferenceData
             MCMC采样结果
         """
-        print(f"开始MCMC采样...")
-        print(f"采样配置: {self.sampling_config}")
+        import sys
+        from datetime import datetime
+        
+        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] ===== 开始MCMC采样 =====")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 采样配置: {self.sampling_config}")
+        sys.stdout.flush()
+        
         # 根据运行环境自动选择初始化策略与并行度
         try:
             cpu_env = int(os.environ.get('SLURM_CPUS_PER_TASK') or 0)
@@ -282,27 +287,56 @@ class BYM2ModelFitter:
         req_cores = int(self.sampling_config.get('cores', 2))
         sample_chains = max(1, min(req_chains, cpu_count))
         sample_cores = max(1, min(req_cores, cpu_count))
-        print(f"检测到CPU: {cpu_count}，使用初始化: {init_strategy}，chains={sample_chains}，cores={sample_cores}")
+        
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] CPU检测: {cpu_count} 可用")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 采样策略: {init_strategy}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 并行配置: {sample_chains} chains, {sample_cores} cores")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 开始初始化采样器...")
+        sys.stdout.flush()
         
         with model:
-            # 运行MCMC采样
-            trace = pm.sample(
-                draws=self.sampling_config['draws'],
-                tune=self.sampling_config['tune'],
-                chains=sample_chains,
-                cores=sample_cores,
-                target_accept=self.sampling_config['target_accept'],
-                init=init_strategy,
-                return_inferencedata=True
-            )
+            try:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 启动NUTS采样器...")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 预计采样时间: ~{(self.sampling_config['draws'] + self.sampling_config['tune']) * sample_chains // 100:.1f} 分钟")
+                sys.stdout.flush()
+                
+                # 运行MCMC采样
+                trace = pm.sample(
+                    draws=self.sampling_config['draws'],
+                    tune=self.sampling_config['tune'],
+                    chains=sample_chains,
+                    cores=sample_cores,
+                    target_accept=self.sampling_config['target_accept'],
+                    init=init_strategy,
+                    return_inferencedata=True,
+                    progressbar=True,  # 确保显示进度条
+                    random_seed=42  # 添加随机种子以便复现
+                )
+                
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ MCMC采样完成!")
+                sys.stdout.flush()
+                
+            except Exception as e:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ MCMC采样失败: {e}")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 错误类型: {type(e).__name__}")
+                if 'divergence' in str(e).lower():
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] 💡 提示: 发散问题，尝试降低target_accept或增加tune步数")
+                elif 'memory' in str(e).lower():
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] 💡 提示: 内存不足，尝试减少chains数量")
+                sys.stdout.flush()
+                raise
             
             # 添加后验预测检验
             try:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 开始后验预测采样...")
+                sys.stdout.flush()
                 pm.sample_posterior_predictive(trace, extend_inferencedata=True)
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ 后验预测完成!")
+                sys.stdout.flush()
             except Exception as e:
-                print(f"⚠️  后验预测采样失败: {e}")
-                # Debugging the model to identify issues with initial values
-                model.debug()
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️  后验预测采样失败: {e}")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 继续进行收敛诊断...")
+                sys.stdout.flush()
         
         # 收敛诊断
         self._check_convergence(trace)
@@ -318,7 +352,11 @@ class BYM2ModelFitter:
         trace : az.InferenceData
             MCMC采样结果
         """
-        print("\n=== 收敛诊断 ===")
+        from datetime import datetime
+        import sys
+        
+        print(f"\n[{datetime.now().strftime('%H:%M:%S')}] === 收敛诊断 ===")
+        sys.stdout.flush()
         
         # 仅对核心参数计算 R-hat，避免在大型潜变量上造成内存压力
         try:

@@ -410,6 +410,14 @@ def create_parser() -> argparse.ArgumentParser:
 
 def main():
     """主函数"""
+    # 强制输出不缓冲（集群环境）
+    import sys
+    import os
+    if not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
+        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)  # 行缓冲
+    if not hasattr(sys.stderr, 'isatty') or not sys.stderr.isatty():
+        sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 1)  # 行缓冲
+        
     # 解析命令行参数
     parser = create_parser()
     args = parser.parse_args()
@@ -417,7 +425,17 @@ def main():
     # 设置日志级别
     if args.verbose:
         import logging
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='[%(asctime)s] %(levelname)s - %(message)s',
+            force=True  # 强制覆盖现有配置
+        )
+        
+    from datetime import datetime
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] WDP PyMC分析系统启动...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Python版本: {sys.version}")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] 工作目录: {os.getcwd()}")
+    sys.stdout.flush()  # 强制刷新输出
     
     try:
         # 处理路径参数
@@ -447,11 +465,12 @@ def main():
                 sys.exit(1)
         
         print(f"WDP PyMC分析系统启动")
-        print(f"疾病: {disease_codes}")
-        print(f"化合物: {compounds}")
-        print(f"模型: {model_types}")
-        print(f"滞后: {lag_years_list}")
-        print(f"测量: {measure_types}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 疾病: {disease_codes}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 化合物: {compounds}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 模型: {model_types}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 滞后: {lag_years_list}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 测量: {measure_types}")
+        sys.stdout.flush()
         
         # Dry run 模式
         if args.dry_run:
@@ -545,8 +564,26 @@ def main():
     
     except Exception as e:
         print(f"\n💥 系统错误: {e}")
-        if args.verbose:
-            traceback.print_exc()
+        print(f"错误类型: {type(e).__name__}")
+        print(f"发生时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        if hasattr(e, '__cause__') and e.__cause__:
+            print(f"根本原因: {e.__cause__}")
+        
+        # 总是打印堆栈跟踪以便调试
+        print("\n详细错误信息:")
+        traceback.print_exc()
+        
+        # 提供一些常见问题的提示
+        error_msg = str(e).lower()
+        if 'memory' in error_msg or 'out of memory' in error_msg:
+            print("\n💡 提示: 可能是内存不足，尝试减少chains或draws参数")
+        elif 'convergence' in error_msg or 'divergence' in error_msg:
+            print("\n💡 提示: 可能是收敛问题，尝试增加tune步数或降低target_accept")
+        elif 'file not found' in error_msg or 'no such file' in error_msg:
+            print("\n💡 提示: 检查数据文件是否存在，确认在正确的项目根目录")
+        elif 'connection' in error_msg or 'network' in error_msg:
+            print("\n💡 提示: 可能是网络问题，检查集群连接")
+            
         sys.exit(1)
 
 

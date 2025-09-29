@@ -1,4 +1,10 @@
-# WDP 集群提交脚本使用说明
+# WD## 目录
+- `debug_test.sh`：**调试专用**极简测试（环境检查+最小模型，30分钟）
+- `test0_small.sh`：最小可行烟囱测试（单化合物、少量模型、短采样）
+- `test1_completed.sh`：完整"单化合物×全部模型"测试（较长采样）
+- `test2_chemical.sh`：完整"多化合物×全部模型"生产跑
+
+> 以上脚本都会自动切换到项目根目录，激活 `pymc` conda 环境，并写日志。**首次使用建议先运行调试脚本排查问题**。脚本使用说明
 
 本目录提供三种层次的作业脚本，覆盖从最小烟囱测试到完整化合物×模型的生产运行。
 
@@ -8,6 +14,21 @@
 - `test2_chemical.sh`：完整“多化合物×全部模型”生产跑
 
 > 以上脚本都会自动切换到项目根目录，激活 `pymc` conda 环境，并写日志到 `logs/`。
+
+---
+
+## debug_test.sh — 调试专用测试
+- **适用场景**：集群环境首次运行或故障排查。
+- **功能**：环境检查 + 数据可用性测试 + 最小模型（M0，100/50样本）。
+- **时间**：30分钟内完成。
+- **资源**：2核心，4G内存。
+
+提交命令：
+```bash
+cd /path/to/WDP
+sbatch Shell/debug_test.sh
+```
+日志：`WDP_Debug-<jobid>.out/.err` + `debug_<jobid>.log`
 
 ---
 
@@ -123,11 +144,45 @@ sacct -u $USER --format=JobID,State,...  # 历史资源
 
 2. 检查conda初始化脚本路径是否正确（脚本会自动检测常见位置）
 
-### 常见错误3：权限或路径问题
+### 常见错误3：作业运行几分钟后失败且无实时输出
+**症状**：作业提交后运行4-5分钟，然后失败，看不到MCMC采样进度。
+
+**原因**：
+1. **输出缓冲**：集群环境下Python输出被缓冲，不会实时显示
+2. **数值问题**：模型参数或数据导致采样失败
+3. **内存不足**：复杂模型消耗内存过大
+
+**解决方案**：
+1. **首先运行调试脚本**：
+   ```bash
+   sbatch Shell/debug_test.sh  # 30分钟内完成，提供详细诊断
+   ```
+
+2. **查看详细日志**：
+   ```bash
+   # 检查Slurm日志
+   cat WDP_Debug-<jobid>.out
+   cat WDP_Debug-<jobid>.err
+   
+   # 检查Python详细日志
+   cat debug_<jobid>.log
+   ```
+
+3. **如果调试脚本成功**，再尝试烟囱测试：
+   ```bash
+   sbatch Shell/test0_small.sh
+   ```
+
+4. **逐步增加复杂度**：
+   - M0 模型 → M1,M2 → 交互模型
+   - 少样本 → 多样本
+   - 单核 → 多核
+
+### 常见错误4：权限或路径问题
 **解决方案**：
 1. 确保对项目目录有读写权限
 2. 检查SLURM_SUBMIT_DIR环境变量是否正确设置
 3. 使用绝对路径提交作业：
    ```bash
-   sbatch /full/path/to/WDP/Shell/test0_small.sh
+   sbatch /full/path/to/WDP/Shell/debug_test.sh
    ```
