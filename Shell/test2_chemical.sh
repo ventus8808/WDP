@@ -1,12 +1,12 @@
 #!/bin/bash
-# 完整化合物批量：一个或多个化合物 × 全部模型配置，生产采样设置
+# 生产级批量分析：多化合物×全模型配置，高质量采样
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WONDER_PyMC_AllChem
+#SBATCH --job-name=WDP_Production
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=98G
-#SBATCH --time=1-00:00:00
+#SBATCH --time=2-00:00:00
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
 
@@ -89,15 +89,15 @@ fi
 
 DISEASE=${DISEASE:-"C81-C96"}
 COMPOUNDS=${COMPOUNDS:-"2,9,cat21,cat33"}
-MODELS=${MODELS:-"M0,M1,M2,M3,M5_SVI,M6_ENV1"}
+MODELS=${MODELS:-"M0,M1,M2,M3"}
 
-log INFO "开始完整化合物批量：$DISEASE | compounds=$COMPOUNDS | models=$MODELS"
+log INFO "开始生产级批量分析：$DISEASE | compounds=$COMPOUNDS | models=$MODELS"
 python Code/PYMC/main.py \
   --disease "$DISEASE" \
   --compound "$COMPOUNDS" \
   --model "$MODELS" \
-  --lag "10" \
-  --measure "Weight" \
+  --lag "5,10" \
+  --measure "Weight,Density" \
   --estimate "avg,max" \
   --sampling-mode "production" \
   --draws 4000 --tune 2000 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-32} --target-accept 0.95 \

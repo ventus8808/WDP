@@ -1,12 +1,12 @@
 #!/bin/bash
-# 小规模烟囱测试：单化合物+少量模型，短采样，快速验证能跑通
+# 基础验证测试：双阶段模型验证，短采样，2小时内完成
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WONDER_PyMC_Smoke
+#SBATCH --job-name=WDP_Basic_Test
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=2G
-#SBATCH --time=01:00:00
+#SBATCH --cpus-per-task=32
+#SBATCH --mem-per-cpu=3G
+#SBATCH --time=02:00:00
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
 
@@ -114,21 +114,21 @@ python -u Code/PYMC/main.py \
   --measure "Weight" \
   --estimate "avg" \
   --sampling-mode "test" \
-  --draws 300 --tune 150 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-4} --target-accept 0.8 \
+  --draws 500 --tune 200 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-32} --target-accept 0.85 \
   --config-path "config.yaml" --verbose 2>&1 | tee -a "smoke_test_${SLURM_JOB_ID:-$$}.log"
 
 PHASE1_EXIT_CODE=$?
 if [ $PHASE1_EXIT_CODE -eq 0 ]; then
-  log INFO "✅ 第一阶段成功，开始第二阶段：交互模型测试..."
+  log INFO "✅ 第一阶段成功，开始第二阶段：社会脆弱性模型测试..."
   python -u Code/PYMC/main.py \
     --disease "C81-C96" \
     --compound "2" \
-    --model "M5_SVI" \
+    --model "M1" \
     --lag "5" \
     --measure "Weight" \
     --estimate "avg" \
     --sampling-mode "test" \
-    --draws 300 --tune 150 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-4} --target-accept 0.8 \
+    --draws 500 --tune 200 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-32} --target-accept 0.85 \
     --config-path "config.yaml" --verbose 2>&1 | tee -a "smoke_test_${SLURM_JOB_ID:-$$}.log"
   
   PHASE2_EXIT_CODE=$?

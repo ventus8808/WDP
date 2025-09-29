@@ -1,12 +1,12 @@
 #!/bin/bash
-# 完整单模型测试：覆盖全部基础与交互模型于一个化合物，较长采样
+# 完整单化合物测试：全套模型验证，中等采样强度
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WONDER_PyMC_OneChem_AllModels
+#SBATCH --job-name=WDP_Single_Compound
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=32
 #SBATCH --mem-per-cpu=3G
-#SBATCH --time=12:00:00
+#SBATCH --time=08:00:00
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
 
@@ -89,18 +89,18 @@ fi
 
 DISEASE=${DISEASE:-"C81-C96"}
 COMPOUND=${COMPOUND:-"2"}
-MODELS=${MODELS:-"M0,M1,M2,M3,M5_SVI,M6_ENV1"}
+MODELS=${MODELS:-"M0,M1,M2,M3"}
 
-log INFO "开始完整单模型测试：$DISEASE | compound=$COMPOUND | models=$MODELS"
+log INFO "开始完整单化合物测试：$DISEASE | compound=$COMPOUND | models=$MODELS"
 python Code/PYMC/main.py \
   --disease "$DISEASE" \
   --compound "$COMPOUND" \
   --model "$MODELS" \
-  --lag "10" \
+  --lag "5,10" \
   --measure "Weight" \
   --estimate "avg" \
   --sampling-mode "test" \
-  --draws 1000 --tune 1000 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-16} --target-accept 0.9 \
+  --draws 1500 --tune 750 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-32} --target-accept 0.90 \
   --config-path "config.yaml" --verbose
 
 log INFO "完成"

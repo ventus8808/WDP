@@ -111,12 +111,31 @@ class WDPDataLoader:
         if 'Deaths_Type' in df.columns:
             df['Deaths_Type'] = df['Deaths_Type'].astype('category')
         
-        # 验证必需的列（现在要求Deaths_Type必须存在）
-        required_cols = ['COUNTY_FIPS', 'Year', 'Deaths_Type', 'Population']
-        missing_cols = [col for col in required_cols if col not in df.columns]
+        # 验证基本必需的列
+        basic_required_cols = ['COUNTY_FIPS', 'Year', 'Population']
+        missing_cols = [col for col in basic_required_cols if col not in df.columns]
         
         if missing_cols:
-            raise ValueError(f"缺少必需的列: {missing_cols}")
+            raise ValueError(f"缺少基本必需的列: {missing_cols}")
+        
+        # 检查是否需要创建Deaths_Type列
+        if 'Deaths_Type' not in df.columns:
+            print("⚠️  数据文件没有Deaths_Type列，将基于Deaths列自动生成")
+            if 'Deaths' in df.columns:
+                # 基于Deaths列的值来判断数据类型
+                # NaN 或小于10的值作为审查数据，其他作为观测数据
+                def classify_deaths(deaths_val):
+                    if pd.isna(deaths_val):
+                        return 'censored'  # 缺失值认为是审查数据
+                    elif deaths_val < 10:
+                        return 'censored'  # CDC通常审查小于10的死亡数
+                    else:
+                        return 'observed'
+                
+                df['Deaths_Type'] = df['Deaths'].apply(classify_deaths)
+                print(f"✅ 自动生成Deaths_Type列完成")
+            else:
+                raise ValueError("既没有Deaths_Type列也没有Deaths列，无法处理数据")
         
         # 如果没有Deaths_Type列，但有Deaths列，创建一个默认的Deaths_Type
         if 'Deaths_Type' not in df.columns:
@@ -185,8 +204,12 @@ class WDPDataLoader:
         
         # 对于观测数据，确保 Deaths_Observed 有值
         if observed_mask.any():
-            # 将空值填充为0（表示没有死亡）
-            df.loc[observed_mask, 'Deaths_Observed'] = df.loc[observed_mask, 'Deaths_Observed'].fillna(0)
+            # 如果有原始Deaths列，优先使用它
+            if 'Deaths' in df.columns:
+                df.loc[observed_mask, 'Deaths_Observed'] = df.loc[observed_mask, 'Deaths']
+            else:
+                # 否则将空值填充为0（表示没有死亡）
+                df.loc[observed_mask, 'Deaths_Observed'] = df.loc[observed_mask, 'Deaths_Observed'].fillna(0)
         
         # 对于审查数据，确保区间值存在
         if censored_mask.any():
