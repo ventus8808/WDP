@@ -4,8 +4,8 @@
 #SBATCH --job-name=WDP_Production
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
-#SBATCH --mem=98G
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=48G
 #SBATCH --time=2-00:00:00
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
@@ -100,7 +100,7 @@ python Code/PYMC/main.py \
   --measure "Weight,Density" \
   --estimate "avg,max" \
   --sampling-mode "production" \
-  --draws 4000 --tune 2000 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-32} --target-accept 0.95 \
+  --draws 4000 --tune 2000 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-16} --target-accept 0.95 \
   --config-path "config.yaml" --verbose
 
 log INFO "完成"

@@ -1,276 +1,284 @@
-# WDP 集群作业脚本使用指南# WDP 集群作业脚本使用指南# WD## 目录
+# WDP 集群作业脚本使用指南# WDP 集群作业脚本使用指南# WDP 集群作业脚本使用指南# WD## 目录
 
 
+
+> **集群配置**: 16核心/48GB节点，Hygon C86处理器，Slurm调度器  
+
+> **资源策略**: 使用16核心配置，更容易获得调度资源，避免长时间排队
 
 > **集群配置**: 32核心/123GB节点，Hygon C86处理器，Slurm调度器- `debug_test.sh`：**调试专用**极简测试（环境检查+最小模型，30分钟）
 
+本目录提供四个优化的作业脚本，**全部使用16核心配置**，平衡性能与资源可用性。
 
+
+
+## 📋 脚本总览
 
 本目录提供四个优化的作业脚本，**全部使用32核心配置**，充分利用服务器资源。> **集群配置**: 32核心/123GB节点，Hygon C86处理器，Slurm调度器- `test0_small.sh`：最小可行烟囱测试（单化合物、少量模型、短采样）
 
-
-
-## 📋 脚本总览- `test1_completed.sh`：完整"单化合物×全部模型"测试（较长采样）
-
-
-
-| 脚本 | 用途 | 时间 | 资源 | 采样配置 | 适用场景 |本目录提供四个优化的作业脚本，按复杂度递增设计，适配集群环境。- `test2_chemical.sh`：完整"多化合物×全部模型"生产跑
+| 脚本 | 用途 | 时间 | 资源 | 采样配置 | 适用场景 |
 
 |------|------|------|------|----------|----------|
 
+| `debug_test.sh` | 🔧 环境诊断 | 1小时 | 16核48G | 2链×16核 | 首次运行，故障排查 |
+
+| `test0_small.sh` | 🧪 基础验证 | 2小时 | 16核48G | 2链×16核 | 双阶段模型验证 |## 📋 脚本总览- `test1_completed.sh`：完整"单化合物×全部模型"测试（较长采样）
+
+| `test1_completed.sh` | 📊 单化合物全测 | 8小时 | 16核48G | 2链×16核 | 完整模型套件 |
+
+| `test2_chemical.sh` | 🚀 生产批量 | 2天 | 16核48G | 2链×16核 | 多化合物生产分析 |
+
+
+
+> **推荐顺序**: debug → test0 → test1 → test2  | 脚本 | 用途 | 时间 | 资源 | 采样配置 | 适用场景 |本目录提供四个优化的作业脚本，按复杂度递增设计，适配集群环境。- `test2_chemical.sh`：完整"多化合物×全部模型"生产跑
+
+> **资源平衡**: 16核配置避免排队，2链采样保证收敛质量
+
+|------|------|------|------|----------|----------|
+
+---
+
 | `debug_test.sh` | 🔧 环境诊断 | 1小时 | 32核96G | 4链×32核 | 首次运行，故障排查 |
+
+## debug_test.sh — 环境诊断测试 ⭐ **首次必运行**
 
 | `test0_small.sh` | 🧪 基础验证 | 2小时 | 32核96G | 4链×32核 | 双阶段模型验证 |
 
-| `test1_completed.sh` | 📊 单化合物全测 | 8小时 | 32核96G | 4链×32核 | 完整模型套件 |## 📋 脚本总览> 以上脚本都会自动切换到项目根目录，激活 `pymc` conda 环境，并写日志。**首次使用建议先运行调试脚本排查问题**。脚本使用说明
+### 功能特性
 
-| `test2_chemical.sh` | 🚀 生产批量 | 2天 | 32核98G | 4链×32核 | 多化合物生产分析 |
+- **环境检查**: Python版本、PyMC安装、内存状态| `test1_completed.sh` | 📊 单化合物全测 | 8小时 | 32核96G | 4链×32核 | 完整模型套件 |## 📋 脚本总览> 以上脚本都会自动切换到项目根目录，激活 `pymc` conda 环境，并写日志。**首次使用建议先运行调试脚本排查问题**。脚本使用说明
 
+- **数据验证**: 逐个检查CDC、协变量、农药、空间数据
 
+- **最小模型**: M0基础模型，100/50采样| `test2_chemical.sh` | 🚀 生产批量 | 2天 | 32核98G | 4链×32核 | 多化合物生产分析 |
 
-> **推荐顺序**: debug → test0 → test1 → test2  
-
-> **性能提升**: 全部32核配置，比之前配置提升4-8倍并行度| 脚本 | 用途 | 时间 | 资源 | 适用场景 |本目录提供三种层次的作业脚本，覆盖从最小烟囱测试到完整化合物×模型的生产运行。
-
-
-
----|------|------|------|------|----------|
-
-
-
-## debug_test.sh — 环境诊断测试 ⭐ **首次必运行**| `debug_test.sh` | 🔧 环境诊断 | 1小时 | 4核8G | 首次运行，故障排查 |## 目录
-
-
-
-### 功能特性| `test0_small.sh` | 🧪 基础验证 | 2小时 | 8核24G | 双阶段模型验证 |- `test0_small.sh`：最小可行烟囱测试（单化合物、少量模型、短采样）
-
-- **环境检查**: Python版本、PyMC安装、内存状态
-
-- **数据验证**: 逐个检查CDC、协变量、农药、空间数据| `test1_completed.sh` | 📊 单化合物全测 | 8小时 | 16核48G | 完整模型套件 |- `test1_completed.sh`：完整“单化合物×全部模型”测试（较长采样）
-
-- **最小模型**: M0基础模型，100/50采样
-
-- **全核心**: 4链×32核心并行采样| `test2_chemical.sh` | 🚀 生产批量 | 2天 | 32核98G | 多化合物生产分析 |- `test2_chemical.sh`：完整“多化合物×全部模型”生产跑
+- **快速调度**: 16核心，更容易获得资源
 
 - **快速完成**: 1小时内完成
 
 
 
-### 提交命令
+### 提交命令> **推荐顺序**: debug → test0 → test1 → test2  
 
-```bash> **推荐顺序**: debug → test0 → test1 → test2> 以上脚本都会自动切换到项目根目录，激活 `pymc` conda 环境，并写日志到 `logs/`。
+```bash
 
-cd /path/to/WDP
+cd /path/to/WDP> **性能提升**: 全部32核配置，比之前配置提升4-8倍并行度| 脚本 | 用途 | 时间 | 资源 | 适用场景 |本目录提供三种层次的作业脚本，覆盖从最小烟囱测试到完整化合物×模型的生产运行。
 
 sbatch Shell/debug_test.sh
 
 ```
 
-------
 
-**日志文件**: `WDP_Debug-<jobid>.out/.err` + `debug_<jobid>.log`
+
+**日志文件**: `WDP_Debug-<jobid>.out/.err` + `debug_<jobid>.log`---|------|------|------|------|----------|
 
 
 
 ---
 
-## debug_test.sh — 环境诊断测试 ⭐ **首次必运行**## debug_test.sh — 调试专用测试 ✨ **推荐首次使用**
 
-## test0_small.sh — 基础验证测试
 
-- **适用场景**：集群环境首次运行或故障排查。
+## test0_small.sh — 基础验证测试## debug_test.sh — 环境诊断测试 ⭐ **首次必运行**| `debug_test.sh` | 🔧 环境诊断 | 1小时 | 4核8G | 首次运行，故障排查 |## 目录
+
+
 
 ### 功能特性
 
-- **双阶段验证**: M0基础模型 → M1社会脆弱性模型### 功能特性- **功能**：
+- **双阶段验证**: M0基础模型 → M1社会脆弱性模型
 
-- **中等采样**: 500/200采样，4链×32核心并行
+- **中等采样**: 500/200采样，2链×16核心并行### 功能特性| `test0_small.sh` | 🧪 基础验证 | 2小时 | 8核24G | 双阶段模型验证 |- `test0_small.sh`：最小可行烟囱测试（单化合物、少量模型、短采样）
 
-- **快速反馈**: 2小时内完成两个模型- **环境检查**: Python版本、PyMC安装、内存状态  - 环境检查（Python、PyMC、内存状态）
+- **快速反馈**: 2小时内完成两个模型
 
-- **错误隔离**: 分阶段执行，便于定位问题
-
-- **数据验证**: 逐个检查CDC、协变量、农药、空间数据  - 详细数据结构检查（CDC、协变量、农药、空间数据）
-
-### 环境变量配置
-
-```bash- **最小模型**: M0基础模型，100/50采样  - 最小模型测试（M0，100/50样本）
-
-# 可选覆盖默认值
-
-export DISEASE="C81-C96"        # 疾病编码- **快速完成**: 1小时内完成- **时间**：30分钟内完成。
-
-export COMPOUND="2"             # 化合物ID
-
-```- **资源**：2核心，3G内存。
+- **错误隔离**: 分阶段执行，便于定位问题- **环境检查**: Python版本、PyMC安装、内存状态
 
 
 
-### 提交命令### 提交命令
+### 环境变量配置- **数据验证**: 逐个检查CDC、协变量、农药、空间数据| `test1_completed.sh` | 📊 单化合物全测 | 8小时 | 16核48G | 完整模型套件 |- `test1_completed.sh`：完整“单化合物×全部模型”测试（较长采样）
 
 ```bash
 
-cd /path/to/WDP```bash提交命令：
+# 可选覆盖默认值- **最小模型**: M0基础模型，100/50采样
 
-sbatch Shell/test0_small.sh
+export DISEASE="C81-C96"        # 疾病编码
 
-```cd /path/to/WDP```bash
-
-
-
-**日志文件**: `WDP_Basic_Test-<jobid>.out/.err` + `smoke_test_<jobid>.log`sbatch Shell/debug_test.shcd /path/to/WDP
-
-
-
----```sbatch Shell/debug_test.sh
-
-
-
-## test1_completed.sh — 单化合物完整测试```
-
-
-
-### 功能特性**日志文件**: `WDP_Debug-<jobid>.out/.err` + `debug_<jobid>.log`日志：`WDP_Debug-<jobid>.out/.err` + `debug_<jobid>.log`
-
-- **全模型测试**: M0, M1, M2, M3四种模型配置
-
-- **多滞后分析**: 5年和10年滞后效应
-
-- **中等采样**: 1500/750采样，4链×32核心并行
-
-- **详细诊断**: 完整的收敛和效应分析------
-
-
-
-### 环境变量配置
-
-```bash
-
-export DISEASE="C81-C96"        # 疾病编码  ## test0_small.sh — 基础验证测试## test0_small.sh — 小规模烟囱测试
-
-export COMPOUND="2"             # 化合物ID
-
-export MODELS="M0,M1,M2,M3"     # 模型类型- 适用场景：首次上集群验证能否跑通端到端。
+export COMPOUND="2"             # 化合物ID- **全核心**: 4链×32核心并行采样| `test2_chemical.sh` | 🚀 生产批量 | 2天 | 32核98G | 多化合物生产分析 |- `test2_chemical.sh`：完整“多化合物×全部模型”生产跑
 
 ```
 
-### 功能特性- 默认：`disease=C81-C96`，`compound=2`，`models=M5_SVI,M6_ENV1`，`lag=10`，`estimate=avg`。
+- **快速完成**: 1小时内完成
 
 ### 提交命令
 
-```bash- **双阶段验证**: M0基础模型 → M1社会脆弱性模型- 资源：`--cpus-per-task=4`，`--mem-per-cpu=2G`，`--time=1:00:00`。
+```bash
 
 cd /path/to/WDP
 
-sbatch Shell/test1_completed.sh- **适中采样**: 500/200采样，2链并行
+sbatch Shell/test0_small.sh### 提交命令
 
 ```
 
-- **快速反馈**: 2小时内完成两个模型提交命令（**请确保在仓库根目录 WDP 下提交**）：
+```bash> **推荐顺序**: debug → test0 → test1 → test2> 以上脚本都会自动切换到项目根目录，激活 `pymc` conda 环境，并写日志到 `logs/`。
 
-**日志文件**: `WDP_Single_Compound-<jobid>.out/.err`
+**日志文件**: `WDP_Basic_Test-<jobid>.out/.err` + `smoke_test_<jobid>.log`
 
-- **错误隔离**: 分阶段执行，便于定位问题```bash
+cd /path/to/WDP
 
 ---
 
-# 确保在项目根目录
+sbatch Shell/debug_test.sh
 
-## test2_chemical.sh — 生产级批量分析
-
-### 环境变量配置cd /path/to/WDP
-
-### 功能特性
-
-- **大规模批量**: 多化合物×多模型×多滞后×多测量类型```bashsbatch Shell/test0_small.sh
-
-- **生产采样**: 4000/2000高质量采样，4链×32核心并行  
-
-- **全资源利用**: 32核心，98GB内存，48小时时间# 可选覆盖默认值```
-
-- **完整覆盖**: Weight/Density测量，avg/max估算
-
-export DISEASE="C81-C96"        # 疾病编码日志：`WONDER_PyMC_Smoke_Sub-<jobid>.out/.err`（位于项目根目录）
-
-### 环境变量配置
-
-```bashexport COMPOUND="2"             # 化合物ID
-
-export DISEASE="C81-C96"                # 疾病编码
-
-export COMPOUNDS="2,9,cat21,cat33"      # 多个化合物```> **重要提示**: 脚本会自动检测项目根目录，但请务必在WDP仓库根目录下提交作业，以确保路径检测正确。
-
-export MODELS="M0,M1,M2,M3"             # 全部基础模型
+## test1_completed.sh — 单化合物完整测试
 
 ```
 
+### 功能特性
+
+- **全模型测试**: M0, M1, M2, M3四种模型配置------
+
+- **多滞后分析**: 5年和10年滞后效应
+
+- **中等采样**: 1500/750采样，2链×16核心并行**日志文件**: `WDP_Debug-<jobid>.out/.err` + `debug_<jobid>.log`
+
+- **详细诊断**: 完整的收敛和效应分析
 
 
-### 提交命令### 提交命令---
+
+### 环境变量配置
+
+```bash---
+
+export DISEASE="C81-C96"        # 疾病编码  
+
+export COMPOUND="2"             # 化合物ID## debug_test.sh — 环境诊断测试 ⭐ **首次必运行**## debug_test.sh — 调试专用测试 ✨ **推荐首次使用**
+
+export MODELS="M0,M1,M2,M3"     # 模型类型
+
+```## test0_small.sh — 基础验证测试
+
+
+
+### 提交命令- **适用场景**：集群环境首次运行或故障排查。
 
 ```bash
 
-cd /path/to/WDP  ```bash
+cd /path/to/WDP### 功能特性
 
-sbatch Shell/test2_chemical.sh
+sbatch Shell/test1_completed.sh
 
-```cd /path/to/WDP## test1_completed.sh — 完整单模型测试
-
-
-
-**日志文件**: `WDP_Production-<jobid>.out/.err`sbatch Shell/test0_small.sh- 适用场景：对一个化合物跑全套模型，采样更充足以观测诊断。
+```- **双阶段验证**: M0基础模型 → M1社会脆弱性模型### 功能特性- **功能**：
 
 
 
----```- 环境变量可覆盖：
+**日志文件**: `WDP_Single_Compound-<jobid>.out/.err`- **中等采样**: 500/200采样，4链×32核心并行
 
 
 
-## 🚀 32核心性能优势  - `DISEASE`（默认 `C81-C96`）
+---- **快速反馈**: 2小时内完成两个模型- **环境检查**: Python版本、PyMC安装、内存状态  - 环境检查（Python、PyMC、内存状态）
 
 
 
-### 并行度对比**日志文件**: `WDP_Basic_Test-<jobid>.out/.err` + `smoke_test_<jobid>.log`  - `COMPOUND`（默认 `2`）
-
-- **之前配置**: 1-16核心，单链或2链采样
-
-- **现在配置**: 32核心，4链并行采样  - `MODELS`（默认 `M0,M1,M2,M3,M5_SVI,M6_ENV1`）
-
-- **性能提升**: 
-
-  - 调试测试: 4倍提升 (1核→32核)---- 资源：`--cpus-per-task=16`，`--mem-per-cpu=3G`，`--time=12:00:00`。
-
-  - 基础验证: 4倍提升 (8核→32核)  
-
-  - 单化合物: 2倍提升 (16核→32核)
-
-  - 生产批量: 保持32核心满负荷
-
-## test1_completed.sh — 单化合物完整测试提交命令：
-
-### MCMC采样优化
-
-- **chains=4**: 4条独立采样链，提高收敛可靠性```bash
-
-- **cores=32**: 每条链充分利用多核心计算
-
-- **内存优化**: 96-98GB内存，支持大数据集高并发### 功能特性# 确保在项目根目录
+## test2_chemical.sh — 生产级批量分析- **错误隔离**: 分阶段执行，便于定位问题
 
 
 
----- **全模型测试**: M0, M1, M2, M3四种模型配置cd /path/to/WDP
+### 功能特性- **数据验证**: 逐个检查CDC、协变量、农药、空间数据  - 详细数据结构检查（CDC、协变量、农药、空间数据）
+
+- **大规模批量**: 多化合物×多模型×多滞后×多测量类型
+
+- **生产采样**: 4000/2000高质量采样，2链×16核心并行  ### 环境变量配置
+
+- **平衡配置**: 16核心，48GB内存，48小时时间
+
+- **完整覆盖**: Weight/Density测量，avg/max估算```bash- **最小模型**: M0基础模型，100/50采样  - 最小模型测试（M0，100/50样本）
 
 
 
-## 🎯 使用建议- **多滞后分析**: 5年和10年滞后效应sbatch Shell/test1_completed.sh
+### 环境变量配置# 可选覆盖默认值
+
+```bash
+
+export DISEASE="C81-C96"                # 疾病编码export DISEASE="C81-C96"        # 疾病编码- **快速完成**: 1小时内完成- **时间**：30分钟内完成。
+
+export COMPOUNDS="2,9,cat21,cat33"      # 多个化合物
+
+export MODELS="M0,M1,M2,M3"             # 全部基础模型export COMPOUND="2"             # 化合物ID
+
+```
+
+```- **资源**：2核心，3G内存。
+
+### 提交命令
+
+```bash
+
+cd /path/to/WDP  
+
+sbatch Shell/test2_chemical.sh### 提交命令### 提交命令
+
+```
+
+```bash
+
+**日志文件**: `WDP_Production-<jobid>.out/.err`
+
+cd /path/to/WDP```bash提交命令：
+
+---
+
+sbatch Shell/test0_small.sh
+
+## 🎯 16核心资源策略
+
+```cd /path/to/WDP```bash
+
+### 调度优势
+
+- **快速获得资源**: 16核心需求更容易满足，避免长时间排队
+
+- **稳定运行**: 降低被抢占的风险
+
+- **合理性能**: 2链×16核仍有良好并行度**日志文件**: `WDP_Basic_Test-<jobid>.out/.err` + `smoke_test_<jobid>.log`sbatch Shell/debug_test.shcd /path/to/WDP
 
 
 
-### 新用户工作流- **中等采样**: 1500/750采样，4链并行```
+### 与32核心对比
+
+| 配置 | 调度速度 | 性能 | 内存 | 适用场景 |
+
+|------|----------|------|------|----------|---```sbatch Shell/debug_test.sh
+
+| 32核心 | 慢，易排队 | 最高 | 96G+ | 资源充足时 |
+
+| **16核心** | **快速调度** | **良好** | **48G** | **日常使用推荐** |
+
+| 8核心 | 很快 | 较低 | 24G | 仅调试用 |
+
+## test1_completed.sh — 单化合物完整测试```
+
+### 性能评估
+
+- **采样速度**: 比32核心降低约40%，但仍远超串行
+
+- **总时间**: 考虑排队时间，实际可能更快完成
+
+- **收敛质量**: 2链采样足够大多数模型收敛### 功能特性**日志文件**: `WDP_Debug-<jobid>.out/.err` + `debug_<jobid>.log`日志：`WDP_Debug-<jobid>.out/.err` + `debug_<jobid>.log`
+
+
+
+---- **全模型测试**: M0, M1, M2, M3四种模型配置
+
+
+
+## 🎯 使用建议- **多滞后分析**: 5年和10年滞后效应
+
+
+
+### 新用户工作流- **中等采样**: 1500/750采样，4链×32核心并行
 
 1. **环境验证** → 运行 `debug_test.sh`
 
-2. **基础测试** → 运行 `test0_small.sh`  - **详细诊断**: 完整的收敛和效应分析日志：`WONDER_PyMC_OneChem_AllModels-<jobid>.out/.err`（位于项目根目录）
+2. **基础测试** → 运行 `test0_small.sh`  - **详细诊断**: 完整的收敛和效应分析------
 
 3. **模型验证** → 运行 `test1_completed.sh`
 
@@ -278,39 +286,39 @@ sbatch Shell/test2_chemical.sh
 
 
 
-### 资源利用策略### 环境变量配置---
+### 资源获取策略### 环境变量配置
 
-- **全核心利用**: 所有脚本都使用32核心，无资源浪费
+- **优先使用**: 16核心配置，快速获得资源
 
-- **内存充足**: 96-98GB配置，支持大数据集```bash
+- **高峰避开**: 避开集群使用高峰期提交```bash
 
-- **时间合理**: 从1小时调试到2天生产，梯度递增
+- **监控队列**: 使用 `squeue` 观察排队情况
 
-export DISEASE="C81-C96"        # 疾病编码  ## test2_chemical.sh — 完整化合物批量（生产）
+export DISEASE="C81-C96"        # 疾病编码  ## test0_small.sh — 基础验证测试## test0_small.sh — 小规模烟囱测试
 
 ### 采样质量建议
 
-- **快速验证**: debug (100/50), test0 (500/200)export COMPOUND="2"             # 化合物ID- 适用场景：多个化合物×全模型配置的正式运行。
+- **快速验证**: debug (100/50), test0 (500/200)export COMPOUND="2"             # 化合物ID
 
 - **标准分析**: test1 (1500/750)
 
-- **发表质量**: test2 (4000/2000)export MODELS="M0,M1,M2,M3"     # 模型类型- 环境变量可覆盖：
+- **发表质量**: test2 (4000/2000)export MODELS="M0,M1,M2,M3"     # 模型类型- 适用场景：首次上集群验证能否跑通端到端。
 
 
 
----```  - `DISEASE`（默认 `C81-C96`）
+---```
 
 
 
-## 📊 结果输出  - `COMPOUNDS`（默认 `2,9,cat21,cat33`）
+## 📊 结果输出### 功能特性- 默认：`disease=C81-C96`，`compound=2`，`models=M5_SVI,M6_ENV1`，`lag=10`，`estimate=avg`。
 
 
 
-### 文件结构### 提交命令  - `MODELS`（默认 `M0,M1,M2,M3,M5_SVI,M6_ENV1`）
+### 文件结构### 提交命令
 
 ```
 
-Result/PyMC_Results/```bash- 资源：单节点满配：`--cpus-per-task=32` + `--mem=98G` + `--time=1-00:00:00`。
+Result/PyMC_Results/```bash- **双阶段验证**: M0基础模型 → M1社会脆弱性模型- 资源：`--cpus-per-task=4`，`--mem-per-cpu=2G`，`--time=1:00:00`。
 
 ├── <DISEASE>_<COMPOUND>_Results.csv    # 主要结果文件
 
@@ -318,19 +326,343 @@ Result/PyMC_Results/```bash- 资源：单节点满配：`--cpus-per-task=32` + `
 
 └── debug_<jobid>.log                   # 调试日志
 
-```sbatch Shell/test1_completed.sh提交命令：
+```sbatch Shell/test1_completed.sh- **适中采样**: 500/200采样，2链并行
 
 
 
-### 结果内容``````bash
+### 结果内容```
 
 - **效应量**: RR per SD, RR per IQR, 四分位对比
 
-- **协变量效应**: 社会脆弱性、环境因子系数# 确保在项目根目录
+- **协变量效应**: 社会脆弱性、环境因子系数- **快速反馈**: 2小时内完成两个模型提交命令（**请确保在仓库根目录 WDP 下提交**）：
 
 - **诊断指标**: R-hat, ESS, WAIC收敛诊断
 
-- **元数据**: 时间戳、参数配置、样本量**日志文件**: `WDP_Single_Compound-<jobid>.out/.err`cd /path/to/WDP
+- **元数据**: 时间戳、参数配置、样本量**日志文件**: `WDP_Single_Compound-<jobid>.out/.err`
+
+
+
+---- **错误隔离**: 分阶段执行，便于定位问题```bash
+
+
+
+## 🛠️ 常用SLURM命令---
+
+
+
+### 队列监控# 确保在项目根目录
+
+```bash
+
+squeue -u $USER                          # 查看我的队列## test2_chemical.sh — 生产级批量分析
+
+squeue -p kshctest                       # 查看分区队列状况
+
+sinfo -p kshctest                        # 查看分区资源状况### 环境变量配置cd /path/to/WDP
+
+showq -u $USER                           # 显示详细队列信息
+
+```### 功能特性
+
+
+
+### 作业管理- **大规模批量**: 多化合物×多模型×多滞后×多测量类型```bashsbatch Shell/test0_small.sh
+
+```bash
+
+scontrol show job <jobid>                # 作业详情  - **生产采样**: 4000/2000高质量采样，4链×32核心并行  
+
+scancel <jobid>                          # 取消作业
+
+sstat -j <jobid> --format=JobID,MaxRSS   # 运行中资源- **全资源利用**: 32核心，98GB内存，48小时时间# 可选覆盖默认值```
+
+sacct -u $USER --format=JobID,State,MaxRSS,Elapsed  # 历史资源
+
+```- **完整覆盖**: Weight/Density测量，avg/max估算
+
+
+
+### 实时监控export DISEASE="C81-C96"        # 疾病编码日志：`WONDER_PyMC_Smoke_Sub-<jobid>.out/.err`（位于项目根目录）
+
+```bash
+
+# 查看作业输出### 环境变量配置
+
+tail -f WDP_Debug-<jobid>.out
+
+```bashexport COMPOUND="2"             # 化合物ID
+
+# 查看错误日志
+
+tail -f WDP_Debug-<jobid>.errexport DISEASE="C81-C96"                # 疾病编码
+
+
+
+# 查看节点资源使用export COMPOUNDS="2,9,cat21,cat33"      # 多个化合物```> **重要提示**: 脚本会自动检测项目根目录，但请务必在WDP仓库根目录下提交作业，以确保路径检测正确。
+
+ssh <node> htop
+
+```export MODELS="M0,M1,M2,M3"             # 全部基础模型
+
+
+
+---```
+
+
+
+## ⚠️ 故障排除
+
+
+
+### 常见问题1：作业一直排队 🚫### 提交命令### 提交命令---
+
+**症状**: 提交后长时间处于PENDING状态
+
+```bash
+
+**原因分析**:
+
+```bashcd /path/to/WDP  ```bash
+
+squeue -u $USER -o "%.8i %.9P %.30j %.8u %.2t %.10M %.6D %R"
+
+# 查看NODELIST(REASON)列：sbatch Shell/test2_chemical.sh
+
+# - Resources: 资源不足
+
+# - Priority: 优先级不够```cd /path/to/WDP## test1_completed.sh — 完整单模型测试
+
+# - QOSMaxCpuLimit: CPU配额限制
+
+```
+
+
+
+**解决方案**:**日志文件**: `WDP_Production-<jobid>.out/.err`sbatch Shell/test0_small.sh- 适用场景：对一个化合物跑全套模型，采样更充足以观测诊断。
+
+1. **降低资源需求** (已采用16核配置)
+
+2. **错峰提交**: 避开8-18点高峰期
+
+3. **检查配额**: `sacctmgr show assoc where user=$USER`
+
+---```- 环境变量可覆盖：
+
+### 常见问题2：数据列缺失（已修复 ✅）
+
+**状态**: 已修复。数据加载逻辑已更新，能正确处理CDC数据文件结构。
+
+
+
+### 常见问题3：项目根目录检测失败## 🚀 32核心性能优势  - `DISEASE`（默认 `C81-C96`）
+
+**错误信息**: `未找到 Code/PYMC/main.py`
+
+
+
+**解决方案**:
+
+```bash### 并行度对比**日志文件**: `WDP_Basic_Test-<jobid>.out/.err` + `smoke_test_<jobid>.log`  - `COMPOUND`（默认 `2`）
+
+# 确保在正确位置提交
+
+cd /path/to/WDP- **之前配置**: 1-16核心，单链或2链采样
+
+ls config.yaml Code/PYMC/main.py  # 确认文件存在
+
+sbatch Shell/debug_test.sh- **现在配置**: 32核心，4链并行采样  - `MODELS`（默认 `M0,M1,M2,M3,M5_SVI,M6_ENV1`）
+
+```
+
+- **性能提升**: 
+
+### 常见问题4：Conda环境问题
+
+**解决方案**:  - 调试测试: 4倍提升 (1核→32核)---- 资源：`--cpus-per-task=16`，`--mem-per-cpu=3G`，`--time=12:00:00`。
+
+```bash
+
+conda create -n pymc python=3.11 -y  - 基础验证: 4倍提升 (8核→32核)  
+
+conda activate pymc
+
+conda install -c conda-forge pymc=5.23.0  - 单化合物: 2倍提升 (16核→32核)
+
+```
+
+  - 生产批量: 保持32核心满负荷
+
+### 常见问题5：作业运行几分钟后失败
+
+**症状**: 作业提交后运行几分钟就失败，无实时输出## test1_completed.sh — 单化合物完整测试提交命令：
+
+
+
+**解决方案**:### MCMC采样优化
+
+1. **首先运行调试脚本**: `sbatch Shell/debug_test.sh`
+
+2. **查看详细日志**: `cat WDP_Debug-<jobid>.out`- **chains=4**: 4条独立采样链，提高收敛可靠性```bash
+
+3. **逐步增加复杂度**: debug → test0 → test1 → test2
+
+- **cores=32**: 每条链充分利用多核心计算
+
+---
+
+- **内存优化**: 96-98GB内存，支持大数据集高并发### 功能特性# 确保在项目根目录
+
+## 📈 性能优化
+
+
+
+### 集群适配优化
+
+- **CPU**: **16核心平衡配置** - 兼顾性能与资源可得性---- **全模型测试**: M0, M1, M2, M3四种模型配置cd /path/to/WDP
+
+- **内存**: **48GB配置** - 满足大数据集需求
+
+- **调度**: **快速获得资源** - 避免长时间排队
+
+- **网络**: 利用InfiniBand高速互联
+
+## 🎯 使用建议- **多滞后分析**: 5年和10年滞后效应sbatch Shell/test1_completed.sh
+
+### 采样策略优化
+
+- **调试**: 16核，小样本 (100/50) - 快速环境验证
+
+- **验证**: 16核，中样本 (500-1500/200-750) - 模型可行性确认
+
+- **生产**: 16核，大样本 (4000/2000) - 高质量研究结果### 新用户工作流- **中等采样**: 1500/750采样，4链并行```
+
+
+
+### MCMC并行优化1. **环境验证** → 运行 `debug_test.sh`
+
+```bash
+
+# 所有脚本统一配置2. **基础测试** → 运行 `test0_small.sh`  - **详细诊断**: 完整的收敛和效应分析日志：`WONDER_PyMC_OneChem_AllModels-<jobid>.out/.err`（位于项目根目录）
+
+--chains 2               # 2条独立采样链，足够收敛
+
+--cores 16               # 16核心并行计算  3. **模型验证** → 运行 `test1_completed.sh`
+
+--mem-per-cpu 3G         # 每核心3GB内存
+
+--cpus-per-task 16       # SLURM 16核心分配4. **批量生产** → 运行 `test2_chemical.sh`
+
+```
+
+
+
+---
+
+### 资源利用策略### 环境变量配置---
+
+## 💡 最佳实践
+
+- **全核心利用**: 所有脚本都使用32核心，无资源浪费
+
+### 资源策略
+
+1. **首选16核**: 平衡性能与可得性- **内存充足**: 96-98GB配置，支持大数据集```bash
+
+2. **监控队列**: 定期检查 `squeue -p kshctest`
+
+3. **错峰使用**: 晚上和周末提交长任务- **时间合理**: 从1小时调试到2天生产，梯度递增
+
+
+
+### 首次使用export DISEASE="C81-C96"        # 疾病编码  ## test2_chemical.sh — 完整化合物批量（生产）
+
+1. 运行 `debug_test.sh` 确认环境正常
+
+2. 检查输出日志确认16核心被正确使用### 采样质量建议
+
+3. 观察调度速度，确认快速获得资源
+
+- **快速验证**: debug (100/50), test0 (500/200)export COMPOUND="2"             # 化合物ID- 适用场景：多个化合物×全模型配置的正式运行。
+
+### 生产使用
+
+1. 使用 `test1_completed.sh` 验证单化合物效果- **标准分析**: test1 (1500/750)
+
+2. 确认收敛质量满意后，运行 `test2_chemical.sh`
+
+3. 定期检查 `sstat` 确认资源使用率- **发表质量**: test2 (4000/2000)export MODELS="M0,M1,M2,M3"     # 模型类型- 环境变量可覆盖：
+
+
+
+### 性能监控
+
+```bash
+
+# 实时查看CPU使用率---```  - `DISEASE`（默认 `C81-C96`）
+
+sstat -j <jobid> --format=JobID,AveCPU,MaxRSS
+
+
+
+# 查看调度等待时间
+
+sacct -j <jobid> --format=JobID,Submit,Start,End,Elapsed## 📊 结果输出  - `COMPOUNDS`（默认 `2,9,cat21,cat33`）
+
+```
+
+
+
+---
+
+### 文件结构### 提交命令  - `MODELS`（默认 `M0,M1,M2,M3,M5_SVI,M6_ENV1`）
+
+## 🔄 资源配额管理
+
+```
+
+### 检查配额
+
+```bashResult/PyMC_Results/```bash- 资源：单节点满配：`--cpus-per-task=32` + `--mem=98G` + `--time=1-00:00:00`。
+
+# 查看用户配额
+
+sacctmgr show assoc where user=$USER format=Cluster,Account,User,MaxCpus,MaxJobs├── <DISEASE>_<COMPOUND>_Results.csv    # 主要结果文件
+
+
+
+# 查看分区限制├── All_Results_Summary.csv             # 汇总表cd /path/to/WDP
+
+scontrol show partition kshctest
+
+└── debug_<jobid>.log                   # 调试日志
+
+# 查看当前使用量
+
+squeue -u $USER --format="%.8i %.12j %.8u %.2t %.10M %.6D %.6C"```sbatch Shell/test1_completed.sh提交命令：
+
+```
+
+
+
+### 配额策略
+
+- **CPU配额**: 通常限制同时使用的总CPU数### 结果内容``````bash
+
+- **作业数量**: 限制同时运行的作业数量
+
+- **队列优先级**: 影响调度顺序- **效应量**: RR per SD, RR per IQR, 四分位对比
+
+
+
+---- **协变量效应**: 社会脆弱性、环境因子系数# 确保在项目根目录
+
+
+
+*文档版本: v4.1 - 16核心平衡版*  - **诊断指标**: R-hat, ESS, WAIC收敛诊断
+
+*更新时间: 2025年9月29日*  
+
+*配置状态: 16核心×4脚本，快速调度优化*- **元数据**: 时间戳、参数配置、样本量**日志文件**: `WDP_Single_Compound-<jobid>.out/.err`cd /path/to/WDP
 
 
 

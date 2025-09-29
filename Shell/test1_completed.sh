@@ -4,7 +4,7 @@
 #SBATCH --job-name=WDP_Single_Compound
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu=3G
 #SBATCH --time=08:00:00
 #SBATCH --output=%x-%j.out
@@ -100,7 +100,7 @@ python Code/PYMC/main.py \
   --measure "Weight" \
   --estimate "avg" \
   --sampling-mode "test" \
-  --draws 1500 --tune 750 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-32} --target-accept 0.90 \
+  --draws 1500 --tune 750 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-16} --target-accept 0.90 \
   --config-path "config.yaml" --verbose
 
 log INFO "完成"

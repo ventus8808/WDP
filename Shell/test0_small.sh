@@ -4,7 +4,7 @@
 #SBATCH --job-name=WDP_Basic_Test
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu=3G
 #SBATCH --time=02:00:00
 #SBATCH --output=%x-%j.out
@@ -114,7 +114,7 @@ python -u Code/PYMC/main.py \
   --measure "Weight" \
   --estimate "avg" \
   --sampling-mode "test" \
-  --draws 500 --tune 200 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-32} --target-accept 0.85 \
+  --draws 500 --tune 200 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-16} --target-accept 0.85 \
   --config-path "config.yaml" --verbose 2>&1 | tee -a "smoke_test_${SLURM_JOB_ID:-$$}.log"
 
 PHASE1_EXIT_CODE=$?
@@ -128,7 +128,7 @@ if [ $PHASE1_EXIT_CODE -eq 0 ]; then
     --measure "Weight" \
     --estimate "avg" \
     --sampling-mode "test" \
-    --draws 500 --tune 200 --chains 4 --cores ${SLURM_CPUS_PER_TASK:-32} --target-accept 0.85 \
+    --draws 500 --tune 200 --chains 2 --cores ${SLURM_CPUS_PER_TASK:-16} --target-accept 0.85 \
     --config-path "config.yaml" --verbose 2>&1 | tee -a "smoke_test_${SLURM_JOB_ID:-$$}.log"
   
   PHASE2_EXIT_CODE=$?

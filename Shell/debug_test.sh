@@ -4,7 +4,7 @@
 #SBATCH --job-name=WDP_Debug
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu=3G
 #SBATCH --time=01:00:00
 #SBATCH --output=%x-%j.out
@@ -161,7 +161,7 @@ python -u Code/PYMC/main.py \
   --measure "Weight" \
   --estimate "avg" \
   --sampling-mode "test" \
-  --draws 100 --tune 50 --chains 4 --cores 32 --target-accept 0.8 \
+  --draws 100 --tune 50 --chains 2 --cores 16 --target-accept 0.8 \
   --config-path "config.yaml" --verbose \
   2>&1 | tee "debug_${SLURM_JOB_ID:-$$}.log"
 
