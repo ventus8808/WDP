@@ -13,9 +13,40 @@
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
-# 切到项目根目录（严格以脚本所在目录的上一级为准）
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
+# 切到项目根目录（增强路径检测逻辑，处理集群环境下的符号链接）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_ROOT=""
+
+# 方法1: 脚本所在目录的上一级（优先）
+if [ -f "${SCRIPT_DIR}/../config.yaml" ]; then
+  PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
+# 方法2: 使用git仓库根目录
+elif command -v git >/dev/null 2>&1; then
+  GIT_ROOT="$(cd "${SCRIPT_DIR}" && git rev-parse --show-toplevel 2>/dev/null || true)"
+  if [ -n "$GIT_ROOT" ] && [ -f "$GIT_ROOT/config.yaml" ]; then
+    PROJECT_ROOT="$GIT_ROOT"
+  fi
+fi
+
+# 方法3: 如果在Slurm环境，使用提交目录
+if [ -z "$PROJECT_ROOT" ] && [ -n "${SLURM_SUBMIT_DIR-}" ] && [ -f "${SLURM_SUBMIT_DIR}/config.yaml" ]; then
+  PROJECT_ROOT="$SLURM_SUBMIT_DIR"
+fi
+
+# 方法4: 最后回退到当前工作目录
+if [ -z "$PROJECT_ROOT" ] && [ -f "$PWD/config.yaml" ]; then
+  PROJECT_ROOT="$PWD"
+fi
+
+# 验证项目根目录
+if [ -z "$PROJECT_ROOT" ] || [ ! -f "$PROJECT_ROOT/config.yaml" ]; then
+  log ERROR "无法确定项目根目录。请确保在WDP仓库根目录下提交作业。"
+  log ERROR "当前脚本目录: $SCRIPT_DIR"
+  log ERROR "SLURM_SUBMIT_DIR: ${SLURM_SUBMIT_DIR-未设置}"
+  log ERROR "当前工作目录: $PWD"
+  exit 1
+fi
+
 cd "$PROJECT_ROOT" || { log ERROR "无法切换到项目根目录: $PROJECT_ROOT"; exit 1; }
 log INFO "项目根目录: $PROJECT_ROOT"
 

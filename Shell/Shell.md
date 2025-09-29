@@ -16,11 +16,15 @@
 - 默认：`disease=C81-C96`，`compound=2`，`models=M5_SVI,M6_ENV1`，`lag=10`，`estimate=avg`。
 - 资源：`--cpus-per-task=4`，`--mem-per-cpu=2G`，`--time=1:00:00`。
 
-提交命令（在仓库根目录 WDP 下）：
+提交命令（**请确保在仓库根目录 WDP 下提交**）：
 ```bash
+# 确保在项目根目录
+cd /path/to/WDP
 sbatch Shell/test0_small.sh
 ```
-日志：`logs/WONDER_Smoke-<jobid>.out/.err`
+日志：`WONDER_PyMC_Smoke_Sub-<jobid>.out/.err`（位于项目根目录）
+
+> **重要提示**: 脚本会自动检测项目根目录，但请务必在WDP仓库根目录下提交作业，以确保路径检测正确。
 
 ---
 
@@ -34,9 +38,11 @@ sbatch Shell/test0_small.sh
 
 提交命令：
 ```bash
+# 确保在项目根目录
+cd /path/to/WDP
 sbatch Shell/test1_completed.sh
 ```
-日志：`logs/WONDER_OneChem_<jobid>.out/.err`
+日志：`WONDER_PyMC_OneChem_AllModels-<jobid>.out/.err`（位于项目根目录）
 
 ---
 
@@ -50,9 +56,11 @@ sbatch Shell/test1_completed.sh
 
 提交命令：
 ```bash
+# 确保在项目根目录
+cd /path/to/WDP
 sbatch Shell/test2_chemical.sh
 ```
-日志：`logs/WONDER_AllChem_<jobid>.out/.err`
+日志：`WONDER_PyMC_AllChem-<jobid>.out/.err`（位于项目根目录）
 
 ---
 
@@ -72,3 +80,54 @@ scontrol show job <jobid>                # 作业详情
 sstat -j <jobid> --format=JobID,MaxRSS   # 运行中资源
 sacct -u $USER --format=JobID,State,...  # 历史资源
 ```
+
+## 故障排除
+
+### 常见错误1：项目根目录检测失败
+**错误信息**：`未找到 Code/PYMC/main.py，请检查项目根目录是否正确`
+
+**原因**：脚本在集群环境下无法正确检测项目根目录。
+
+**解决方案**：
+1. **确保在正确位置提交**：
+   ```bash
+   cd /path/to/your/WDP  # 切换到WDP仓库根目录
+   ls config.yaml        # 确认config.yaml存在
+   sbatch Shell/test0_small.sh
+   ```
+
+2. **检查目录结构**：
+   ```bash
+   # 项目根目录应包含以下文件/目录：
+   config.yaml
+   Code/PYMC/main.py
+   Shell/test0_small.sh
+   ```
+
+3. **手动指定项目路径**（如果自动检测仍失败）：
+   ```bash
+   # 编辑脚本，在PROJECT_ROOT检测逻辑后添加：
+   PROJECT_ROOT="/your/actual/WDP/path"  # 手动指定
+   ```
+
+### 常见错误2：Conda环境激活失败
+**错误信息**：`激活pymc失败`
+
+**解决方案**：
+1. 确保pymc环境已创建：
+   ```bash
+   conda create -n pymc python=3.11 -y
+   conda activate pymc
+   # 安装必需包...
+   ```
+
+2. 检查conda初始化脚本路径是否正确（脚本会自动检测常见位置）
+
+### 常见错误3：权限或路径问题
+**解决方案**：
+1. 确保对项目目录有读写权限
+2. 检查SLURM_SUBMIT_DIR环境变量是否正确设置
+3. 使用绝对路径提交作业：
+   ```bash
+   sbatch /full/path/to/WDP/Shell/test0_small.sh
+   ```
