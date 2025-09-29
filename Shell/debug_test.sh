@@ -5,8 +5,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
-#SBATCH --mem-per-cpu=4G
-#SBATCH --time=30:00
+#SBATCH --mem-per-cpu=3G
+#SBATCH --time=30:00:00
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
 
@@ -70,32 +70,82 @@ fi
 log INFO "激活后Python: $(which python)"
 log INFO "PyMC版本: $(python -c 'import pymc; print(pymc.__version__)')"
 
-# 数据可用性测试
-log INFO "=== 数据可用性测试 ==="
+# 数据结构检查
+log INFO "=== 数据结构检查 ==="
 export PYTHONUNBUFFERED=1
 
 python -u -c "
 import sys
 sys.path.insert(0, 'Code/PYMC')
-from Utils_Data import WDPDataLoader
-from Utils_Others import check_data_availability
+import pandas as pd
+from pathlib import Path
 
-print('测试数据加载...')
+print('=== 检查CDC数据文件结构 ===')
 try:
+    cdc_file = Path('Data/Processed/CDC/AAMR_C81-C96.csv')
+    if cdc_file.exists():
+        df = pd.read_csv(cdc_file, nrows=5)  # 只读前5行检查结构
+        print(f'文件存在: {cdc_file}')
+        print(f'数据形状: {df.shape}')
+        print(f'列名: {list(df.columns)}')
+        print('前几行数据:')
+        print(df.head())
+        
+        # 检查是否有Deaths相关列
+        deaths_cols = [col for col in df.columns if 'death' in col.lower()]
+        print(f'Deaths相关列: {deaths_cols}')
+        
+        # 检查是否有Type相关列
+        type_cols = [col for col in df.columns if 'type' in col.lower()]
+        print(f'Type相关列: {type_cols}')
+        
+    else:
+        print(f'❌ 文件不存在: {cdc_file}')
+        
+except Exception as e:
+    print(f'❌ 数据文件检查失败: {e}')
+    import traceback
+    traceback.print_exc()
+
+print('\\n=== 详细数据加载测试 ===')
+try:
+    from Utils_Data import WDPDataLoader
+    
     loader = WDPDataLoader()
     print('✅ 数据加载器初始化成功')
     
-    # 检查数据可用性
+    # 直接尝试加载CDC数据
+    print('直接加载CDC数据...')
+    cdc_df = loader.load_mortality_data('C81-C96')
+    print(f'✅ CDC数据加载成功，形状: {cdc_df.shape}')
+    print(f'列名: {list(cdc_df.columns)}')
+    print(f'Deaths_Type值: {cdc_df[\"Deaths_Type\"].value_counts()}')
+    
+    # 加载其他数据
+    print('\\n加载协变量数据...')
+    cov_df = loader.load_covariate_data()
+    print(f'✅ 协变量数据加载成功，形状: {cov_df.shape}')
+    
+    print('\\n加载农药数据...')
+    pest_df = loader.load_pesticide_data()
+    print(f'✅ 农药数据加载成功，形状: {pest_df.shape}')
+    
+    print('\\n加载空间邻接数据...')
+    adj_matrix, county_fips = loader.load_spatial_adjacency()
+    print(f'✅ 空间数据加载成功，县数: {len(county_fips)}')
+    
+    print('\\n=== 综合数据可用性检查 ===')
+    from Utils_Others import check_data_availability
     report = check_data_availability('C81-C96', '2')
-    print(f'数据可用性: {report[\"data_available\"]}')
+    print(f'综合检查结果: {report[\"data_available\"]}')
     if not report['data_available']:
         for issue in report['issues']:
             print(f'  问题: {issue}')
     else:
-        print('✅ 数据检查通过')
+        print('✅ 所有数据检查通过')
     
 except Exception as e:
-    print(f'❌ 数据检查失败: {e}')
+    print(f'❌ 数据加载失败: {e}')
     import traceback
     traceback.print_exc()
     sys.exit(1)

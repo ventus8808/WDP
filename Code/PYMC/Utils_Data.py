@@ -92,23 +92,40 @@ class WDPDataLoader:
         
         print(f"加载疾病数据: {cdc_file}")
         
-        # --- START: 修改建议 ---
-        # 为关键列指定更节省内存的类型
-        dtype_spec = {
-            'COUNTY_FIPS': str, # 始终以字符串形式读取FIPS以保留前导零
-            'Year': 'int16',
-            'Population': 'float64', # 先读为浮点数以处理可能的空值
-            'Deaths_Type': 'category', # 如果类型不多，category很高效
-        }
-        df = pd.read_csv(cdc_file, dtype=dtype_spec)
-        # --- END: 修改建议 ---
+        # 先读取基本数据，不指定可能不存在的列类型
+        # 先读取数据，让pandas自动推断类型，避免类型冲突
+        try:
+            df = pd.read_csv(cdc_file)
+            print(f"数据文件列: {list(df.columns)}")
+            print(f"数据形状: {df.shape}")
+        except Exception as e:
+            raise ValueError(f"读取CDC数据文件失败: {e}")
         
-        # 验证必需的列
+        # 后续手动转换类型
+        if 'COUNTY_FIPS' in df.columns:
+            df['COUNTY_FIPS'] = df['COUNTY_FIPS'].astype(str)
+        if 'Year' in df.columns:
+            df['Year'] = pd.to_numeric(df['Year'], errors='coerce').astype('Int64')
+        if 'Population' in df.columns:
+            df['Population'] = pd.to_numeric(df['Population'], errors='coerce')
+        if 'Deaths_Type' in df.columns:
+            df['Deaths_Type'] = df['Deaths_Type'].astype('category')
+        
+        # 验证必需的列（现在要求Deaths_Type必须存在）
         required_cols = ['COUNTY_FIPS', 'Year', 'Deaths_Type', 'Population']
         missing_cols = [col for col in required_cols if col not in df.columns]
         
         if missing_cols:
             raise ValueError(f"缺少必需的列: {missing_cols}")
+        
+        # 如果没有Deaths_Type列，但有Deaths列，创建一个默认的Deaths_Type
+        if 'Deaths_Type' not in df.columns:
+            print("⚠️  未找到Deaths_Type列，假设所有数据为观测数据")
+            df['Deaths_Type'] = 'observed'  # 默认为观测数据
+            
+        # 如果有Deaths列但没有Deaths_Observed列，复制
+        if 'Deaths' in df.columns and 'Deaths_Observed' not in df.columns:
+            df['Deaths_Observed'] = df['Deaths']
         
         # 处理审查数据
         df = self._process_censored_data(df)
@@ -140,7 +157,10 @@ class WDPDataLoader:
         # 复制数据框避免修改原始数据
         df = df.copy()
         
-        # 为观测数据和审查数据创建列
+        # 检查数据是否已经包含必要的死亡数据列
+        print("检查死亡数据列...")
+        
+        # 确保必要的列存在，如果不存在则创建
         if 'Deaths_Observed' not in df.columns:
             df['Deaths_Observed'] = np.nan
         if 'Deaths_Censored_Lower' not in df.columns:
@@ -148,23 +168,31 @@ class WDPDataLoader:
         if 'Deaths_Censored_Upper' not in df.columns:
             df['Deaths_Censored_Upper'] = np.nan
         
-        # 处理观测数据
+        # 数据清理：确保数值类型正确
         observed_mask = df['Deaths_Type'] == 'observed'
-        if observed_mask.any():
-            # 检查是否有Deaths列，如果没有则使用Deaths_Observed列
-            if 'Deaths' in df.columns:
-                df.loc[observed_mask, 'Deaths_Observed'] = df.loc[observed_mask, 'Deaths'].fillna(0)
-            elif 'Deaths_Observed' in df.columns:
-                # 如果Deaths_Observed列已存在且有数据，保持不变
-                pass
-            else:
-                print("⚠️  警告: 既没有Deaths列也没有Deaths_Observed列数据")
-        
-        # 处理审查数据
         censored_mask = df['Deaths_Type'] == 'censored'
+        missing_mask = df['Deaths_Type'] == 'missing'
+        
+        print(f"观测记录数: {observed_mask.sum()}")
+        print(f"审查记录数: {censored_mask.sum()}")
+        if missing_mask.any():
+            print(f"缺失记录数: {missing_mask.sum()} (将被移除)")
+            # 移除missing类型的记录
+            df = df[~missing_mask].copy()
+            # 重新计算掩码
+            observed_mask = df['Deaths_Type'] == 'observed'
+            censored_mask = df['Deaths_Type'] == 'censored'
+        
+        # 对于观测数据，确保 Deaths_Observed 有值
+        if observed_mask.any():
+            # 将空值填充为0（表示没有死亡）
+            df.loc[observed_mask, 'Deaths_Observed'] = df.loc[observed_mask, 'Deaths_Observed'].fillna(0)
+        
+        # 对于审查数据，确保区间值存在
         if censored_mask.any():
-            df.loc[censored_mask, 'Deaths_Censored_Lower'] = 1
-            df.loc[censored_mask, 'Deaths_Censored_Upper'] = 9
+            # 如果审查数据的区间值为空，使用默认值1-9
+            df.loc[censored_mask, 'Deaths_Censored_Lower'] = df.loc[censored_mask, 'Deaths_Censored_Lower'].fillna(1)
+            df.loc[censored_mask, 'Deaths_Censored_Upper'] = df.loc[censored_mask, 'Deaths_Censored_Upper'].fillna(9)
         
         return df
     
