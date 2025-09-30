@@ -1,0 +1,161 @@
+[2025-09-30 11:07:28] [INFO] - 项目根目录: /public/home/acf4pijnzl/WDP
+[2025-09-30 11:07:28] [INFO] - Test1: 开始快速冒烟测试...
+[11:07:32] WDP PyMC分析系统启动...
+[11:07:32] Python版本: 3.11.13 (main, Jun  5 2025, 13:12:00) [GCC 11.2.0]
+[11:07:32] 工作目录: /public/home/acf4pijnzl/WDP
+WDP PyMC分析系统启动
+[11:07:32] 疾病: ['C81-C96']
+[11:07:32] 化合物: ['2']
+[11:07:32] 模型: ['M0']
+[11:07:32] 滞后: [10]
+[11:07:32] 测量: ['Weight']
+WDP PyMC分析系统初始化完成
+采样模式: test
+输出目录: /public/home/acf4pijnzl/WDP/Result/PyMC_Results
+采样配置: draws=100, tune=50, chains=1, cores=8, target_accept=0.8
+
+================================================================================
+开始分析: C81-C96 - 2 - M0
+================================================================================
+检查数据可用性...
+加载疾病数据: Data/Processed/CDC/AAMR_C81-C96.csv
+数据文件列: ['COUNTY_FIPS', 'Year', 'Population', 'Deaths_Observed', 'Deaths_Censored_Lower', 'Deaths_Censored_Upper', 'Deaths_Type']
+数据形状: (69234, 7)
+检查死亡数据列...
+观测记录数: 29805
+审查记录数: 39298
+缺失记录数: 131 (将被移除)
+加载了 69103 条记录，覆盖 3147 个县，22 个年份
+加载协变量数据: Data/Processed/PCA/PCA_Master_Covariables.csv
+找到PCA分数列: ['SVI_PC1', 'ENV_PC1', 'ENV_PC2', 'ENV_PC3']
+加载农药数据: Data/Processed/Pesticide/PNSP.csv
+加载邻接数据: Data/Processed/Socioeconomic/County_Adjacency_List.csv
+构建邻接矩阵: 3223×3223，18962 条邻接关系
+✅ 数据检查通过
+准备模型数据...
+
+=== 准备模型数据 ===
+疾病: C81-C96
+化合物: 2
+模型: M0
+滞后: 10年
+加载疾病数据: Data/Processed/CDC/AAMR_C81-C96.csv
+数据文件列: ['COUNTY_FIPS', 'Year', 'Population', 'Deaths_Observed', 'Deaths_Censored_Lower', 'Deaths_Censored_Upper', 'Deaths_Type']
+数据形状: (69234, 7)
+检查死亡数据列...
+观测记录数: 29805
+审查记录数: 39298
+缺失记录数: 131 (将被移除)
+加载了 69103 条记录，覆盖 3147 个县，22 个年份
+加载协变量数据: Data/Processed/PCA/PCA_Master_Covariables.csv
+找到PCA分数列: ['SVI_PC1', 'ENV_PC1', 'ENV_PC2', 'ENV_PC3']
+加载邻接数据: Data/Processed/Socioeconomic/County_Adjacency_List.csv
+构建邻接矩阵: 3223×3223，18962 条邻接关系
+加载农药数据: Data/Processed/Pesticide/PNSP.csv
+输入 '2' (estimate='avg') 被解析为列: 'chem2_avg'
+识别到年份列: YEAR，县列: COUNTY_FIPS
+正在计算 10 年滞后暴露，请稍候...
+💡 保持面板数据结构: 县×年组合保留
+滞后暴露数据: 33759行 (包含零暴露对照组)
+计算滞后暴露: 2 -> 列 chem2_avg -> lag10年
+合并数据...
+合并协变量后: 69103 -> 67786 行 (排除 1317 行)
+合并暴露后: 67786 -> 33137 行 (排除 34649 行)
+
+=== 数据摘要 ===
+县数: 3223
+年数: 11
+协变量数: 0
+观测点数: 14304
+审查点数: 18822
+协变量: []
+拟合BYM2模型...
+
+=== BYM2模型分析 ===
+疾病: C81-C96
+化合物: 2
+模型: M0
+构建BYM2模型 - M0
+县数: 3223, 年数: 11, 协变量数: 0
+观测点: 14304, 审查点: 18822
+Debugging data preparation...
+y_obs: [11 11 10 11 11 29 37 46 47 39]
+y_cens_lower: [1 1 1 1 1 1 1 1 1 1]
+y_cens_upper: [9 9 9 9 9 9 9 9 9 9]
+n_obs: <IntegerArray>
+[ 55514,  55347,  55416,  55504,  55869, 179406, 182265, 186717, 190790,
+ 195540,
+ ...
+   9899,   9799,   9813,  43534,  23265,  21025,   7885,   7208,   7201,
+   6967]
+Length: 14304, dtype: Int32
+n_cens: <IntegerArray>
+[54135, 54571, 55267, 55246, 55395, 55601, 27657, 27457, 27119, 27201,
+ ...
+  8064,  7805,  7266,  7108,  7082,  7158,  7234,  7236,  6927,  6927]
+Length: 18822, dtype: Int32
+
+[11:07:55] ===== 开始MCMC采样 =====
+[11:07:55] 采样配置: {'draws': 100, 'tune': 50, 'chains': 1, 'cores': 8, 'target_accept': 0.8}
+[11:07:55] CPU检测: 8 可用
+[11:07:55] 采样策略: jitter+adapt_diag
+[11:07:55] 并行配置: 1 chains, 8 cores
+[11:07:55] 开始初始化采样器...
+[11:07:55] 启动NUTS采样器...
+[11:07:55] 预计采样时间: ~1.0 分钟
+                                                                                
+                              Step      Grad      Sampli…                       
+  Progre…   Draws   Diverg…   size      evals     Speed     Elapsed   Remaini…  
+ ────────────────────────────────────────────────────────────────────────────── 
+  ━━━━━━━   150     0         0.00      1023      10.95     0:27:11   0:00:00   
+                                                  s/draws                       
+                                                                                
+[11:35:45] ✅ MCMC采样完成!
+[11:35:45] 开始后验预测采样...
+[11:35:45] ✅ 后验预测完成!
+
+[11:35:45] === 收敛诊断 ===
+最大R̂: nan
+ℹ️ R̂ 无法可靠估计（样本过少或变量不可用）
+最小ESS (bulk): 1
+最小ESS (tail): 13
+⚠️  警告: ESS (bulk) < 400，需要更多样本
+⚠️  警告: ESS (tail) < 400，需要更多样本
+提取分析结果...
+
+=== 结果提取 ===
+
+=== 分析结果摘要 ===
+  RR (per SD):     0.990 (0.980, 1.002)
+  RR (Q4 vs Q1):   0.978 (0.960, 1.003)
+  诊断 (R-hat):    NA
+  诊断 (ESS):      17
+结果已追加到: /public/home/acf4pijnzl/WDP/Result/PyMC_Results/C81-C96_2_Results.csv
+
+============================================================
+WDP PyMC分析摘要
+============================================================
+疾病编码: C81-C96
+化合物: 2
+模型类型: M0
+滞后年份: 10
+测量类型: Weight
+------------------------------------------------------------
+数据统计:
+  县数: 3223
+  年数: 11
+  观测点: 14304
+  审查点: 18822
+  协变量数: 0
+------------------------------------------------------------
+采样统计:
+  链数: 1
+  每链样本数: 100
+  总样本数: 100
+  ⚠️  收敛统计计算失败: float() argument must be a string or a real number, not 'Dataset'
+============================================================
+✅ 分析完成！结果保存到: /public/home/acf4pijnzl/WDP/Result/PyMC_Results/C81-C96_2_Results.csv
+
+🎉 分析成功完成！
+结果文件: /public/home/acf4pijnzl/WDP/Result/PyMC_Results/C81-C96_2_Results.csv
+[2025-09-30 11:35:56] [INFO] - ✅ Test1: 快速冒烟测试完成！

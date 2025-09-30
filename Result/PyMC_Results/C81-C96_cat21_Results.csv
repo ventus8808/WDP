@@ -1,0 +1,2 @@
+Timestamp,Disease,Exposure,Lag,Model,RR_per_SD,RR_per_IQR,RR_Q1_vs_Q1,RR_Q2_vs_Q1,RR_Q3_vs_Q1,RR_Q4_vs_Q1,P_Value,R_hat,ESS_bulk,WAIC,N_Counties,N_Records,Status_Message,Category,Measure,Estimate
+2025-09-30 08:13:42,C81-C96,cat21,5,M0,"0.985 (0.977, 0.993)","0.979 (0.968, 0.991)",1.0 (Reference),"0.987 (0.980, 0.994)","0.977 (0.964, 0.990)","0.968 (0.951, 0.986)",0.000***,1.0000,7439,NA,3223,51188,SUCCESS,Unknown,Weight,avg
