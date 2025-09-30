@@ -8,8 +8,8 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=3500M
 #SBATCH --time=03:00:00
-#SBATCH --output=logs/Test1_Smoke_%j.out
-#SBATCH --error=logs/Test1_Smoke_%j.err
+#SBATCH --output=%x-%j.out
+#SBATCH --error=%x-%j.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -32,8 +32,7 @@ fi
 cd "$PROJECT_ROOT" || exit 1
 log INFO "项目根目录: $PROJECT_ROOT"
 
-# 确保logs目录存在
-mkdir -p logs
+# 日志将输出到当前目录
 
 # 激活conda环境
 set +u

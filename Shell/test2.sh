@@ -6,10 +6,10 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=48G
+#SBATCH --mem-per-cpu=3500M
 #SBATCH --time=1-00:00:00  # 申请1天时间以确保完成
-#SBATCH --output=logs/Test2_SingleFull_%j.out
-#SBATCH --error=logs/Test2_SingleFull_%j.err
+#SBATCH --output=%x-%j.out
+#SBATCH --error=%x-%j.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -32,8 +32,7 @@ fi
 cd "$PROJECT_ROOT" || exit 1
 log INFO "项目根目录: $PROJECT_ROOT"
 
-# 确保logs目录存在
-mkdir -p logs
+# 日志将输出到当前目录
 
 # 激活conda环境
 set +u
