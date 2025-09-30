@@ -458,9 +458,11 @@ class WDPDataLoader:
         df[year_col] = pd.to_numeric(df[year_col], errors='coerce')
         df = df.sort_values(by=[county_col, year_col])
 
-        # 创建一个包含所有县和完整年份范围的 MultiIndex
+        # 获取原始年份范围（不扩展）
         all_counties = df[county_col].unique()
-        year_range = range(df[year_col].min(), df[year_col].max() + 1 + lag_years)
+        min_year = df[year_col].min()
+        max_year = df[year_col].max()
+        year_range = range(min_year, max_year + 1)
         multi_index = pd.MultiIndex.from_product([all_counties, year_range], names=[county_col, year_col])
 
         # 扩展 DataFrame 以填补缺失的年份，用0填充暴露值
@@ -472,27 +474,24 @@ class WDPDataLoader:
             lambda x: x.rolling(window=lag_years, closed='left').mean()
         )
 
-        # 🚀 性能优化：将时间序列压缩为单一暴露值
-        # 计算每个县在整个时间窗口内的滚动平均值的总平均（排除NaN）
-        county_exposure = df_full.groupby(county_col)['rolling_avg'].agg(
-            lambda x: x.dropna().mean() if len(x.dropna()) > 0 else 0
-        ).reset_index()
-
         # 生成最终的滞后暴露列名
         exposure_col_name = f'{compound}_{actual_estimate_type}_lag{lag_years}'
-        county_exposure = county_exposure.rename(columns={'rolling_avg': exposure_col_name})
+        df_full = df_full.rename(columns={'rolling_avg': exposure_col_name})
 
-        # 🔥 关键优化：不再保留年份维度，每个县只有一个暴露值
-        # 这将数据从 N县×M年 压缩到 N县×1，大幅减少计算量
+        # 保持面板数据结构：保留所有县×年组合，不压缩
+        # 只保留有效的滞后暴露值（dropna已隐式完成年份过滤）
+        df_full = df_full.dropna(subset=[exposure_col_name])
         
-        # 统一列名，注意：这里不包含Year列！
-        lagged_df = county_exposure.rename(columns={county_col: 'COUNTY_FIPS'})
+        # 统一列名：县列和年列都保留
+        lagged_df = df_full.rename(columns={county_col: 'COUNTY_FIPS', year_col: 'Year'})
+        lagged_df = lagged_df[['COUNTY_FIPS', 'Year', exposure_col_name]]
         
-        print(f"💡 性能优化: 将时间序列暴露压缩为每县单一值")
-        print(f"数据压缩: {len(df_full)}行 -> {len(lagged_df)}行 (减少 {len(df_full)-len(lagged_df)} 行)")
+        print(f"💡 保持面板数据结构: 县×年组合保留")
+        print(f"滞后暴露数据: {len(lagged_df)}行 (包含零暴露对照组)")
         
-        # 移除全为0的县（这些县可能没有有效的暴露数据）
-        lagged_df = lagged_df[lagged_df[exposure_col_name] > 0]
+        # 🚨 重要分析决策：保留零暴露记录以避免选择偏倚
+        # 零暴露是重要的对照组，删除会引入偏倚并夸大关联强度
+        # lagged_df = lagged_df[lagged_df[exposure_col_name] > 0]  # 已注释掉
         
         print(f"计算滞后暴露: {compound} -> 列 {compound_col} -> lag{lag_years}年")
         
