@@ -472,22 +472,27 @@ class WDPDataLoader:
             lambda x: x.rolling(window=lag_years, closed='left').mean()
         )
 
+        # 🚀 性能优化：将时间序列压缩为单一暴露值
+        # 计算每个县在整个时间窗口内的滚动平均值的总平均（排除NaN）
+        county_exposure = df_full.groupby(county_col)['rolling_avg'].agg(
+            lambda x: x.dropna().mean() if len(x.dropna()) > 0 else 0
+        ).reset_index()
+
         # 生成最终的滞后暴露列名
         exposure_col_name = f'{compound}_{actual_estimate_type}_lag{lag_years}'
-        df_full = df_full.rename(columns={'rolling_avg': exposure_col_name})
+        county_exposure = county_exposure.rename(columns={'rolling_avg': exposure_col_name})
 
-        # 滞后暴露的年份应该与死亡年份对齐，所以将年份加 lag_years 是不正确的。
-        # 正确的做法是直接在原始年份上计算历史暴露。
-        # 我们需要的是 `mortality_year` 对应的 `exposure_year` 的历史平均。
-        # 因此，我们直接返回带有 `exposure_col_name` 的 df_full，在合并时，
-        # `mortality_df` 中的 `Year` 会自动匹配 `df_full` 中计算好的 `Year` 的滞后值。
-
-        # 统一列名
-        lagged_df = df_full[[county_col, year_col, exposure_col_name]].copy()
-        lagged_df = lagged_df.rename(columns={county_col: 'COUNTY_FIPS', year_col: 'Year'})
-
-        # 移除全为NA的行（这些是窗口期不足导致的）
-        lagged_df = lagged_df.dropna(subset=[exposure_col_name])
+        # 🔥 关键优化：不再保留年份维度，每个县只有一个暴露值
+        # 这将数据从 N县×M年 压缩到 N县×1，大幅减少计算量
+        
+        # 统一列名，注意：这里不包含Year列！
+        lagged_df = county_exposure.rename(columns={county_col: 'COUNTY_FIPS'})
+        
+        print(f"💡 性能优化: 将时间序列暴露压缩为每县单一值")
+        print(f"数据压缩: {len(df_full)}行 -> {len(lagged_df)}行 (减少 {len(df_full)-len(lagged_df)} 行)")
+        
+        # 移除全为0的县（这些县可能没有有效的暴露数据）
+        lagged_df = lagged_df[lagged_df[exposure_col_name] > 0]
         
         print(f"计算滞后暴露: {compound} -> 列 {compound_col} -> lag{lag_years}年")
         

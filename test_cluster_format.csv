@@ -1,6 +1,0 @@
-COUNTY_FIPS,Year,County,Deaths,Population,CMR,CMR_SE,AAMR,AAMR_SE
-1001,1999,"Autauga County, AL",,42963,,,,
-1001,2000,"Autauga County, AL",,43671,,,,
-1001,2001,"Autauga County, AL",,44889,,,,
-1001,2002,"Autauga County, AL",11.0,45909,,7.22,,9.04
-1001,2003,"Autauga County, AL",,46800,,,,

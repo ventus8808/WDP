@@ -97,6 +97,18 @@ data_sources:
     processed: "Data/Processed/Environmental"
   tiger:
     shapefile: "Data/Original/County Shapeline/tl_2015_us_county.shp"
+  
+  # EPA Environmental Quality Index数据
+  epa_eqi:
+    original: "Data/Original/EPA EQI"
+    processed: "Data/Processed/EQI"
+    download_urls:
+      base: "https://www.epa.gov/enviromatics-epa-environmental-quality-index"
+      filename_pattern_0005: "00_05_EQI.csv"
+      filename_pattern_0610: "06_10_EQI.csv"
+    years:
+      period1: "2000-2005"
+      period2: "2006-2010"
 
   # Socioeconomic Data
   socioeconomic:

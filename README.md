@@ -47,6 +47,7 @@ WDP/
 │   │   ├── CDC_*.py             # CDC data cleaning (AAMR, Death, Location, Urbanization)
 │   │   ├── County_Adjacency.py  # Spatial adjacency matrix generation
 │   │   ├── ENV_*.py             # Environmental data processing (GEE, LUR, NLDAS)
+│   │   ├── EQI_*.py             # Environmental Quality Index data processing
 │   │   ├── PNSP_*.py            # Pesticide data processing (Weight and Density)
 │   │   └── SE_*.py              # Socioeconomic data processing
 │   ├── Download/                # Data download scripts
@@ -69,6 +70,7 @@ WDP/
 │   │   ├── BEA/                 # Bureau of Economic Analysis
 │   │   ├── CACES LUR/           # Air pollution data
 │   │   ├── County Shapeline/    # Geographic boundary files
+│   │   ├── EPA EQI/             # Environmental Quality Index data
 │   │   ├── GEE/                 # Google Earth Engine exports
 │   │   ├── LAUS/                # Labor force statistics
 │   │   ├── NLDAS/               # Meteorological data
@@ -79,6 +81,7 @@ WDP/
 │   └── Processed/               # Cleaned, analysis-ready datasets
 │       ├── CDC/                 # Mortality and geographic data
 │       ├── Environmental/       # Climate and land use data
+│       ├── EQI/                 # Environmental Quality Index data
 │       ├── PCA/                 # Principal component analysis results
 │       ├── Pesticide/           # Pesticide usage and density data
 │       └── Socioeconomic/       # Economic and demographic indicators
@@ -121,8 +124,17 @@ This project integrates data from multiple public sources to construct a compreh
     - **CACES LUR**: Air pollution data (O3, CO, SO2, NO2, PM10, PM2.5).
     - **GEE (Google Earth Engine)**: Land cover (NLCD) and surface water (JRC) data.
     - **NLDAS**: Meteorological data (temperature, precipitation, wind, etc.).
+    - **EPA EQI**: Environmental Quality Index data (2000-2010).
 - **Content**: Environmental and climate-related variables at the county level.
-- **Key Files**: `Data/Original/CACES LUR/`, `Data/Original/GEE/`, `Data/Original/NLDAS/`
+- **Key Files**: `Data/Original/CACES LUR/`, `Data/Original/GEE/`, `Data/Original/NLDAS/`, `Data/Original/EPA EQI/`
+
+### 3.5. Environmental Quality Index (EPA EQI)
+- **Source**: EPA Environmental Quality Index (EQI)
+- **Content**: County-level environmental quality indices for air, water, land, built, and sociodemographic domains.
+- **Years**: 2000-2005 and 2006-2010
+- **Key Files**: 
+    - Raw data: `Data/Original/EPA EQI/00_05_EQI.csv`, `Data/Original/EPA EQI/06_10_EQI.csv`
+    - Processed data: `Data/Processed/EQI/EQI0005.csv`, `Data/Processed/EQI/EQI0610.csv`
 
 ## 4. Data Cleaning
 
@@ -164,6 +176,15 @@ The `Code/Clean/` directory contains scripts for processing raw data into analys
     - **Air Pollution**: `O3`, `CO`, `SO2`, `NO2`, `PM10`, `PM25`.
     - **Land Use**: `nlcd_forest_km2`, `nlcd_urban_km2`, `nlcd_agriculture_km2`.
     - **Meteorology**: `tas_mean_annual` (temperature), `prcp_sum_annual` (precipitation).
+
+### 4.5. Environmental Quality Index (EPA EQI) Processing
+- **Scripts**: `EQI_0005.py`, `EQI_0610.py`
+- **Output**: `Data/Processed/EQI/`
+- **Description**: Processes the EPA Environmental Quality Index data for two time periods (2000-2005 and 2006-2010). The scripts calculate quintile rankings for national and urban-rural stratified indices.
+- **Key Variables**:
+    - **EQI**: Overall Environmental Quality Index (1-5 quintile ranking)
+    - **Domain-specific EQIs**: `EQI_air`, `EQI_water`, `EQI_land`, `EQI_built`, `EQI_sociod`
+    - **RUCC-stratified EQIs**: `RUCC_EQI`, `RUCC_EQI_air`, `RUCC_EQI_water`, `RUCC_EQI_land`, `RUCC_EQI_built`, `RUCC_EQI_sociod`
 
 ## 5. Principal Component Analysis (PCA)
 
