@@ -50,11 +50,21 @@ logger = logging.getLogger(__name__)
 class LMMPipeline:
     """LMM分析完整流程管理器"""
     
-    def __init__(self):
+    def __init__(self, data_file: Optional[str] = None, output_dir: Optional[str] = None):
         """初始化流程管理器"""
         self.project_root = Path(__file__).resolve().parents[2]
-        self.data_file = self.project_root / "Data" / "df" / "EQI_LMM_Delete_df.csv"
-        self.default_output_dir = self.project_root / "Result" / "EQI_LMM"
+        
+        # 支持自定义数据文件
+        if data_file:
+            self.data_file = Path(data_file)
+        else:
+            self.data_file = self.project_root / "Data" / "df" / "EQI_LMM_Delete_df.csv"
+        
+        # 支持自定义输出目录
+        if output_dir:
+            self.default_output_dir = Path(output_dir)
+        else:
+            self.default_output_dir = self.project_root / "Result" / "EQI_LMM"
         
         # 分析配置
         self.all_scenarios = [
@@ -154,7 +164,7 @@ class LMMPipeline:
             logger.error(f"模型分析过程出错: {e}")
             return None
     
-    def run_model_analysis_with_incremental_save(self, cancer_types: List[str], output_dir: str) -> bool:
+    def run_model_analysis_with_incremental_save(self, cancer_types: List[str], output_dir: str, apply_correction: bool = True) -> bool:
         """运行模型分析阶段，边分析边保存"""
         logger.info("=== 开始增量模型分析阶段 ===")
         
@@ -181,7 +191,8 @@ class LMMPipeline:
                     saved_files = self.result_formatter.save_results(
                         single_cancer_results, 
                         [cancer_type], 
-                        output_dir
+                        output_dir,
+                        apply_correction=apply_correction
                     )
                     
                     if saved_files:
@@ -200,15 +211,21 @@ class LMMPipeline:
             logger.error(f"增量分析过程出错: {e}")
             return False
 
-    def save_results(self, model_results: dict, cancer_types: List[str], output_dir: str) -> dict:
+    def save_results(self, model_results: dict, cancer_types: List[str], output_dir: str, apply_correction: bool = True) -> dict:
         """保存分析结果"""
         logger.info("=== 开始结果输出阶段 ===")
+        
+        if apply_correction:
+            logger.info("将应用多重校正（FDR）")
+        else:
+            logger.info("跳过多重校正，仅输出原始p值")
         
         try:
             saved_files = self.result_formatter.save_results(
                 model_results, 
                 cancer_types, 
-                output_dir
+                output_dir,
+                apply_correction=apply_correction
             )
             
             logger.info(f"结果已保存到 {len(saved_files)} 个文件")
@@ -218,7 +235,7 @@ class LMMPipeline:
             logger.error(f"结果保存过程出错: {e}")
             return {}
     
-    def run_full_pipeline(self, cancer_types: List[str], output_dir: str) -> bool:
+    def run_full_pipeline(self, cancer_types: List[str], output_dir: str, apply_correction: bool = True) -> bool:
         """运行完整分析流程"""
         logger.info("=== 开始LMM完整分析流程 ===")
         logger.info(f"分析癌症类型: {', '.join(cancer_types)}")
@@ -242,7 +259,7 @@ class LMMPipeline:
                 return False
             
             # 4. 保存结果
-            saved_files = self.save_results(model_results, cancer_types, output_dir)
+            saved_files = self.save_results(model_results, cancer_types, output_dir, apply_correction)
             if not saved_files:
                 logger.error("结果保存失败")
                 return False
@@ -266,7 +283,7 @@ class LMMPipeline:
             logger.error(f"分析流程出错: {e}")
             return False
     
-    def run_incremental_pipeline(self, cancer_types: List[str], output_dir: str) -> bool:
+    def run_incremental_pipeline(self, cancer_types: List[str], output_dir: str, apply_correction: bool = True) -> bool:
         """运行增量分析流程（边分析边保存）"""
         logger.info("=== 开始LMM增量分析流程 ===")
         logger.info(f"分析癌症类型: {', '.join(cancer_types)}")
@@ -284,7 +301,7 @@ class LMMPipeline:
                 return False
             
             # 3. 运行增量模型分析（边分析边保存）
-            success = self.run_model_analysis_with_incremental_save(cancer_types, output_dir)
+            success = self.run_model_analysis_with_incremental_save(cancer_types, output_dir, apply_correction)
             if not success:
                 logger.error("增量分析失败")
                 return False
@@ -320,11 +337,14 @@ def parse_arguments():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例用法:
-  python LMM_Main.py                              # 运行所有癌症类型分析
-  python LMM_Main.py --cancer-types C00_C97      # 仅分析总癌症
-  python LMM_Main.py --cancer-types C00_C97,C34,C50  # 分析特定癌症类型
-  python LMM_Main.py --test                       # 运行快速测试
-  python LMM_Main.py --output-dir /custom/path    # 指定输出目录
+  python LMM_Main.py                                    # 运行所有癌症类型分析（原始数据）
+  python LMM_Main.py --use-imputed                     # 使用插补后数据分析
+  python LMM_Main.py --cancer-types C00_C97            # 仅分析总癌症
+  python LMM_Main.py --cancer-types C00_C97,C34,C50    # 分析特定癌症类型
+  python LMM_Main.py --use-imputed --cancer-types C00_C97  # 用插补数据分析总癌症
+  python LMM_Main.py --test                             # 运行快速测试
+  python LMM_Main.py --data-file /path/to/data.csv     # 指定数据文件
+  python LMM_Main.py --output-dir /custom/path         # 指定输出目录
         """
     )
     
@@ -352,6 +372,32 @@ def parse_arguments():
         help='列出所有可用的癌症类型'
     )
     
+    parser.add_argument(
+        '--data-file',
+        type=str,
+        help='指定输入数据文件路径 (默认: EQI_LMM_Delete_df.csv)'
+    )
+    
+    parser.add_argument(
+        '--use-imputed',
+        action='store_true',
+        help='使用插补后的数据文件进行分析'
+    )
+    
+    parser.add_argument(
+        '--no-correction',
+        action='store_true',
+        help='跳过多重校正，仅输出原始p值结果'
+    )
+    
+    parser.add_argument(
+        '--correction-method',
+        type=str,
+        default='fdr_bh',
+        choices=['fdr_bh', 'bonferroni', 'holm', 'sidak'],
+        help='多重校正方法 (默认: fdr_bh)'
+    )
+    
     return parser.parse_args()
 
 
@@ -364,8 +410,30 @@ def main():
     # 解析命令行参数
     args = parse_arguments()
     
+    # 确定数据文件
+    data_file = None
+    if args.use_imputed:
+        # 使用插补后的长格式数据
+        project_root = Path(__file__).resolve().parents[2]
+        data_file = str(project_root / "Data" / "df" / "EQI_LMM_MI_Imputed_Long.csv")
+        print(f"📊 使用插补后数据: EQI_LMM_MI_Imputed_Long.csv")
+    elif args.data_file:
+        data_file = args.data_file
+        print(f"📊 使用指定数据文件: {data_file}")
+    
+    # 确定输出目录
+    output_dir = None
+    if args.use_imputed and not args.output_dir:
+        # 使用插补数据时，默认输出到MI结果目录
+        project_root = Path(__file__).resolve().parents[2]
+        output_dir = str(project_root / "Result" / "EQI_LMM_MI")
+        print(f"📁 输出目录: Result/EQI_LMM_MI")
+    elif args.output_dir:
+        output_dir = args.output_dir
+        print(f"📁 输出目录: {output_dir}")
+    
     # 创建流程管理器
-    pipeline = LMMPipeline()
+    pipeline = LMMPipeline(data_file=data_file, output_dir=output_dir)
     
     # 处理列出癌症类型的请求
     if args.list_cancer_types:
@@ -395,15 +463,21 @@ def main():
     else:
         cancer_types = pipeline.all_cancer_types
     
-    # 确定输出目录
-    if args.output_dir:
-        output_dir = args.output_dir
-    else:
+    # 确定最终输出目录
+    if not output_dir:
         output_dir = str(pipeline.default_output_dir)
+    
+    # 确定多重校正设置
+    apply_correction = not args.no_correction
     
     # 运行增量分析（边分析边保存）
     print(f"开始分析 {len(cancer_types)} 种癌症类型...")
-    success = pipeline.run_incremental_pipeline(cancer_types, output_dir)
+    if apply_correction:
+        print(f"将应用多重校正: {args.correction_method}")
+    else:
+        print("跳过多重校正")
+    
+    success = pipeline.run_incremental_pipeline(cancer_types, output_dir, apply_correction)
     
     if success:
         print("✅ 分析完成!")
