@@ -12,7 +12,7 @@ missing or unreadable, fall back to relative paths via get_data_dir().
   - data_sources.cdc_wonder.urbanization_output_file -> Urbanization.csv
 
 Tables produced:
-  - Location.csv        (county static: COUNTY_FIPS, County, HHS_Region, Census_Region, Census_Division)
+  - Location.csv        (county static: COUNTY_FIPS, County, State, HHS_Region, Census_Region, Census_Division)
   - Urbanization.csv    (county×year: COUNTY_FIPS, Year, County, Urbanization_Code, Urbanization_Type)
 """
 
@@ -20,48 +20,42 @@ import sys
 from pathlib import Path
 import pandas as pd
 
-# Optional: read paths from YAML
+# Required: read paths from YAML
 try:
     import yaml  # type: ignore
-except Exception:  # pragma: no cover
-    yaml = None  # fallback below
+except Exception:
+    print("ERROR: 需要 PyYAML。请安装: pip install pyyaml", file=sys.stderr)
+    sys.exit(1)
 
-# fallback helper from previous config module
-sys.path.append(str(Path(__file__).parent.parent))
-from config import get_data_dir  # noqa: E402
-
-# ---------- resolve paths from config.yaml (preferred) ----------
+# ---------- Load paths from config.yaml ----------
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PROJECT_ROOT / "config.yaml"
 
-SRC_DIR: Path
-LOCATION_OUT: Path
-URBAN_OUT: Path
+if not CONFIG_PATH.exists():
+    print(f"ERROR: 未找到配置文件: {CONFIG_PATH}", file=sys.stderr)
+    sys.exit(1)
 
-_loaded_from_yaml = False
-if yaml is not None and CONFIG_PATH.exists():
-    try:
-        with CONFIG_PATH.open("r", encoding="utf-8") as f:
-            cfg = yaml.safe_load(f)
-        ds = (cfg or {}).get("data_sources", {})
-        cdc = ds.get("cdc_wonder", {})
-        src_rel = cdc.get("location_urbanization_original")
-        loc_rel = cdc.get("location_output_file")
-        urb_rel = cdc.get("urbanization_output_file")
-        if src_rel and loc_rel and urb_rel:
-            SRC_DIR = PROJECT_ROOT / src_rel
-            LOCATION_OUT = PROJECT_ROOT / loc_rel
-            URBAN_OUT = PROJECT_ROOT / urb_rel
-            _loaded_from_yaml = True
-    except Exception:
-        _loaded_from_yaml = False
+try:
+    with CONFIG_PATH.open("r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+    
+    ds = (cfg or {}).get("data_sources", {})
+    cdc = ds.get("cdc_wonder", {})
+    src_rel = cdc.get("location_urbanization_original")
+    loc_rel = cdc.get("location_output_file")
+    urb_rel = cdc.get("urbanization_output_file")
+    
+    if not src_rel or not loc_rel or not urb_rel:
+        print("ERROR: config.yaml缺少必需的路径配置", file=sys.stderr)
+        sys.exit(1)
+    
+    SRC_DIR = PROJECT_ROOT / src_rel
+    LOCATION_OUT = PROJECT_ROOT / loc_rel
+    URBAN_OUT = PROJECT_ROOT / urb_rel
 
-# ---------- fallback to previous relative resolution ----------
-if not _loaded_from_yaml:
-    # keep the literal space to match on-disk path
-    SRC_DIR = get_data_dir("original") / " CDC WONDER" / "Location and Urbanization"
-    LOCATION_OUT = get_data_dir("processed") / "CDC" / "Location.csv"
-    URBAN_OUT = get_data_dir("processed") / "CDC" / "Urbanization.csv"
+except Exception as e:
+    print(f"ERROR: 读取配置文件失败: {e}", file=sys.stderr)
+    sys.exit(1)
 
 URBAN_PREFIX = "Location_County_Urbanization"
 HHS_FILE = "Location_HHS_State.csv"
@@ -103,6 +97,15 @@ def load_urbanization_panel() -> pd.DataFrame:
     return urb
 
 
+def _extract_state_from_county(county_name: str) -> str:
+    """Extract state abbreviation from county name like 'Autauga County, AL'"""
+    if pd.isna(county_name) or not isinstance(county_name, str):
+        return ""
+    if ", " in county_name:
+        return county_name.split(", ")[-1].strip()
+    return ""
+
+
 def load_location_static() -> pd.DataFrame:
     # HHS
     hhs = pd.DataFrame(columns=['COUNTY_FIPS','County','HHS_Region'])
@@ -138,12 +141,19 @@ def load_location_static() -> pd.DataFrame:
             print(f"[LOC] Census read failed: {exc}")
 
     if hhs.empty and cen.empty:
-        return pd.DataFrame(columns=['COUNTY_FIPS','County','HHS_Region','Census_Region','Census_Division'])
+        return pd.DataFrame(columns=['COUNTY_FIPS','County','State','HHS_Region','Census_Region','Census_Division'])
 
     merged = pd.merge(hhs, cen, on='COUNTY_FIPS', how='outer', suffixes=("_hhs","_cen"))
     merged['County'] = merged.get('County_hhs').fillna(merged.get('County_cen'))
     merged = merged.drop(columns=[c for c in merged.columns if c.startswith('County_') and c != 'County'])
-    keep = ['COUNTY_FIPS','County','HHS_Region','Census_Region','Census_Division']
+    
+    # Extract state from county name
+    merged['State'] = merged['County'].apply(_extract_state_from_county)
+    
+    # Filter out invalid FIPS codes (like "00nan")
+    merged = merged[merged['COUNTY_FIPS'] != '00nan']
+    
+    keep = ['COUNTY_FIPS','County','State','HHS_Region','Census_Region','Census_Division']
     merged = merged[[c for c in keep if c in merged.columns]]
     merged = (merged.sort_values(['COUNTY_FIPS'])
                     .drop_duplicates(subset=['COUNTY_FIPS'], keep='first')

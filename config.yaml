@@ -27,6 +27,10 @@ result_directories:
   figures: "Result/Figures"
   # 表格结果
   tables: "Result/Tables"
+  # EQI LMM分析结果
+  eqi_lmm: "Result/EQI_LMM"
+  # EQI LMM多重插补分析结果
+  eqi_lmm_mi: "Result/EQI_LMM_MI"
 
 # 代码目录设置
 code_directories:
@@ -67,6 +71,11 @@ data_sources:
     aamr_original: "Data/Original/CDC WONDER AAMR"
     # AAMR 处理后输出文件命名：AAMR_{ICD}.csv（例如 AAMR_C81-C96.csv）
     aamr_output_pattern: "Data/Processed/CDC/AAMR_{ICD}.csv"
+    # CDC WONDER EQI（环境质量指数相关癌症数据）
+    eqi_original: "Data/Original/CDC WONDER EQI"
+    eqi_processed: "Data/Processed/CDC"
+    eqi_output_pattern: "Data/Processed/CDC/CDC_EQI_{time_period}.csv"
+    eqi_suppression_threshold: 40.0
     # Location & Urbanization 源与输出
     location_urbanization_original: "Data/Original/ CDC WONDER/Location and Urbanization"
     location_output_file: "Data/Processed/CDC/Location.csv"
@@ -134,6 +143,7 @@ pymc_analysis:
   data_files:
     pca_covariates: "Data/Processed/PCA/PCA_Master_Covariables.csv"
     cdc_data_template: "Data/Processed/CDC/AAMR_{disease_code}.csv"
+    cdc_eqi_template: "Data/Processed/CDC/CDC_EQI_{time_period}.csv"
     pesticide_data: "Data/Processed/Pesticide/PNSP.csv"
     pesticide_density_data: "Data/Processed/Pesticide/PNSP_Density.csv"
     adjacency_data: "Data/Processed/Socioeconomic/County_Adjacency_List.csv"
@@ -268,3 +278,64 @@ pymc_analysis:
     column_template: "cat{category_id}_{estimate}"
     test_categories: ["TEST"]
     batch_size: 5
+
+# EQI LMM多重插补分析配置
+eqi_lmm_multiple_imputation:
+  # 基础设置
+  n_imputations: 20              # 插补次数
+  max_iterations: 10             # MICE最大迭代次数
+  random_seed: 42               # 随机种子
+  convergence_threshold: 0.01    # 收敛阈值
+  
+  # 数据路径
+  data_paths:
+    mi_source: "Data/df/EQI_LMM_MI_df.csv"
+    mi_datasets_dir: "Data/df/MI_Datasets"
+    diagnostics_dir: "Data/MI_Diagnostics"
+  
+  # 结果路径
+  result_paths:
+    base_dir: "Result/EQI_LMM_MI"
+    individual_results: "Result/EQI_LMM_MI/Individual_Results"
+    pooled_results: "Result/EQI_LMM_MI/Pooled_Results"
+    mi_diagnostics: "Result/EQI_LMM_MI/MI_Diagnostics"
+  
+  # 插补设置
+  imputation_settings:
+    method: "mice"                # 插补方法 (MICE/FCS)
+    predictive_mean_matching: true # 使用PMM处理连续变量
+    min_observed_ratio: 0.1       # 最小观测比例
+    auxiliary_variables:          # 辅助变量
+      - "RUCC"
+      - "STATE_FIPS"
+      - "Population"
+      - "Area"
+    
+  # 变量特定插补方法
+  variable_methods:
+    AAMR: "pmm"                   # 预测均值匹配
+    EQI: "pmm"
+    EQI_air: "pmm" 
+    EQI_water: "pmm"
+    EQI_land: "pmm"
+    EQI_built: "pmm"
+    EQI_Sociodemographic: "pmm"
+    SR: "pmm"                     # 吸烟率
+    
+  # 质量控制
+  quality_control:
+    check_convergence: true       # 检查收敛性
+    plot_diagnostics: true        # 生成诊断图
+    validate_distributions: true   # 验证分布匹配
+    
+  # 池化设置
+  pooling_settings:
+    confidence_level: 0.95        # 置信水平
+    rubin_rules: true             # 使用Rubin规则
+    calculate_fmi: true           # 计算缺失信息分数
+    
+  # 并行处理
+  parallel_processing:
+    enabled: true                 # 启用并行处理
+    n_cores: 4                   # 使用核心数
+    batch_size: 5                # 批处理大小

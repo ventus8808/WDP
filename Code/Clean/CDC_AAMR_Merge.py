@@ -23,9 +23,10 @@ import pandas as pd
 import numpy as np
 import yaml
 
-# ============ 手动指定疾病子目录（相对输入根目录，例："C81-C96"） ============
-MANUAL_ICD_GROUP = "C81-C96"
-# =====================================================================
+# ============ 批量处理模式 ============
+# 设置为 None 表示批量处理所有目录
+MANUAL_ICD_GROUP = None
+# =======================================
 
 # --- 路径配置 (与之前脚本相同) ---
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -52,7 +53,6 @@ if not aamr_base_rel or not processed_rel:
 
 _base_dir = (PROJECT_ROOT / aamr_base_rel).resolve()
 _output_dir = (PROJECT_ROOT / processed_rel).resolve()
-_input_dir = (_base_dir / MANUAL_ICD_GROUP.strip()).resolve()
 
 def merge_and_clean_data(folder_path):
     """合并并清洗CDC数据，只保留核心列并处理审查数据"""
@@ -201,13 +201,15 @@ def print_data_summary(df):
         percentage = missing / len(df) * 100
         print(f"  {col} 缺失: {missing} ({percentage:.1f}%)")
 
-def main():
-    """主函数"""
+def process_single_icd_group(icd_group):
+    """处理单个ICD分组"""
+    _input_dir = (_base_dir / icd_group.strip()).resolve()
+    
     if not _input_dir.exists():
-        print(f"ERROR: 输入目录不存在: {_input_dir}", file=sys.stderr)
-        sys.exit(1)
+        print(f"⚠️  跳过不存在的目录: {_input_dir}")
+        return False
         
-    print(f"开始处理CDC数据: {MANUAL_ICD_GROUP}")
+    print(f"\n开始处理CDC数据: {icd_group}")
     print(f"输入目录: {_input_dir}")
     
     final_data = merge_and_clean_data(_input_dir)
@@ -217,26 +219,87 @@ def main():
         cdc_output_dir = _output_dir / "CDC"
         cdc_output_dir.mkdir(parents=True, exist_ok=True)
         
-        output_file = cdc_output_dir / f"AAMR_{MANUAL_ICD_GROUP}.csv"
+        output_file = cdc_output_dir / f"AAMR_{icd_group}.csv"
         final_data.to_csv(output_file, index=False)
         print(f"\n数据已保存到: {output_file}")
         
         # 打印数据摘要
         print_data_summary(final_data)
         
-        # 打印数据预览
-        print(f"\n数据预览 (前5行):")
-        print(final_data.head())
+        # 打印数据预览（简化版）
+        print(f"\n数据预览 (前3行):")
+        print(final_data.head(3))
         
-        # 审查数据示例
+        # 审查数据示例（简化版）
         censored_data = final_data[final_data['Deaths_Type'] == 'censored']
         if len(censored_data) > 0:
-            print(f"\n审查数据示例 ({len(censored_data)}条):")
-            print(censored_data[['COUNTY_FIPS', 'Year', 'Deaths_Type', 'Deaths_Censored_Lower', 'Deaths_Censored_Upper']].head())
+            print(f"审查数据: {len(censored_data)}条")
         else:
-            print("\n无审查数据")
+            print("无审查数据")
         
-        print(f"\n✅ CDC精简数据清理完成!")
+        print(f"✅ {icd_group} 处理完成!")
+        return True
+    else:
+        print(f"❌ {icd_group} 处理失败!")
+        return False
+
+def main():
+    """主函数 - 支持批量处理"""
+    if not _base_dir.exists():
+        print(f"ERROR: 基础目录不存在: {_base_dir}", file=sys.stderr)
+        sys.exit(1)
+    
+    if MANUAL_ICD_GROUP is not None:
+        # 单个ICD分组处理
+        success = process_single_icd_group(MANUAL_ICD_GROUP)
+        if not success:
+            sys.exit(1)
+    else:
+        # 批量处理所有ICD分组
+        print("🚀 开始批量处理所有CDC AAMR数据...")
+        print(f"基础目录: {_base_dir}")
+        
+        # 获取所有符合条件的子目录（ICD分组目录）
+        icd_groups = []
+        for item in _base_dir.iterdir():
+            if item.is_dir() and item.name.startswith('C') and item.name != 'CY':
+                icd_groups.append(item.name)
+        
+        if not icd_groups:
+            print("❌ 未找到任何ICD分组目录")
+            sys.exit(1)
+        
+        icd_groups.sort()  # 按名称排序
+        print(f"发现 {len(icd_groups)} 个ICD分组: {', '.join(icd_groups)}")
+        
+        success_count = 0
+        failed_count = 0
+        
+        for icd_group in icd_groups:
+            try:
+                success = process_single_icd_group(icd_group)
+                if success:
+                    success_count += 1
+                else:
+                    failed_count += 1
+            except Exception as e:
+                print(f"❌ 处理 {icd_group} 时发生错误: {e}")
+                failed_count += 1
+        
+        # 批量处理总结
+        print("\n" + "="*80)
+        print("批量处理完成总结")
+        print("="*80)
+        print(f"总计处理: {len(icd_groups)} 个ICD分组")
+        print(f"成功处理: {success_count} 个")
+        print(f"处理失败: {failed_count} 个")
+        
+        if failed_count > 0:
+            print(f"⚠️  有 {failed_count} 个分组处理失败，请检查日志")
+        else:
+            print("🎉 所有ICD分组处理成功!")
+    
+    print(f"\n✅ CDC精简数据清理完成!")
 
 if __name__ == "__main__":
     main()

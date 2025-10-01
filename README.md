@@ -44,7 +44,7 @@
 WDP/
 ├── Code/
 │   ├── Clean/                   # Data cleaning and processing scripts
-│   │   ├── CDC_*.py             # CDC data cleaning (AAMR, Death, Location, Urbanization)
+│   │   ├── CDC_*.py             # CDC data cleaning (AAMR, Death, Location, Urbanization, EQI)
 │   │   ├── County_Adjacency.py  # Spatial adjacency matrix generation
 │   │   ├── ENV_*.py             # Environmental data processing (GEE, LUR, NLDAS)
 │   │   ├── EQI_*.py             # Environmental Quality Index data processing
@@ -67,6 +67,8 @@ WDP/
 ├── Data/
 │   ├── Original/                # Raw data from various sources
 │   │   ├── CDC WONDER/          # CDC mortality data
+│   │   ├── CDC WONDER AAMR/     # CDC Age-Adjusted Mortality Rate data
+│   │   ├── CDC WONDER EQI/      # CDC cancer mortality data by time periods
 │   │   ├── BEA/                 # Bureau of Economic Analysis
 │   │   ├── CACES LUR/           # Air pollution data
 │   │   ├── County Shapeline/    # Geographic boundary files
@@ -101,7 +103,10 @@ This project integrates data from multiple public sources to construct a compreh
 ### 3.1. CDC (Outcomes and Geographic Classification)
 - **Source**: CDC WONDER (Wide-ranging Online Data for Epidemiologic Research)
 - **Content**: County-level mortality data (1999-2020), geographic classifications, and urbanization codes.
-- **Key Files**: `Data/Original/ CDC WONDER/`, `Data/Original/CDC WONDER AAMR/`
+- **Key Files**: 
+  - `Data/Original/CDC WONDER/` - General mortality data by ICD groups
+  - `Data/Original/CDC WONDER AAMR/` - Age-Adjusted Mortality Rate data
+  - `Data/Original/CDC WONDER EQI/` - Cancer mortality data by ICD groups across multiple time periods (2006-2020)
 
 ### 3.2. Pesticide (USGS PNSP)
 - **Source**: USGS Pesticide National Synthesis Project (PNSP)
@@ -141,13 +146,27 @@ This project integrates data from multiple public sources to construct a compreh
 The `Code/Clean/` directory contains scripts for processing raw data into analysis-ready formats. All paths are managed through `config.yaml`.
 
 ### 4.1. CDC Data Processing
-- **Scripts**: `CDC_AAMR_Merge.py`, `CDC_Death_Merge.py`, `CDC_Location_Urbanization.py`
+- **Scripts**: `CDC_AAMR_Merge.py`, `CDC_Death_Merge.py`, `CDC_Location_Urbanization.py`, `CDC_EQI_Merge.py`
 - **Output**: `Data/Processed/CDC/`
-- **Description**: Cleans and merges mortality, location, and urbanization data. `CDC_Data_Integrity_Checker.py` is used for validation.
+- **Description**: Cleans and merges mortality, location, and urbanization data. `CDC_Data_Integrity_Checker.py` is used for validation. `CDC_AAMR_Merge.py` features enhanced interval-censored data handling for suppressed death counts and supports batch processing across multiple ICD groups.
 - **Key Variables**:
-    - **AAMR**: `COUNTY_FIPS`, `Year`, `Deaths`, `Population`, `AAMR` (Age-Adjusted Mortality Rate).
+    - **AAMR**: `COUNTY_FIPS`, `Year`, `Population`, `Deaths_Observed`, `Deaths_Censored_Lower`, `Deaths_Censored_Upper`, `Deaths_Type` (Enhanced with interval-censored data handling for Bayesian models).
     - **Location**: `COUNTY_FIPS`, `HHS_Region`, `Census_Region`, `Census_Division`.
     - **Urbanization**: `COUNTY_FIPS`, `Year`, `Urbanization_Code`, `Urbanization_Type`.
+
+#### CDC EQI Cancer Mortality Processing (New)
+- **Script**: `CDC_EQI_Merge.py`
+- **Input**: `Data/Original/CDC WONDER EQI/` (multiple ICD cancer group files across time periods)
+- **Output**: Three time-period specific files:
+  - `CDC_EQI_2006_2010.csv`
+  - `CDC_EQI_2011_2015.csv` 
+  - `CDC_EQI_2016_2020.csv`
+- **Description**: Advanced cancer mortality data processing with strict quality filtering. Only includes ICD cancer groups that have ≤40% suppression rate across ALL time periods. Handles data type consistency (FIPS as strings, Deaths/Population as integers) and removes incomplete records.
+- **Key Variables**:
+  - **FIPS**: 5-digit county FIPS codes (string format)
+  - **Population**: Total population (integer)
+  - **Deaths_[ICD]**: Cancer deaths by ICD group (e.g., `Deaths_C81_C96`, `Deaths_C50`) with underscore format
+- **Quality Control**: Multi-period suppression rate analysis ensures only high-quality cancer groups are included in final datasets for GLMM modeling.
 
 ### 4.2. Pesticide Data Processing
 - **Scripts**: `PNSP_Merge.py`, `PNSP_Density.py`
@@ -309,6 +328,21 @@ install.packages(c("dplyr", "data.table", "sf", "spdep"))
 
 ### 8.2. Basic Usage
 
+**Data Cleaning**
+```bash
+# Process CDC EQI cancer mortality data (batch processing with quality filtering)
+python Code/Clean/CDC_EQI_Merge.py
+
+# Process CDC AAMR data for specific ICD group (edit MANUAL_ICD_GROUP variable in script)
+python Code/Clean/CDC_AAMR_Merge.py
+
+# Process pesticide data
+python Code/Clean/PNSP_Merge.py
+
+# Generate PCA covariates
+python Code/Analysis/PCA.py
+```
+
 **PyMC Analysis**
 ```bash
 # Single analysis
@@ -351,6 +385,7 @@ pymc_analysis:
   data_files:
     pca_covariates: "Data/Processed/PCA/PCA_Master_Covariables.csv"
     cdc_data_template: "Data/Processed/CDC/AAMR_{disease_code}.csv"
+    cdc_eqi_template: "Data/Processed/CDC/CDC_EQI_{time_period}.csv"
     pesticide_data: "Data/Processed/Pesticide/PNSP.csv"
     pesticide_density_data: "Data/Processed/Pesticide/PNSP_Density.csv"
     adjacency_data: "Data/Processed/Socioeconomic/County_Adjacency_List.csv"
@@ -432,7 +467,7 @@ python Code/PYMC/main.py --draws 6000 --tune 3000 --target-accept 0.99
 
 **Development Team**: WDP Analysis Team  
 **Institution**: Environmental Health Research  
-**Last Updated**: September 28, 2025  
+**Last Updated**: September 30, 2025  
 **Version**: 2.2
 
 ### 13.1. Getting Help
