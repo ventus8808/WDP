@@ -63,7 +63,7 @@ parse_args <- function() {
   # Look for --scenario flag
   scenario_idx <- which(args == "--scenario")
   if (length(scenario_idx) == 0) {
-    stop("Usage: Rscript 02_run_brms_model.R --scenario <scenario_name>")
+    stop("Usage: Rscript 02_run_brms_model.R --scenario <scenario_name> [--config <config_file>]")
   }
   
   if (scenario_idx == length(args)) {
@@ -73,7 +73,17 @@ parse_args <- function() {
   scenario_name <- args[scenario_idx + 1]
   message(sprintf("[brms] Target scenario: %s", scenario_name))
   
-  return(list(scenario_name = scenario_name))
+  # Look for optional --config flag
+  config_file <- NULL
+  config_idx <- which(args == "--config")
+  if (length(config_idx) > 0) {
+    if (config_idx < length(args)) {
+      config_file <- args[config_idx + 1]
+      message(sprintf("[brms] Using config file: %s", config_file))
+    }
+  }
+  
+  return(list(scenario_name = scenario_name, config_file = config_file))
 }
 
 #' Find scenario configuration by name
@@ -244,9 +254,15 @@ main <- function() {
   # Parse command line arguments
   args_list <- parse_args()
   scenario_name <- args_list$scenario_name
+  config_file <- args_list$config_file
   
-  # Load configuration 
-  cfg <- read_config()
+  # Load configuration (use custom config if provided)
+  if (!is.null(config_file)) {
+    message(sprintf("[brms] Reading config from: %s", config_file))
+    cfg <- yaml::read_yaml(config_file)
+  } else {
+    cfg <- read_config()
+  }
   brms_config <- cfg$brms_analysis
   stopifnot(!is.null(brms_config))
   

@@ -1,0 +1,2 @@
+scenario,timestamp,n_obs,formula_key,family,fallback_mode,rhat_max,ess_bulk_min,ess_tail_min
+AllCancer_total_All_20062010_Lag5,20251005_210616,3072,total_eqi_quintile,gaussian,_midpoint,1.0031502448633811,10.86438860307554,Inf

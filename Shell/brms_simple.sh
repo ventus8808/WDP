@@ -21,8 +21,9 @@ mkdir -p logs
 echo "任务 $SLURM_ARRAY_TASK_ID 开始: $(date)"
 
 # 激活环境
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate pymc
+# 使用系统R (本地测试)
+# source /opt/anaconda3/etc/profile.d/conda.sh
+# conda activate r
 
 # 参数数组
 DOMAINS=(total air water land built sociodemographic)
@@ -111,10 +112,11 @@ with open(temp_config, 'w') as f:
 print(f"开始分析: $scenario_name")
 
 try:
-    # 运行R分析
+    # 运行R分析，指定临时配置文件
     result = subprocess.run([
         'Rscript', 'Code/brms/02_run_brms_model.R',
-        '--scenario', '$scenario_name'
+        '--scenario', '$scenario_name',
+        '--config', temp_config
     ], check=True)
     print("✅ 分析成功")
     
