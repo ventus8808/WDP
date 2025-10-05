@@ -16,6 +16,8 @@ data_directories:
   processed: "Data/Processed"
   # 元数据目录
   metadata: "Data/Metadata"
+  # 新增：长表/下游分析输入目录
+  df: "Data/df"
 
 # 结果目录设置
 result_directories:
@@ -136,6 +138,12 @@ data_sources:
   seer_population:
     original: "Data/Original/SEER Population"
     processed: "Data/Processed/Socioeconomic"
+
+# 新增：三类 EQI × CDC WONDER 合并长表输出位置
+df_outputs:
+  eqi_deaths: "Data/df/EQI_Deaths.csv"
+  eqi_aamr_point: "Data/df/EQI_AAMR_Point.csv"
+  eqi_aamr_interval: "Data/df/EQI_AAMR_Interval.csv"
 
 # PyMC分析配置
 pymc_analysis:
@@ -278,6 +286,145 @@ pymc_analysis:
     column_template: "cat{category_id}_{estimate}"
     test_categories: ["TEST"]
     batch_size: 5
+
+# brms 分析配置（Bayesian multilevel interval regression）
+brms_analysis:
+  # 数据输入
+  data_file: "Data/df/EQI_AAMR_Interval.csv"
+
+  # 结果输出目录
+  results:
+    base_dir: "Result/brms"
+    model_fits: "Result/brms/model_fits"
+    csv_outputs: "Result/brms/csv_outputs"
+    figures: "Result/brms/figures"
+    reports: "Result/brms/reports"
+
+  # 采样与后端设置
+  settings:
+    chains: 2
+    iter: 1000
+    warmup: 500
+    cores: 2
+    seed: 12345
+    backend: "rstan"
+    adapt_delta: 0.95
+    max_treedepth: 12
+
+  # 先验设置
+  priors:
+    intercept:
+      strategy: "auto_center"
+      fallback_mean: 100.0
+      fallback_sd: 50.0
+    fixed_effects:
+      class_b_sd: 5.0
+    sigma:
+      type: "student_t"
+      df: 3
+      scale: 30.0
+    random_effects:
+      state_sd:
+        type: "student_t"
+        df: 3
+        scale: 20.0
+
+  # 字段映射
+  field_map:
+    state: "State"
+    cancer_type: "Cancer_Type"
+    rucc: "RUCC"
+    eqi_total: "EQI"
+    eqi_quintile: "EQI"
+    aamr_lower: "AAMR_lower"
+    aamr_upper: "AAMR_upper"
+    smoking_rate: "Smoking_Rate"
+
+  # 分析场景 - 每个场景包含完整的分析定义
+  scenarios:
+    # 肺癌 - 总EQI - 滞后5年 - 所有RUCC
+    - name: "LungCancer_TotalEQI_Lag5_AllRUCC"
+      active: true
+      cancer_type: "C34"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: null
+      domain: "total"
+      formula_key: "total_eqi_quintile"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: ""
+
+    # 肺癌 - 空气EQI - 滞后5年 - 城市地区
+    - name: "LungCancer_AirEQI_Lag5_Urban"
+      active: true
+      cancer_type: "C34"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: [1, 2]  # Urban counties
+      domain: "air"
+      formula_key: "total_eqi_quintile"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Urban"
+
+    # 肺癌 - 水EQI - 滞后5年 - 农村地区
+    - name: "LungCancer_WaterEQI_Lag5_Rural"
+      active: false
+      cancer_type: "C34"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: [3, 4, 5, 6, 7, 8, 9]  # Rural counties
+      domain: "water"
+      formula_key: "total_eqi_quintile"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Rural"
+
+    # 乳腺癌 - 总EQI - 滞后3年
+    - name: "BreastCancer_TotalEQI_Lag3_AllRUCC"
+      active: false
+      cancer_type: "C50"
+      eqi_period: "0005"
+      time_period: "2008-2012"
+      lag_years: 3
+      rucc_filter: null
+      domain: "total"
+      formula_key: "total_eqi_quintile"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: ""
+
+    # 所有癌症 - 社会人口学EQI - 滞后10年 - 敏感性分析(Student-t)
+    - name: "AllCancer_SocioEQI_Lag10_StudentT"
+      active: false
+      cancer_type: "C00_C97"
+      eqi_period: "0005"
+      time_period: "2011-2015"
+      lag_years: 10
+      rucc_filter: null
+      domain: "sociodemographic"
+      formula_key: "total_eqi_quintile"
+      family: "student_t"
+      use_midpoint: false
+      output_suffix: "_StudentT"
+
+    # 肺癌 - 连续EQI - 随机斜率模型
+    - name: "LungCancer_ContinuousEQI_RandomSlope"
+      active: false
+      cancer_type: "C34"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: null
+      domain: "total"
+      formula_key: "random_slope_eqi"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_RandomSlope"
 
 # EQI LMM多重插补分析配置
 eqi_lmm_multiple_imputation:

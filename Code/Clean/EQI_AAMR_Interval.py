@@ -1,0 +1,269 @@
+#!/usr/bin/env python3
+"""
+EQI × CDC WONDER — AAMR intervals (long table)
+Outputs a single long CSV with rows per county × time_period × ICD × Lag_Years,
+with columns AAMR_lower and AAMR_upper, plus RUCC/EQI covariates based on lag mapping.
+
+Output path: config.yaml df_outputs.eqi_aamr_interval (default Data/df/EQI_AAMR_Interval.csv)
+"""
+import sys
+from pathlib import Path
+import re
+import pandas as pd
+import numpy as np
+import yaml
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CONFIG_PATH = PROJECT_ROOT / 'config.yaml'
+
+with CONFIG_PATH.open('r', encoding='utf-8') as f:
+    CFG = yaml.safe_load(f)
+
+CDC_EQI_SRC_DIR = PROJECT_ROOT / CFG['data_sources']['cdc_wonder']['eqi_original']
+DF_OUTPUT = PROJECT_ROOT / CFG.get('df_outputs', {}).get('eqi_aamr_interval', 'Data/df/EQI_AAMR_Interval.csv')
+EQI_DIR = PROJECT_ROOT / CFG['data_sources']['epa_eqi']['processed']
+SUPPRESSION_THRESHOLD = float(CFG['data_sources']['cdc_wonder'].get('eqi_suppression_threshold', 40.0))
+SMOKING_PATH = PROJECT_ROOT / CFG['data_directories']['processed'] / 'Smoking' / 'County_Smoking.csv'
+
+EQI_COLS = ['RUCC','EQI','EQI_air','EQI_water','EQI_land','EQI_built','EQI_Sociodemographic',
+            'RUCC_EQI','RUCC_EQI_air','RUCC_EQI_water','RUCC_EQI_land','RUCC_EQI_built','RUCC_EQI_Sociodemographic']
+
+# ---------------- Helpers ----------------
+
+def _extract_state_from_county(county_name: str) -> str:
+    if pd.isna(county_name) or not isinstance(county_name, str):
+        return ""
+    if ", " in county_name:
+        return county_name.split(", ")[-1].strip()
+    return ""
+
+def _clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    cols_norm = {c: c.strip() for c in df.columns}
+    df = df.rename(columns=cols_norm)
+    if 'Notes' in df.columns:
+        df = df.drop(columns=['Notes'])
+    df_clean = df.dropna(subset=['County Code']).copy()
+    df_clean = df_clean[pd.to_numeric(df_clean['County Code'], errors='coerce').notna()]
+    df_clean = df_clean[(df_clean['Deaths'] != 'Missing') & (df_clean['Population'] != 'Missing')]
+    return df_clean
+
+def _find_col_by_keywords(df: pd.DataFrame, include_keys, exclude_keys=None):
+    include = [k.lower() for k in include_keys]
+    exclude = [k.lower() for k in (exclude_keys or [])]
+    for col in df.columns:
+        s = str(col).lower()
+        if all(k in s for k in include) and not any(k in s for k in exclude):
+            return col
+    return None
+
+def _get_ci_cols(df: pd.DataFrame):
+    lcl_col = _find_col_by_keywords(df, ['age','adjusted','rate','lower','confidence'])
+    if lcl_col is None:
+        for alias in ['Age Adjusted Rate Lower 95% Confidence Interval','Lower 95% CI for Age Adjusted Rate']:
+            if alias in df.columns:
+                lcl_col = alias; break
+    ucl_col = _find_col_by_keywords(df, ['age','adjusted','rate','upper','confidence'])
+    if ucl_col is None:
+        for alias in ['Age Adjusted Rate Upper 95% Confidence Interval','Upper 95% CI for Age Adjusted Rate']:
+            if alias in df.columns:
+                ucl_col = alias; break
+    rate_col = _find_col_by_keywords(df, ['age','adjusted','rate'], ['lower','upper','confidence','interval','ci','standard','error','se'])
+    if rate_col is None:
+        for alias in ['Age Adjusted Rate','Age-Adjusted Rate','Age adjusted rate','Age-adjusted Rate','Age Adjusted Rate (per 100,000)']:
+            if alias in df.columns:
+                rate_col = alias; break
+    return rate_col, lcl_col, ucl_col
+
+def _extract_meta_from_name(name: str):
+    base = name.replace('.csv','')
+    m = re.search(r'(\d{4}-\d{4})', base)
+    if not m:
+        raise ValueError(f'无法解析时间段: {name}')
+    period = m.group(1)
+    icd = base.replace(period,'').strip()
+    return period, icd
+
+def _suppression_rate(df_raw: pd.DataFrame) -> float:
+    dfc = _clean_dataframe(df_raw)
+    tot = len(dfc)
+    sup = (dfc['Deaths'] == 'Suppressed').sum()
+    return (sup/tot*100.0) if tot>0 else 0.0
+
+def _load_eqi_by_period() -> dict:
+    d = {}
+    for code in ('0005','0610'):
+        fp = EQI_DIR / f'EQI{code}.csv'
+        if fp.exists():
+            t = pd.read_csv(fp)
+            t['COUNTY_FIPS'] = t['COUNTY_FIPS'].astype(str).str.zfill(5)
+            d[code] = t
+    return d
+
+def _load_smoking() -> pd.DataFrame | None:
+    if SMOKING_PATH.exists():
+        df = pd.read_csv(SMOKING_PATH)
+        if 'COUNTY_FIPS' in df.columns and 'SR_Total' in df.columns:
+            df = df[['COUNTY_FIPS','SR_Total']].copy()
+            df['COUNTY_FIPS'] = df['COUNTY_FIPS'].astype(str).str.zfill(5)
+            df = df.rename(columns={'SR_Total':'Smoking_Rate'})
+            return df
+    return None
+
+def _map_eqi_period(time_period: str, lag_years: int):
+    # Based on available 0005 and 0610 datasets
+    if time_period == '2006-2010':
+        return '0005' if lag_years == 5 else None
+    if time_period == '2011-2015':
+        return '0610' if lag_years == 5 else '0005'
+    if time_period == '2016-2020':
+        return None if lag_years == 5 else '0610'
+    return None
+
+# Interval computation per rules
+
+def _compute_interval_rows(dfc: pd.DataFrame) -> pd.DataFrame:
+    deaths_num = pd.to_numeric(dfc['Deaths'], errors='coerce')
+    deaths_txt = dfc['Deaths'].astype(str).str.strip().str.lower()
+    zero_mask = deaths_num.eq(0)
+    suppressed_mask = deaths_txt.str.contains('suppress', na=False) | deaths_num.between(1,9, inclusive='both')
+
+    rate_col, lcl_col, ucl_col = _get_ci_cols(dfc)
+    point = pd.to_numeric(dfc[rate_col], errors='coerce') if rate_col else pd.Series([pd.NA]*len(dfc), dtype='Float64', index=dfc.index)
+    lcl = pd.to_numeric(dfc[lcl_col], errors='coerce') if lcl_col else pd.Series([pd.NA]*len(dfc), dtype='Float64', index=dfc.index)
+    ucl = pd.to_numeric(dfc[ucl_col], errors='coerce') if ucl_col else pd.Series([pd.NA]*len(dfc), dtype='Float64', index=dfc.index)
+
+    pop = pd.to_numeric(dfc['Population'], errors='coerce')
+
+    # Ensure aligned indices
+    lower = pd.Series(pd.NA, index=dfc.index, dtype='Float64')
+    upper = pd.Series(pd.NA, index=dfc.index, dtype='Float64')
+
+    # Zero -> [0,0]
+    lower.loc[zero_mask] = 0.0
+    upper.loc[zero_mask] = 0.0
+
+    # Use CI if available
+    with_ci = lcl.notna() & ucl.notna()
+    lower.loc[with_ci] = lcl.loc[with_ci]
+    upper.loc[with_ci] = ucl.loc[with_ci]
+
+    # If no CI but have point, use point for both
+    no_ci_with_point = (~with_ci) & point.notna()
+    lower.loc[no_ci_with_point] = point.loc[no_ci_with_point]
+    upper.loc[no_ci_with_point] = point.loc[no_ci_with_point]
+
+    # Suppressed crude interval
+    idx = suppressed_mask & pop.notna() & (pop>0)
+    if idx.any():
+        cr_lo = (1.0 / pop.loc[idx]) * 100000.0
+        cr_hi = (9.0 / pop.loc[idx]) * 100000.0
+        lower.loc[idx] = cr_lo
+        upper.loc[idx] = cr_hi
+
+    return lower.round(2), upper.round(2)
+
+# ---------------- Main ----------------
+
+def main():
+    print('🧮 Building AAMR interval long table with RUCC/EQI...')
+    files = sorted(CDC_EQI_SRC_DIR.glob('*.csv'))
+    if not files:
+        print(f'⚠️ No files under {CDC_EQI_SRC_DIR}')
+        sys.exit(0)
+
+    # group by period and find qualified ICDs
+    grouped = {}
+    for fp in files:
+        try:
+            period, icd = _extract_meta_from_name(fp.name)
+        except Exception:
+            continue
+        grouped.setdefault(period, []).append((icd, fp))
+
+    icd_rates = {}
+    for period, pairs in grouped.items():
+        for icd, fp in pairs:
+            try:
+                try:
+                    df = pd.read_csv(fp, encoding='utf-8')
+                except UnicodeDecodeError:
+                    df = pd.read_csv(fp, encoding='latin-1')
+                icd_rates.setdefault(icd, {})[period] = _suppression_rate(df)
+            except Exception:
+                pass
+
+    qualified_icds = [icd for icd, d in icd_rates.items() if len(d)==len(grouped) and all(v<=SUPPRESSION_THRESHOLD for v in d.values())]
+    eqi_dict = _load_eqi_by_period()
+    smoking_df = _load_smoking()
+
+    rows = []
+    for period in sorted(grouped.keys()):
+        pairs = [(icd, fp) for icd, fp in grouped[period] if (not qualified_icds) or (icd in qualified_icds)]
+        if not pairs:
+            continue
+        print(f'📅 {period}: {len(pairs)} ICDs')
+        for icd, fp in pairs:
+            try:
+                try:
+                    df = pd.read_csv(fp, encoding='utf-8')
+                except UnicodeDecodeError:
+                    df = pd.read_csv(fp, encoding='latin-1')
+                dfc = _clean_dataframe(df)
+                dfc['COUNTY_FIPS'] = dfc['County Code'].astype(int).astype(str).str.zfill(5)
+                dfc['State'] = dfc.get('County','').apply(_extract_state_from_county) if 'County' in dfc.columns else ''
+
+                lo, hi = _compute_interval_rows(dfc)
+                icd_fmt = icd.replace('-', '_')
+                base = pd.DataFrame({
+                    'COUNTY_FIPS': dfc['COUNTY_FIPS'].astype(str),
+                    'State': dfc['State'].astype(str),
+                    'Time_Period': period,
+                    'Cancer_Type': icd_fmt,
+                    'AAMR_lower': lo,
+                    'AAMR_upper': hi,
+                })
+                base = base.drop_duplicates(subset=['COUNTY_FIPS'], keep='first')
+
+                for lag in (5, 10):
+                    eqi_code = _map_eqi_period(period, lag)
+                    out = base.copy()
+                    out['Lag_Years'] = lag
+                    out['EQI_Period'] = eqi_code if eqi_code is not None else pd.NA
+                    if eqi_code and eqi_code in eqi_dict:
+                        eqidf = eqi_dict[eqi_code][['COUNTY_FIPS'] + EQI_COLS].copy()
+                        out = out.merge(eqidf, on='COUNTY_FIPS', how='left')
+                    else:
+                        for c in EQI_COLS:
+                            out[c] = pd.NA
+                    # merge Smoking_Rate
+                    if smoking_df is not None:
+                        out = out.merge(smoking_df, on='COUNTY_FIPS', how='left')
+                    else:
+                        out['Smoking_Rate'] = pd.NA
+                    rows.append(out)
+            except Exception as e:
+                print(f'  ⚠️ {fp.name} failed: {e}')
+                continue
+
+    if not rows:
+        print('⚠️ No rows to write.')
+        DF_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(columns=['COUNTY_FIPS','State','Time_Period','Lag_Years','EQI_Period','Cancer_Type','AAMR_lower','AAMR_upper']+EQI_COLS).to_csv(DF_OUTPUT, index=False)
+        print(f'💾 Wrote empty skeleton to {DF_OUTPUT}')
+        return
+
+    final = pd.concat(rows, ignore_index=True)
+    first = ['COUNTY_FIPS','State','Time_Period','Lag_Years','EQI_Period','Cancer_Type','AAMR_lower','AAMR_upper','Smoking_Rate']
+    final = final[first + [c for c in EQI_COLS if c in final.columns]]
+
+    # Cast RUCC/EQI quintiles to nullable int to avoid 1.0/2.0 formatting
+    for c in EQI_COLS:
+        if c in final.columns:
+            final[c] = pd.to_numeric(final[c], errors='coerce').astype('Int64')
+
+    DF_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    final.to_csv(DF_OUTPUT, index=False)
+    print(f'💾 Saved {len(final):,} rows to {DF_OUTPUT}')
+
+if __name__ == '__main__':
+    main()
