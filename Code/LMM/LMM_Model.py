@@ -5,7 +5,7 @@ LMM模型构建模块 - 多层线性回归分析
 
 主要功能:
 1. 固定斜率随机截距多层线性回归模型
-2. 支持总体EQI分析和RUCC分层EQI分析
+2. 支持总体EQI分析和RUCC分层EQI分析（兼容长表: RUCC_EQI + EQI_Domain）
 3. 包含吸烟率作为协变量控制
 4. 州级随机效应处理
 
@@ -16,7 +16,7 @@ LMM模型构建模块 - 多层线性回归分析
 输出:
 - 回归系数及95%置信区间
 - 显著性检验结果
-- 模型拟合统计
+- 模型拟合统计（含州随机截距方差与残差方差）
 """
 
 import sys
@@ -60,31 +60,25 @@ class LMMAnalyzer:
         # 模型变量配置
         self.eqi_variables = [
             'EQI',                    # 总体EQI
-            'EQI_air',               # 空气质量
-            'EQI_water',             # 水质量
-            'EQI_land',              # 土地质量
-            'EQI_built',             # 建成环境质量
-            'EQI_Sociodemographic'   # 社会人口学质量
+            'EQI_Air',               # 空气质量
+            'EQI_Water',             # 水质量
+            'EQI_Land',              # 土地质量
+            'EQI_Built',             # 建成环境质量
+            'EQI_Social'   # 社会人口学质量
         ]
         
         self.rucc_eqi_variables = [
             'RUCC_EQI',                    # RUCC分层总体EQI
-            'RUCC_EQI_air',               # RUCC分层空气质量
-            'RUCC_EQI_water',             # RUCC分层水质量
-            'RUCC_EQI_land',              # RUCC分层土地质量
-            'RUCC_EQI_built',             # RUCC分层建成环境质量
-            'RUCC_EQI_Sociodemographic'   # RUCC分层社会人口学质量
+            'RUCC_EQI_Air',               # RUCC分层空气质量
+            'RUCC_EQI_Water',             # RUCC分层水质量
+            'RUCC_EQI_Land',              # RUCC分层土地质量
+            'RUCC_EQI_Built',             # RUCC分层建成环境质量
+            'RUCC_EQI_Social'   # RUCC分层社会人口学质量
         ]
         
-        # 多EQI域联合模型变量
-        self.multi_eqi_variables = [
-            'EQI_air',               # 空气质量
-            'EQI_water',             # 水质量
-            'EQI_land',              # 土地质量
-            'EQI_built',             # 建成环境质量
-            'EQI_Sociodemographic'   # 社会人口学质量
-        ]
-        
+        # RUCC 长表领域名（若数据以 RUCC_EQI + EQI_Domain 表示五领域）
+        self.rucc_domains_allowed = ['Air', 'Water', 'Land', 'Built', 'Social']
+
         # 模型结果存储
         self.model_results = {}
         self.analysis_summary = {}
@@ -105,15 +99,30 @@ class LMMAnalyzer:
                 # 如果没有State_FIPS但有State列，使用State作为分组变量
                 self.data['State_FIPS'] = self.data['State'].astype(str)
             
-            # 确保EQI变量为分类变量
-            for var in self.eqi_variables + self.rucc_eqi_variables + self.multi_eqi_variables:
+            # 确保EQI变量为分类变量（源数据已是1..5，这里仅显式设置为有序分类）
+            for var in self.eqi_variables + self.rucc_eqi_variables:
                 if var in self.data.columns:
                     self.data[f'{var}_factor'] = pd.Categorical(
                         self.data[var], 
                         categories=[1, 2, 3, 4, 5], 
                         ordered=True
                     )
-            
+
+            # 动态检测并并入任何以 RUCC_EQI 开头的列（大小写不敏感），创建对应有序因子
+            rucc_cols = [c for c in self.data.columns if c.lower().startswith('rucc_eqi') and not c.lower().endswith('_factor')]
+            if rucc_cols:
+                existing = set(self.rucc_eqi_variables)
+                for c in rucc_cols:
+                    if c not in existing:
+                        self.rucc_eqi_variables.append(c)
+                        existing.add(c)
+                    self.data[f'{c}_factor'] = pd.Categorical(
+                        self.data[c], categories=[1, 2, 3, 4, 5], ordered=True
+                    )
+                logger.info(f"检测到RUCC相关列: {sorted(rucc_cols)}")
+            else:
+                logger.info("未检测到额外的RUCC_EQI列，使用默认列名集合")
+
             logger.info("数据预处理完成")
             return True
             
@@ -135,8 +144,10 @@ class LMMAnalyzer:
         """
         # 解析scenario格式 (如 'EQI0005_AAMR2006_2010')
         parts = scenario.split('_')
-        eqi_period = f"{parts[0][3:7]}_{parts[0][7:11]}"  # EQI0005 -> 2000_2005
-        aamr_period = f"{parts[1][4:8]}_{parts[1][8:12]}"  # AAMR2006 -> 2006_2010
+        eqi_map = {'EQI0005': '2000-2005', 'EQI0610': '2006-2010'}
+        aamr_map = {'AAMR2006': '2006-2010', 'AAMR2011': '2011-2015', 'AAMR2016': '2016-2020'}
+        eqi_period = eqi_map.get(parts[0], parts[0])
+        aamr_period = aamr_map.get(parts[1], parts[1])
         
         # 筛选条件
         mask = (self.data['EQI_Period'] == eqi_period) & (self.data['Time_Period'] == aamr_period) & (self.data['Cancer_Type'] == cancer_type)
@@ -164,6 +175,62 @@ class LMMAnalyzer:
         
         return analysis_data
     
+    def _has_long_rucc_subdomains(self, data: pd.DataFrame) -> bool:
+        """长表应包含 RUCC_EQI（1-5 分位）和 EQI_Domain（Air/Water/Land/Built/Social）"""
+        return {'RUCC_EQI', 'EQI_Domain'}.issubset(set(data.columns))
+
+    def _extract_random_variances(self, result) -> Tuple[Optional[float], Optional[float]]:
+        """返回(州随机截距方差, 残差方差)"""
+        re_var, resid_var = None, None
+        try:
+            cov_re = getattr(result, 'cov_re', None)
+            if cov_re is not None:
+                arr = np.asarray(cov_re)
+                if arr.size > 0:
+                    re_var = float(arr.ravel()[0])
+        except Exception:
+            pass
+        try:
+            resid_var = float(getattr(result, 'scale', np.nan))
+        except Exception:
+            resid_var = None
+        return re_var, resid_var
+
+    def _normalize_rucc_suffix(self, varname: str) -> str:
+        """将RUCC变量名标准化为 EQI 域后缀，方便与结果表对齐。
+        例: RUCC_EQI_air -> EQI_Air, RUCC_EQI_Sociodemographic -> EQI_Social, RUCC_EQI -> EQI
+        """
+        low = varname.lower()
+        if low == 'rucc_eqi':
+            return 'EQI'
+        if 'air' in low:
+            return 'EQI_Air'
+        if 'water' in low:
+            return 'EQI_Water'
+        if 'land' in low:
+            return 'EQI_Land'
+        if 'built' in low:
+            return 'EQI_Built'
+        if 'socio' in low or 'social' in low:
+            return 'EQI_Social'
+        # 回退：去掉前缀并保持原样（尽量不丢）
+        return varname.replace('RUCC_', '')
+
+    def _normalize_domain(self, dom: str) -> str:
+        """标准化领域名（Sociodemographic -> Social）。"""
+        if isinstance(dom, str) and dom.lower().startswith('socio'):
+            return 'Social'
+        return dom
+
+    def _make_rucc_key(self, prefix: str, rucc_eqi_var: str) -> str:
+        """将宽表变量名映射为结果键，匹配 LMM_Result.model_order 约定。
+        例如: prefix='RUCC_Overall', rucc_eqi_var='RUCC_EQI_Air' -> 'RUCC_Overall_EQI_Air'
+              prefix='RUCC1',        rucc_eqi_var='RUCC_EQI'     -> 'RUCC1_EQI'
+        """
+        # 使用标准化后缀，避免命名差异导致结果丢失
+        suffix = self._normalize_rucc_suffix(rucc_eqi_var)
+        return f"{prefix}_{suffix}"
+
     def fit_mixed_model(self, data: pd.DataFrame, eqi_var: str, model_name: str) -> Dict:
         """
         拟合混合效应模型（单一EQI变量模型）
@@ -183,37 +250,40 @@ class LMMAnalyzer:
                 logger.error(f"EQI因子变量不存在: {eqi_factor_var}")
                 return None
             
+            # 进一步清理：剔除 EQI 缺失
+            data_model = data.dropna(subset=[eqi_var]).copy()
+
             # 检查EQI分布
-            eqi_dist = data[eqi_var].value_counts().sort_index()
+            eqi_dist = data_model[eqi_var].value_counts().sort_index()
             if len(eqi_dist) < 3:
                 logger.warning(f"EQI变量 {eqi_var} 分类不足: {dict(eqi_dist)}")
                 return None
             
             # 构建公式 - 固定斜率随机截距模型
-            # Level 1: EQI五分位数 + 吸烟率 (固定效应)
-            # Level 2: 州随机截距 (随机效应)
             formula = f"AAMR ~ C({eqi_factor_var}, Treatment(reference=1)) + Smoking_Rate"
             
             # 拟合混合效应模型
-            logger.debug(f"拟合模型: {formula}")
-            model = smf.mixedlm(formula, data, groups=data['State_FIPS'])
+            logger.debug(f"拟合模型: {model_name} | {formula}")
+            model = smf.mixedlm(formula, data_model, groups=data_model['State_FIPS'])
             result = model.fit(method='lbfgs', maxiter=1000)
             
             # 提取系数和置信区间
             coefficients = self._extract_coefficients(result, eqi_var)
             
-            # 模型诊断信息
+            # 模型诊断信息（州随机截距方差与残差方差）
+            re_var, resid_var = self._extract_random_variances(result)
             model_info = {
                 'model_name': model_name,
                 'eqi_variable': eqi_var,
-                'sample_size': len(data),
-                'counties': data['COUNTY_FIPS'].nunique(),
-                'states': data['State_FIPS'].nunique(),
+                'sample_size': len(data_model),
+                'counties': data_model['COUNTY_FIPS'].nunique(),
+                'states': data_model['State_FIPS'].nunique(),
                 'aic': result.aic,
                 'bic': result.bic,
                 'log_likelihood': result.llf,
-                'random_effect_var': result.scale if hasattr(result, 'scale') else None,
-                'converged': result.converged if hasattr(result, 'converged') else True
+                'random_intercept_var': re_var,   # 州随机截距方差（来自 cov_re）
+                'residual_var': resid_var,        # 残差方差（scale）
+                'converged': bool(getattr(result, 'converged', True))
             }
             
             return {
@@ -226,74 +296,13 @@ class LMMAnalyzer:
             logger.error(f"模型拟合失败 ({model_name}): {e}")
             return None
     
-    def fit_multi_eqi_model(self, data: pd.DataFrame, model_name: str) -> Dict:
-        """
-        拟合多EQI域联合模型
-        
-        参数:
-            data: 分析数据
-            model_name: 模型名称
-            
-        返回:
-            模型结果字典
-        """
-        try:
-            # 检查所有需要的变量是否存在
-            required_vars = [f'{var}_factor' for var in self.multi_eqi_variables]
-            missing_vars = [var for var in required_vars if var not in data.columns]
-            if missing_vars:
-                logger.error(f"缺少必要的变量: {missing_vars}")
-                return None
-            
-            # 检查变量分布
-            for var in self.multi_eqi_variables:
-                var_dist = data[var].value_counts().sort_index()
-                if len(var_dist) < 3:
-                    logger.warning(f"EQI变量 {var} 分类不足: {dict(var_dist)}")
-            
-            # 构建多EQI域联合模型公式
-            # 包含所有5个EQI细分域的五分位数 + 吸烟率 + 州随机截距
-            eqi_factors = [f'C({var}_factor, Treatment(reference=1))' for var in self.multi_eqi_variables]
-            formula = f"AAMR ~ {' + '.join(eqi_factors)} + Smoking_Rate"
-            
-            # 拟合混合效应模型
-            logger.debug(f"拟合多EQI模型: {formula}")
-            model = smf.mixedlm(formula, data, groups=data['State_FIPS'])
-            result = model.fit(method='lbfgs', maxiter=1000)
-            
-            # 提取系数和置信区间
-            coefficients = self._extract_multi_eqi_coefficients(result)
-            
-            # 模型诊断信息
-            model_info = {
-                'model_name': model_name,
-                'eqi_variables': self.multi_eqi_variables,
-                'sample_size': len(data),
-                'counties': data['COUNTY_FIPS'].nunique(),
-                'states': data['State_FIPS'].nunique(),
-                'aic': result.aic,
-                'bic': result.bic,
-                'log_likelihood': result.llf,
-                'random_effect_var': result.scale if hasattr(result, 'scale') else None,
-                'converged': result.converged if hasattr(result, 'converged') else True
-            }
-            
-            return {
-                'coefficients': coefficients,
-                'model_info': model_info,
-                'raw_result': result
-            }
-            
-        except Exception as e:
-            logger.error(f"多EQI模型拟合失败 ({model_name}): {e}")
-            return None
-    
+
+
     def _extract_coefficients(self, result, eqi_var: str) -> Dict:
         """提取模型系数和置信区间"""
         coefficients = {}
         
-        # 获取系数表
-        coef_table = result.summary().tables[1]
+        # 获取系数
         params = result.params
         conf_int = result.conf_int()
         pvalues = result.pvalues
@@ -352,71 +361,7 @@ class LMMAnalyzer:
         
         return coefficients
     
-    def _extract_multi_eqi_coefficients(self, result) -> Dict:
-        """提取多EQI域联合模型系数和置信区间"""
-        coefficients = {}
-        
-        # 获取系数表
-        params = result.params
-        conf_int = result.conf_int()
-        pvalues = result.pvalues
-        
-        # 为每个EQI域提取系数 (Q2-Q5, Q1为参照组)
-        for eqi_var in self.multi_eqi_variables:
-            for q in range(1, 6):  # 包括Q1作为参照组
-                if q == 1:
-                    # Q1始终为参照组 (coefficient = 0)
-                    coefficients[f'{eqi_var}_Q{q}'] = {
-                        'coefficient': 0.0,
-                        'lower_ci': 0.0,
-                        'upper_ci': 0.0,
-                        'p_value': np.nan,
-                        'significant': False
-                    }
-                else:
-                    param_name = f'C({eqi_var}_factor, Treatment(reference=1))[T.{q}]'
-                    
-                    if param_name in params.index:
-                        coef = params[param_name]
-                        lower_ci = conf_int.loc[param_name, 0]
-                        upper_ci = conf_int.loc[param_name, 1] 
-                        p_value = pvalues[param_name]
-                        
-                        coefficients[f'{eqi_var}_Q{q}'] = {
-                            'coefficient': coef,
-                            'lower_ci': lower_ci,
-                            'upper_ci': upper_ci,
-                            'p_value': p_value,
-                            'significant': p_value < 0.05
-                        }
-                    else:
-                        # 如果该分位数不存在，设为缺失
-                        coefficients[f'{eqi_var}_Q{q}'] = {
-                            'coefficient': np.nan,
-                            'lower_ci': np.nan,
-                            'upper_ci': np.nan,
-                            'p_value': np.nan,
-                            'significant': False
-                        }
-        
-        # 吸烟率系数
-        smoking_param = 'Smoking_Rate'
-        if smoking_param in params.index:
-            coef = params[smoking_param]
-            lower_ci = conf_int.loc[smoking_param, 0]
-            upper_ci = conf_int.loc[smoking_param, 1]
-            p_value = pvalues[smoking_param]
-            
-            coefficients['Smoking_Rate'] = {
-                'coefficient': coef,
-                'lower_ci': lower_ci,
-                'upper_ci': upper_ci,
-                'p_value': p_value,
-                'significant': p_value < 0.05
-            }
-        
-        return coefficients
-    
+
     def run_scenario_analysis(self, scenario: str, cancer_types: List[str]) -> Dict:
         """
         运行单个场景的完整分析
@@ -437,17 +382,16 @@ class LMMAnalyzer:
         
         for cancer_type in cancer_types:
             logger.info(f"分析癌症类型: {cancer_type}")
-            
-            # 获取分析数据
             analysis_data = self.get_analysis_data(scenario, cancer_type)
-            
+            logger.info(f"可用RUCC变量: {sorted([c for c in self.rucc_eqi_variables if c in analysis_data.columns])}")
+
             if len(analysis_data) < 50:
                 logger.warning(f"跳过 {cancer_type}: 数据量不足 ({len(analysis_data)} 记录)")
                 continue
             
             cancer_results = {}
             
-            # 1. 总体EQI分析
+            # 1. 总体EQI分析 (不分层)
             logger.info("  进行总体EQI分析...")
             for eqi_var in self.eqi_variables:
                 if eqi_var in analysis_data.columns:
@@ -456,36 +400,24 @@ class LMMAnalyzer:
                     if result:
                         cancer_results[eqi_var] = result
             
-            # 2. 多EQI域联合模型分析
-            logger.info("  进行多EQI域联合模型分析...")
-            # 检查是否所有需要的变量都存在
-            required_multi_vars = [var for var in self.multi_eqi_variables if var in analysis_data.columns]
-            if len(required_multi_vars) == len(self.multi_eqi_variables):
-                model_name = f"{scenario}_{cancer_type}_Multi_EQI"
-                result = self.fit_multi_eqi_model(analysis_data, model_name)
-                if result:
-                    cancer_results['Multi_EQI'] = result
-            else:
-                missing_vars = set(self.multi_eqi_variables) - set(required_multi_vars)
-                logger.warning(f"跳过多EQI模型: 缺少变量 {missing_vars}")
-            
-            # 3. RUCC分层EQI分析 (只分析RUCC1-RUCC4)
+            # 2. RUCC分层（仅 RUCC=1..4，且仅宽表列）
             logger.info("  进行RUCC分层分析...")
+            rucc_models_before = len(cancer_results)
             for rucc in [1, 2, 3, 4]:
                 rucc_data = self.get_analysis_data(scenario, cancer_type, rucc_filter=rucc)
-                
-                if len(rucc_data) < 30:  # 分层数据的最小样本量要求更低
+                if len(rucc_data) < 30:
                     logger.debug(f"跳过 RUCC{rucc}: 数据量不足 ({len(rucc_data)} 记录)")
                     continue
-                
                 for rucc_eqi_var in self.rucc_eqi_variables:
                     if rucc_eqi_var in rucc_data.columns:
                         model_name = f"{scenario}_{cancer_type}_RUCC{rucc}_{rucc_eqi_var}"
                         result = self.fit_mixed_model(rucc_data, rucc_eqi_var, model_name)
                         if result:
-                            key = f"RUCC{rucc}_{rucc_eqi_var}"
+                            key = self._make_rucc_key(f"RUCC{rucc}", rucc_eqi_var)
                             cancer_results[key] = result
-            
+            rucc_models_after = len(cancer_results)
+            logger.info(f"  RUCC模型数量: 新增 {rucc_models_after - rucc_models_before} 个")
+
             if cancer_results:
                 scenario_results['cancer_results'][cancer_type] = cancer_results
                 logger.info(f"  {cancer_type} 分析完成: {len(cancer_results)} 个模型")
@@ -608,7 +540,7 @@ def main():
     """主函数 - 演示用法"""
     print("=== LMM多层回归分析 ===")
     
-    # 数据路径
+    # 数据路径（示例演示用；实际流程由 LMM_Main 驱动并从项目配置选择）
     data_path = "Data/df/EQI_LMM_Delete_df.csv"
     
     # 创建分析器

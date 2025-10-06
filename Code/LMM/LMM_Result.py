@@ -57,67 +57,22 @@ class LMMResultFormatter:
             0.05: "*†"
         }
         
-        # 模型顺序配置
+        # 模型顺序配置（移除 RUCC_Overall_*）
         self.model_order = [
-            'EQI',
-            'EQI_air', 
-            'EQI_water',
-            'EQI_land',
-            'EQI_built',
-            'EQI_Sociodemographic',
-            'Multi_EQI',  # 新增的多EQI域联合模型
-            'RUCC1_RUCC_EQI',
-            'RUCC1_RUCC_EQI_air',
-            'RUCC1_RUCC_EQI_water', 
-            'RUCC1_RUCC_EQI_land',
-            'RUCC1_RUCC_EQI_built',
-            'RUCC1_RUCC_EQI_Sociodemographic',
-            'RUCC2_RUCC_EQI',
-            'RUCC2_RUCC_EQI_air',
-            'RUCC2_RUCC_EQI_water',
-            'RUCC2_RUCC_EQI_land', 
-            'RUCC2_RUCC_EQI_built',
-            'RUCC2_RUCC_EQI_Sociodemographic',
-            'RUCC3_RUCC_EQI',
-            'RUCC3_RUCC_EQI_air',
-            'RUCC3_RUCC_EQI_water',
-            'RUCC3_RUCC_EQI_land',
-            'RUCC3_RUCC_EQI_built', 
-            'RUCC3_RUCC_EQI_Sociodemographic',
-            'RUCC4_RUCC_EQI',
-            'RUCC4_RUCC_EQI_air',
-            'RUCC4_RUCC_EQI_water',
-            'RUCC4_RUCC_EQI_land',
-            'RUCC4_RUCC_EQI_built',
-            'RUCC4_RUCC_EQI_Sociodemographic'
+            'EQI', 'EQI_Air', 'EQI_Water', 'EQI_Land', 'EQI_Built', 'EQI_Social',
+            'RUCC1_EQI', 'RUCC1_EQI_Air', 'RUCC1_EQI_Water', 'RUCC1_EQI_Land', 'RUCC1_EQI_Built', 'RUCC1_EQI_Social',
+            'RUCC2_EQI', 'RUCC2_EQI_Air', 'RUCC2_EQI_Water', 'RUCC2_EQI_Land', 'RUCC2_EQI_Built', 'RUCC2_EQI_Social',
+            'RUCC3_EQI', 'RUCC3_EQI_Air', 'RUCC3_EQI_Water', 'RUCC3_EQI_Land', 'RUCC3_EQI_Built', 'RUCC3_EQI_Social',
+            'RUCC4_EQI', 'RUCC4_EQI_Air', 'RUCC4_EQI_Water', 'RUCC4_EQI_Land', 'RUCC4_EQI_Built', 'RUCC4_EQI_Social'
         ]
         
-        # 简化模型名称映射
+        # 简化模型名称映射（移除 RUCC_Overall_*）
         self.model_name_mapping = {
-            'RUCC1_RUCC_EQI': 'RUCC1_EQI',
-            'RUCC1_RUCC_EQI_air': 'RUCC1_EQI_air',
-            'RUCC1_RUCC_EQI_water': 'RUCC1_EQI_water',
-            'RUCC1_RUCC_EQI_land': 'RUCC1_EQI_land',
-            'RUCC1_RUCC_EQI_built': 'RUCC1_EQI_built',
-            'RUCC1_RUCC_EQI_Sociodemographic': 'RUCC1_EQI_Sociodemographic',
-            'RUCC2_RUCC_EQI': 'RUCC2_EQI',
-            'RUCC2_RUCC_EQI_air': 'RUCC2_EQI_air',
-            'RUCC2_RUCC_EQI_water': 'RUCC2_EQI_water',
-            'RUCC2_RUCC_EQI_land': 'RUCC2_EQI_land',
-            'RUCC2_RUCC_EQI_built': 'RUCC2_EQI_built',
-            'RUCC2_RUCC_EQI_Sociodemographic': 'RUCC2_EQI_Sociodemographic',
-            'RUCC3_RUCC_EQI': 'RUCC3_EQI',
-            'RUCC3_RUCC_EQI_air': 'RUCC3_EQI_air',
-            'RUCC3_RUCC_EQI_water': 'RUCC3_EQI_water',
-            'RUCC3_RUCC_EQI_land': 'RUCC3_EQI_land',
-            'RUCC3_RUCC_EQI_built': 'RUCC3_EQI_built',
-            'RUCC3_RUCC_EQI_Sociodemographic': 'RUCC3_EQI_Sociodemographic',
-            'RUCC4_RUCC_EQI': 'RUCC4_EQI',
-            'RUCC4_RUCC_EQI_air': 'RUCC4_EQI_air',
-            'RUCC4_RUCC_EQI_water': 'RUCC4_EQI_water',
-            'RUCC4_RUCC_EQI_land': 'RUCC4_EQI_land',
-            'RUCC4_RUCC_EQI_built': 'RUCC4_EQI_built',
-            'RUCC4_RUCC_EQI_Sociodemographic': 'RUCC4_EQI_Sociodemographic'
+            'EQI': 'EQI', 'EQI_Air': 'EQI_Air', 'EQI_Water': 'EQI_Water', 'EQI_Land': 'EQI_Land', 'EQI_Built': 'EQI_Built', 'EQI_Social': 'EQI_Social',
+            'RUCC1_EQI': 'RUCC1_EQI', 'RUCC1_EQI_Air': 'RUCC1_EQI_Air', 'RUCC1_EQI_Water': 'RUCC1_EQI_Water', 'RUCC1_EQI_Land': 'RUCC1_EQI_Land', 'RUCC1_EQI_Built': 'RUCC1_EQI_Built', 'RUCC1_EQI_Social': 'RUCC1_EQI_Social',
+            'RUCC2_EQI': 'RUCC2_EQI', 'RUCC2_EQI_Air': 'RUCC2_EQI_Air', 'RUCC2_EQI_Water': 'RUCC2_EQI_Water', 'RUCC2_EQI_Land': 'RUCC2_EQI_Land', 'RUCC2_EQI_Built': 'RUCC2_EQI_Built', 'RUCC2_EQI_Social': 'RUCC2_EQI_Social',
+            'RUCC3_EQI': 'RUCC3_EQI', 'RUCC3_EQI_Air': 'RUCC3_EQI_Air', 'RUCC3_EQI_Water': 'RUCC3_EQI_Water', 'RUCC3_EQI_Land': 'RUCC3_EQI_Land', 'RUCC3_EQI_Built': 'RUCC3_EQI_Built', 'RUCC3_EQI_Social': 'RUCC3_EQI_Social',
+            'RUCC4_EQI': 'RUCC4_EQI', 'RUCC4_EQI_Air': 'RUCC4_EQI_Air', 'RUCC4_EQI_Water': 'RUCC4_EQI_Water', 'RUCC4_EQI_Land': 'RUCC4_EQI_Land', 'RUCC4_EQI_Built': 'RUCC4_EQI_Built', 'RUCC4_EQI_Social': 'RUCC4_EQI_Social'
         }
         
         # 时间场景映射
@@ -231,19 +186,23 @@ class LMMResultFormatter:
         返回:
             格式化字符串
         """
+        # 检查coef_info是否为空或缺少必要键
+        if not coef_info or 'coefficient' not in coef_info:
+            return ""
+        
         if pd.isna(coef_info['coefficient']):
             return ""
         
         coef = coef_info['coefficient']
-        lower_ci = coef_info['lower_ci']
-        upper_ci = coef_info['upper_ci']
+        lower_ci = coef_info.get('lower_ci', np.nan)
+        upper_ci = coef_info.get('upper_ci', np.nan)
         
         # 选择使用原始p值还是校正后p值
         if use_corrected and 'p_value_corrected' in coef_info:
             p_value = coef_info['p_value_corrected']
             significance_markers = self.fdr_significance_markers
         else:
-            p_value = coef_info['p_value']
+            p_value = coef_info.get('p_value', np.nan)
             significance_markers = self.significance_markers
         
         # Q1参照组特殊处理
@@ -337,51 +296,40 @@ class LMMResultFormatter:
                     logger.warning(f"没有找到结果: {scenario} - {cancer_type}")
                     continue
                 
-                # 按模型顺序处理
-                for model_name in self.model_order:
-                    if model_name in scenario_results:
-                        coeffs = scenario_results[model_name]
-                        
-                        # 简化模型名称
-                        display_model_name = self.model_name_mapping.get(model_name, model_name)
-                        
-                        # 处理不同模型类型的结果格式
-                        if model_name == 'Multi_EQI':
-                            # 为Multi_EQI模型的每个EQI域创建单独的行
-                            eqi_domains = ['EQI_air', 'EQI_water', 'EQI_land', 'EQI_built', 'EQI_Sociodemographic']
-                            for domain in eqi_domains:
-                                # 创建行数据
-                                row = {
-                                    'ICD_Code': cancer_type,
-                                    'EQI_Period': eqi_period,
-                                    'AAMR_Period': aamr_period,
-                                    'Lag': lag,
-                                    'Model': f'{display_model_name}_{domain}',
-                                    'Q1': self.format_coefficient(coeffs.get(f'{domain}_Q1', {}), use_corrected),
-                                    'Q2': self.format_coefficient(coeffs.get(f'{domain}_Q2', {}), use_corrected),
-                                    'Q3': self.format_coefficient(coeffs.get(f'{domain}_Q3', {}), use_corrected),
-                                    'Q4': self.format_coefficient(coeffs.get(f'{domain}_Q4', {}), use_corrected),
-                                    'Q5': self.format_coefficient(coeffs.get(f'{domain}_Q5', {}), use_corrected)
-                                }
-                                
-                                all_rows.append(row)
-                        else:
-                            # 创建行数据
-                            row = {
-                                'ICD_Code': cancer_type,
-                                'EQI_Period': eqi_period,
-                                'AAMR_Period': aamr_period,
-                                'Lag': lag,
-                                'Model': display_model_name,
-                                'Q1': self.format_coefficient(coeffs.get('Q1', {}), use_corrected),
-                                'Q2': self.format_coefficient(coeffs.get('Q2', {}), use_corrected),
-                                'Q3': self.format_coefficient(coeffs.get('Q3', {}), use_corrected),
-                                'Q4': self.format_coefficient(coeffs.get('Q4', {}), use_corrected),
-                                'Q5': self.format_coefficient(coeffs.get('Q5', {}), use_corrected)
-                            }
-                            
-                            all_rows.append(row)
-        
+                # 过滤：移除任何 RUCC_Overall* 和包含 '_factor' 的模型键
+                scenario_results = {
+                    k: v for k, v in scenario_results.items()
+                    if not (k.startswith('RUCC_Overall') or k.endswith('_factor'))
+                }
+                if not scenario_results:
+                    continue
+
+                # 先按预设顺序，再补充所有未列入的键（确保RUCC等不会丢失）
+                preferred = [m for m in self.model_order if m in scenario_results]
+                others = sorted([m for m in scenario_results.keys() if m not in self.model_order])
+                models_to_emit = preferred + others
+
+                for model_name in models_to_emit:
+                    coeffs = scenario_results[model_name]
+                    # 简化模型名称
+                    display_model_name = self.model_name_mapping.get(model_name, model_name)
+
+                    # 创建行数据
+                    row = {
+                        'ICD_Code': cancer_type,
+                        'EQI_Period': eqi_period,
+                        'AAMR_Period': aamr_period,
+                        'Lag': lag,
+                        'Model': display_model_name,
+                        'Q1': self.format_coefficient(coeffs.get('Q1', {}), use_corrected) if coeffs else "",
+                        'Q2': self.format_coefficient(coeffs.get('Q2', {}), use_corrected) if coeffs else "",
+                        'Q3': self.format_coefficient(coeffs.get('Q3', {}), use_corrected) if coeffs else "",
+                        'Q4': self.format_coefficient(coeffs.get('Q4', {}), use_corrected) if coeffs else "",
+                        'Q5': self.format_coefficient(coeffs.get('Q5', {}), use_corrected) if coeffs else ""
+                    }
+
+                    all_rows.append(row)
+
         # 创建DataFrame
         if all_rows:
             df = pd.DataFrame(all_rows)

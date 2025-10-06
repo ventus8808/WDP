@@ -123,7 +123,7 @@ class LMMPipeline:
         logger.info("开始重新生成数据...")
         
         try:
-            self.data_integrator = LMMDataIntegrator()
+            self.data_integrator = LMMDataIntegrator(use_mice=self.use_mice)
             success = self.data_integrator.process_all()
             
             if success and self.data_file.exists():

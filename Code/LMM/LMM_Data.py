@@ -112,7 +112,7 @@ class LMMDataIntegrator:
             
             if 'Analysis_Scenario' not in self.integrated_data.columns:
                 # 构建分析场景名称
-                eqi_period_map = {5.0: '0005', 610.0: '0610'}
+                eqi_period_map = {'2000-2005': '0005', '2006-2010': '0610'}
                 eqi_period_str = self.integrated_data['EQI_Period'].map(eqi_period_map).fillna('0000')
                 time_period_str = self.integrated_data['Time_Period'].str.replace('-', '_')
                 self.integrated_data['Analysis_Scenario'] = 'EQI' + eqi_period_str + '_AAMR' + time_period_str
@@ -243,9 +243,6 @@ class LMMDataIntegrator:
             # 保存数据
             self.integrated_data.to_csv(self.output_path, index=False)
             
-            # 生成数据字典
-            self._generate_data_dictionary()
-            
             logger.info(f"数据保存成功: {self.output_path}")
             logger.info(f"文件大小: {self.output_path.stat().st_size / (1024*1024):.2f} MB")
             
@@ -255,67 +252,20 @@ class LMMDataIntegrator:
             logger.error(f"数据保存失败: {e}")
             return False
     
-    def _generate_data_dictionary(self):
-        """生成数据字典"""
-        suffix = "_MI" if self.use_mice else "_Delete_df"
-        dict_path = self.output_path.parent / f"EQI_LMM{suffix}_Data_Dictionary.txt"
-        
-        try:
-            with open(dict_path, 'w', encoding='utf-8') as f:
-                f.write("EQI LMM 统一数据表 - 数据字典\n")
-                f.write("=" * 50 + "\n\n")
-                f.write(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"数据文件: {self.output_path.name}\n")
-                f.write(f"数据源: {self.input_file}\n")
-                f.write(f"使用MICE插补: {'是' if self.use_mice else '否'}\n\n")
-                
-                f.write("数据概述:\n")
-                f.write(f"- 总记录数: {len(self.integrated_data):,}\n")
-                f.write(f"- 列数: {len(self.integrated_data.columns)}\n")
-                f.write(f"- 县数量: {self.integrated_data['COUNTY_FIPS'].nunique():,}\n")
-                f.write(f"- 癌症类型: {self.integrated_data['Cancer_Type'].nunique()}\n")
-                f.write(f"- 分析场景: {self.integrated_data['Analysis_Scenario'].nunique()}\n\n")
-                
-                f.write("列变量说明:\n")
-                column_descriptions = {
-                    'COUNTY_FIPS': '县FIPS代码 (主键, 字符串)',
-                    'State': '州缩写',
-                    'Time_Period': 'AAMR时间段',
-                    'Lag_Years': '滞后年数 (5或10年)',
-                    'EQI_Period': 'EQI时间段 (5或610)',
-                    'RUCC': '农村-城市连续码 (1-4整型)',
-                    'EQI': '环境质量指数总分 (1-5五分位数整型)',
-                    'EQI_air': '空气质量指数 (1-5整型)',
-                    'EQI_water': '水质量指数 (1-5整型)', 
-                    'EQI_land': '土地质量指数 (1-5整型)',
-                    'EQI_built': '建成环境质量指数 (1-5整型)',
-                    'EQI_Sociodemographic': '社会人口学质量指数 (1-5整型)',
-                    'RUCC_EQI': 'RUCC分层EQI总分 (1-5整型)',
-                    'RUCC_EQI_air': 'RUCC分层空气质量指数 (1-5整型)',
-                    'RUCC_EQI_water': 'RUCC分层水质量指数 (1-5整型)',
-                    'RUCC_EQI_land': 'RUCC分层土地质量指数 (1-5整型)',
-                    'RUCC_EQI_built': 'RUCC分层建成环境质量指数 (1-5整型)',
-                    'RUCC_EQI_Sociodemographic': 'RUCC分层社会人口学质量指数 (1-5整型)',
-                    'Analysis_Scenario': '分析场景标识',
-                    'Cancer_Type': '癌症类型ICD代码',
-                    'Cancer_Description': '癌症类型描述',
-                    'AAMR': '年龄调整癌症死亡率',
-                    'Smoking_Rate': '县级吸烟率 (%) - 与EQI时期匹配',
-                    'State_FIPS': '2位州FIPS代码'
-                }
-                
-                for col in self.integrated_data.columns:
-                    desc = column_descriptions.get(col, '待补充描述')
-                    f.write(f"- {col}: {desc}\n")
-                
-                f.write("\n癌症类型映射:\n")
-                for code, desc in self.cancer_types.items():
-                    f.write(f"- {code}: {desc}\n")
+    def get_data_info(self):
+        """获取数据信息"""
+        if self.integrated_data is None:
+            return None
             
-            logger.info(f"数据字典已保存: {dict_path}")
-            
-        except Exception as e:
-            logger.warning(f"数据字典生成失败: {e}")
+        info = {
+            'total_records': len(self.integrated_data),
+            'counties': self.integrated_data['COUNTY_FIPS'].nunique(),
+            'states': self.integrated_data['State_FIPS'].nunique(),
+            'cancer_types': self.integrated_data['Cancer_Type'].nunique(),
+            'scenarios': self.integrated_data['Analysis_Scenario'].nunique(),
+            'columns': list(self.integrated_data.columns)
+        }
+        return info
     
     def get_integrated_data(self):
         """获取整合后的数据 - 保持原方法名"""

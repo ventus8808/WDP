@@ -144,7 +144,7 @@ def _map_eqi_period(time_period: str, lag_years: int):
     if time_period == '2006-2010':
         return '2000-2005' if lag_years == 5 else None
     if time_period == '2011-2015':
-        return '2006-2010' if lag_years == 5 else '2000-2005' if lag_years == 10 else None
+        return '2000-2005' if lag_years == 10 else '2006-2010' if lag_years == 5 else None
     if time_period == '2016-2020':
         return '2006-2010' if lag_years == 10 else None
     return None
@@ -158,7 +158,7 @@ def _map_eqi_code(time_period: str, lag_years: int):
     if time_period == '2006-2010':
         return '0005' if lag_years == 5 else None
     if time_period == '2011-2015':
-        return '0610' if lag_years == 5 else '0005' if lag_years == 10 else None
+        return '0005' if lag_years == 10 else '0610' if lag_years == 5 else None
     if time_period == '2016-2020':
         return '0610' if lag_years == 10 else None
     return None
@@ -268,12 +268,27 @@ def main():
                 })
                 base = base.drop_duplicates(subset=['COUNTY_FIPS'], keep='first')
 
-                for lag in (5, 10):
-                    eqi_period = _map_eqi_period(period, lag)
-                    eqi_code = _map_eqi_code(period, lag)
+                # Generate only valid EQI-AAMR combinations
+                # 1. 2000-2005 EQI (code '0005') + 5 years lag -> 2006-2010 AAMR
+                # 2. 2000-2005 EQI (code '0005') + 10 years lag -> 2011-2015 AAMR
+                # 3. 2006-2010 EQI (code '0610') + 5 years lag -> 2011-2015 AAMR
+                # 4. 2006-2010 EQI (code '0610') + 10 years lag -> 2016-2020 AAMR
+                valid_combinations = []
+                if period == '2006-2010':
+                    # Only 2000-2005 EQI with 5 years lag
+                    valid_combinations.append((5, '0005', '2000-2005'))
+                elif period == '2011-2015':
+                    # Both 2000-2005 EQI with 10 years lag and 2006-2010 EQI with 5 years lag
+                    valid_combinations.append((10, '0005', '2000-2005'))
+                    valid_combinations.append((5, '0610', '2006-2010'))
+                elif period == '2016-2020':
+                    # Only 2006-2010 EQI with 10 years lag
+                    valid_combinations.append((10, '0610', '2006-2010'))
+                
+                for lag, eqi_code, eqi_period in valid_combinations:
                     out = base.copy()
                     out['Lag_Years'] = lag
-                    out['EQI_Period'] = eqi_period if eqi_period is not None else pd.NA
+                    out['EQI_Period'] = eqi_period
                     if eqi_code and eqi_code in eqi_dict:
                         eqidf = eqi_dict[eqi_code][['COUNTY_FIPS'] + EQI_COLS].copy()
                         out = out.merge(eqidf, on='COUNTY_FIPS', how='left')
@@ -298,8 +313,9 @@ def main():
         return
 
     final = pd.concat(rows, ignore_index=True)
-    first = ['COUNTY_FIPS','State','Time_Period','Lag_Years','EQI_Period','Cancer_Type','AAMR_lower','AAMR_upper','Smoking_Rate']
-    final = final[first + [c for c in EQI_COLS if c in final.columns]]
+    first = ['COUNTY_FIPS','State','EQI_Period','Time_Period','Lag_Years','Cancer_Type','AAMR_lower','AAMR_upper','Smoking_Rate']
+    ordered = first + [c for c in EQI_COLS if c in final.columns]
+    final = final[ordered]
 
     # Cast RUCC/EQI quintiles to nullable int to avoid 1.0/2.0 formatting
     for c in EQI_COLS:
