@@ -2,45 +2,44 @@
   "n_imputations": 5,
   "n_iterations": 10,
   "original_shape": [
-    12578,
+    12288,
     34
   ],
   "final_shape_wide": [
-    12578,
+    12288,
     34
   ],
   "final_shape_long": [
-    163514,
-    23
+    159744,
+    21
   ],
   "n_aamr_vars": 14,
   "saved_files": {
-    "wide_format": "/Users/ventus/Repository/WDP/Data/df/EQI_LMM_MI_Imputed.csv",
-    "long_format": "/Users/ventus/Repository/WDP/Data/df/EQI_LMM_MI_Imputed_Long.csv"
+    "point_format": "/Users/maguoli/Repository/WDP/Data/Processed/df_EQI_AAMR/EQI_AAMR_Point_MICE.csv"
   },
   "diagnostic_files": {
-    "quality": "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/imputation_quality_comprehensive.png",
-    "pmm_validation": "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/pmm_validation_comprehensive.png",
-    "convergence": "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/convergence_advanced.png",
-    "distribution": "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/distribution_validation_comprehensive.png",
-    "correlation": "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/correlation_preservation.png",
-    "triple_distribution": "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/before_after_imputation_comparison.png",
+    "quality": "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/imputation_quality_comprehensive.png",
+    "pmm_validation": "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/pmm_validation_comprehensive.png",
+    "convergence": "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/convergence_advanced.png",
+    "distribution": "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/distribution_validation_comprehensive.png",
+    "correlation": "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/correlation_preservation.png",
+    "triple_distribution": "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/before_after_imputation_comparison.png",
     "individual_reports": [
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C00_C97_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C15_C26_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C18_C21_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C25_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C30_C39_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C34_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C50_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C51_C58_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C60_C63_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C61_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C64_C68_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C76_C80_detailed_diagnostics.png",
-      "/Users/ventus/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C81_C96_detailed_diagnostics.png"
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C00_C97_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C15_C26_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C18_C21_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C25_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C30_C39_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C34_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C50_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C51_C58_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C60_C63_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C61_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C64_C68_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C76_C80_detailed_diagnostics.png",
+      "/Users/maguoli/Repository/WDP/Result/EQI_LMM_MI_Diagnose/individual_variables/AAMR_C81_C96_detailed_diagnostics.png"
     ]
   },
-  "processing_time": "0 days 00:01:33.256184",
-  "timestamp": "2025-10-01 22:38:16"
+  "processing_time": "0 days 00:01:52.027931",
+  "timestamp": "2025-10-06 18:03:47"
 }

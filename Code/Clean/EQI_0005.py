@@ -36,11 +36,11 @@ def clean_eqi_0005(source_path, output_path):
     # 3. 处理全国指数 (计算五分位数)
     national_cols_map = {
         'EQI_22July2013': 'EQI',
-        'air_EQI_22July2013': 'EQI_air',
-        'water_EQI_22July2013': 'EQI_water',
-        'land_EQI_22July2013': 'EQI_land',
-        'built_EQI_22July2013': 'EQI_built',
-        'sociod_EQI_22July2013': 'EQI_Sociodemographic'  # 修改列名
+        'air_EQI_22July2013': 'EQI_Air',
+        'water_EQI_22July2013': 'EQI_Water',
+        'land_EQI_22July2013': 'EQI_Land',
+        'built_EQI_22July2013': 'EQI_Built',
+        'sociod_EQI_22July2013': 'EQI_Social'  # 修改列名
     }
     for original_col, new_name in national_cols_map.items():
         # 使用qcut计算五分位数, labels=False得到0-4, +1得到1-5
@@ -80,8 +80,8 @@ def clean_eqi_0005(source_path, output_path):
 
     # 5. 确保最终列顺序并保存
     final_columns = [
-        'COUNTY_FIPS', 'RUCC', 'EQI', 'EQI_air', 'EQI_water', 'EQI_land', 'EQI_built', 'EQI_Sociodemographic',
-        'RUCC_EQI', 'RUCC_EQI_air', 'RUCC_EQI_water', 'RUCC_EQI_land', 'RUCC_EQI_built', 'RUCC_EQI_Sociodemographic'
+        'COUNTY_FIPS', 'RUCC', 'EQI', 'EQI_Air', 'EQI_Water', 'EQI_Land', 'EQI_Built', 'EQI_Social',
+        'RUCC_EQI', 'RUCC_EQI_Air', 'RUCC_EQI_Water', 'RUCC_EQI_Land', 'RUCC_EQI_Built', 'RUCC_EQI_Social'
     ]
     
     # 检查实际生成的列
@@ -96,7 +96,7 @@ def clean_eqi_0005(source_path, output_path):
     df_final = df_processed[final_columns]
     
     # 修复：将RUCC分层列转换为整数类型（允许NaN）
-    rucc_columns = ['RUCC_EQI', 'RUCC_EQI_air', 'RUCC_EQI_water', 'RUCC_EQI_land', 'RUCC_EQI_built', 'RUCC_EQI_Sociodemographic']
+    rucc_columns = ['RUCC_EQI', 'RUCC_EQI_Air', 'RUCC_EQI_Water', 'RUCC_EQI_Land', 'RUCC_EQI_Built', 'RUCC_EQI_Social']
     for col in rucc_columns:
         if col in df_final.columns:
             df_final[col] = df_final[col].astype('Int64')

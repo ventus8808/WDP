@@ -35,8 +35,13 @@ logger = logging.getLogger(__name__)
 class LMMResultFormatter:
     """LMM结果格式化器"""
     
-    def __init__(self):
-        """初始化结果格式化器"""
+    def __init__(self, use_mice: bool = False):
+        """初始化结果格式化器
+        
+        Args:
+            use_mice: 是否使用MICE插补数据，影响输出文件名
+        """
+        self.use_mice = use_mice
         
         # 显著性标记配置
         self.significance_markers = {
@@ -60,6 +65,7 @@ class LMMResultFormatter:
             'EQI_land',
             'EQI_built',
             'EQI_Sociodemographic',
+            'Multi_EQI',  # 新增的多EQI域联合模型
             'RUCC1_RUCC_EQI',
             'RUCC1_RUCC_EQI_air',
             'RUCC1_RUCC_EQI_water', 
@@ -339,21 +345,42 @@ class LMMResultFormatter:
                         # 简化模型名称
                         display_model_name = self.model_name_mapping.get(model_name, model_name)
                         
-                        # 创建行数据
-                        row = {
-                            'ICD_Code': cancer_type,
-                            'EQI_Period': eqi_period,
-                            'AAMR_Period': aamr_period,
-                            'Lag': lag,
-                            'Model': display_model_name,
-                            'Q1': self.format_coefficient(coeffs.get('Q1', {}), use_corrected),
-                            'Q2': self.format_coefficient(coeffs.get('Q2', {}), use_corrected),
-                            'Q3': self.format_coefficient(coeffs.get('Q3', {}), use_corrected),
-                            'Q4': self.format_coefficient(coeffs.get('Q4', {}), use_corrected),
-                            'Q5': self.format_coefficient(coeffs.get('Q5', {}), use_corrected)
-                        }
-                        
-                        all_rows.append(row)
+                        # 处理不同模型类型的结果格式
+                        if model_name == 'Multi_EQI':
+                            # 为Multi_EQI模型的每个EQI域创建单独的行
+                            eqi_domains = ['EQI_air', 'EQI_water', 'EQI_land', 'EQI_built', 'EQI_Sociodemographic']
+                            for domain in eqi_domains:
+                                # 创建行数据
+                                row = {
+                                    'ICD_Code': cancer_type,
+                                    'EQI_Period': eqi_period,
+                                    'AAMR_Period': aamr_period,
+                                    'Lag': lag,
+                                    'Model': f'{display_model_name}_{domain}',
+                                    'Q1': self.format_coefficient(coeffs.get(f'{domain}_Q1', {}), use_corrected),
+                                    'Q2': self.format_coefficient(coeffs.get(f'{domain}_Q2', {}), use_corrected),
+                                    'Q3': self.format_coefficient(coeffs.get(f'{domain}_Q3', {}), use_corrected),
+                                    'Q4': self.format_coefficient(coeffs.get(f'{domain}_Q4', {}), use_corrected),
+                                    'Q5': self.format_coefficient(coeffs.get(f'{domain}_Q5', {}), use_corrected)
+                                }
+                                
+                                all_rows.append(row)
+                        else:
+                            # 创建行数据
+                            row = {
+                                'ICD_Code': cancer_type,
+                                'EQI_Period': eqi_period,
+                                'AAMR_Period': aamr_period,
+                                'Lag': lag,
+                                'Model': display_model_name,
+                                'Q1': self.format_coefficient(coeffs.get('Q1', {}), use_corrected),
+                                'Q2': self.format_coefficient(coeffs.get('Q2', {}), use_corrected),
+                                'Q3': self.format_coefficient(coeffs.get('Q3', {}), use_corrected),
+                                'Q4': self.format_coefficient(coeffs.get('Q4', {}), use_corrected),
+                                'Q5': self.format_coefficient(coeffs.get('Q5', {}), use_corrected)
+                            }
+                            
+                            all_rows.append(row)
         
         # 创建DataFrame
         if all_rows:
@@ -387,6 +414,9 @@ class LMMResultFormatter:
         saved_files = {}
         all_scenarios = list(self.scenario_mapping.keys())
         
+        # 构建文件名后缀
+        mice_suffix = "_MICE" if self.use_mice else ""
+        
         # 如果需要，应用多重校正
         corrected_results = model_results
         if apply_correction:
@@ -398,7 +428,7 @@ class LMMResultFormatter:
             cancer_table = self.create_result_table(model_results, [cancer_type], all_scenarios, use_corrected=False)
             
             if not cancer_table.empty:
-                cancer_path = output_path / f"LMM_{cancer_type}_Results.csv"
+                cancer_path = output_path / f"LMM_{cancer_type}{mice_suffix}.csv"
                 cancer_table.to_csv(cancer_path, index=False)
                 saved_files[f'cancer_{cancer_type}'] = str(cancer_path)
                 logger.info(f"{cancer_type} 结果表已保存: {cancer_path}")
@@ -410,7 +440,7 @@ class LMMResultFormatter:
                 cancer_table_corrected = self.create_result_table(corrected_results, [cancer_type], all_scenarios, use_corrected=True)
                 
                 if not cancer_table_corrected.empty:
-                    cancer_path_corrected = output_path / f"LMM_{cancer_type}_Results_FDR.csv"
+                    cancer_path_corrected = output_path / f"LMM_{cancer_type}_FDR{mice_suffix}.csv"
                     cancer_table_corrected.to_csv(cancer_path_corrected, index=False)
                     saved_files[f'cancer_{cancer_type}_fdr'] = str(cancer_path_corrected)
                     logger.info(f"{cancer_type} FDR校正结果已保存: {cancer_path_corrected}")
@@ -463,6 +493,36 @@ def main():
                                 'Q3': {'coefficient': -1.28, 'lower_ci': -3.80, 'upper_ci': 1.24, 'p_value': 0.320},
                                 'Q4': {'coefficient': -14.70, 'lower_ci': -18.20, 'upper_ci': -11.20, 'p_value': 0.0001},
                                 'Q5': {'coefficient': -8.50, 'lower_ci': -12.10, 'upper_ci': -4.90, 'p_value': 0.008}
+                            }
+                        },
+                        'Multi_EQI': {
+                            'coefficients': {
+                                'EQI_air_Q1': {'coefficient': 0.0, 'lower_ci': 0.0, 'upper_ci': 0.0, 'p_value': np.nan},
+                                'EQI_air_Q2': {'coefficient': -1.20, 'lower_ci': -3.10, 'upper_ci': 0.70, 'p_value': 0.210},
+                                'EQI_air_Q3': {'coefficient': -0.80, 'lower_ci': -2.90, 'upper_ci': 1.30, 'p_value': 0.450},
+                                'EQI_air_Q4': {'coefficient': -3.50, 'lower_ci': -5.80, 'upper_ci': -1.20, 'p_value': 0.003},
+                                'EQI_air_Q5': {'coefficient': -2.10, 'lower_ci': -4.50, 'upper_ci': 0.30, 'p_value': 0.085},
+                                'EQI_water_Q1': {'coefficient': 0.0, 'lower_ci': 0.0, 'upper_ci': 0.0, 'p_value': np.nan},
+                                'EQI_water_Q2': {'coefficient': 0.50, 'lower_ci': -1.20, 'upper_ci': 2.20, 'p_value': 0.560},
+                                'EQI_water_Q3': {'coefficient': -1.10, 'lower_ci': -3.00, 'upper_ci': 0.80, 'p_value': 0.250},
+                                'EQI_water_Q4': {'coefficient': -4.20, 'lower_ci': -6.30, 'upper_ci': -2.10, 'p_value': 0.0001},
+                                'EQI_water_Q5': {'coefficient': -2.80, 'lower_ci': -5.10, 'upper_ci': -0.50, 'p_value': 0.018},
+                                'EQI_land_Q1': {'coefficient': 0.0, 'lower_ci': 0.0, 'upper_ci': 0.0, 'p_value': np.nan},
+                                'EQI_land_Q2': {'coefficient': -0.30, 'lower_ci': -2.10, 'upper_ci': 1.50, 'p_value': 0.740},
+                                'EQI_land_Q3': {'coefficient': 1.20, 'lower_ci': -0.70, 'upper_ci': 3.10, 'p_value': 0.210},
+                                'EQI_land_Q4': {'coefficient': -2.80, 'lower_ci': -4.90, 'upper_ci': -0.70, 'p_value': 0.009},
+                                'EQI_land_Q5': {'coefficient': -1.50, 'lower_ci': -3.70, 'upper_ci': 0.70, 'p_value': 0.180},
+                                'EQI_built_Q1': {'coefficient': 0.0, 'lower_ci': 0.0, 'upper_ci': 0.0, 'p_value': np.nan},
+                                'EQI_built_Q2': {'coefficient': -1.80, 'lower_ci': -3.70, 'upper_ci': 0.10, 'p_value': 0.062},
+                                'EQI_built_Q3': {'coefficient': -0.90, 'lower_ci': -3.00, 'upper_ci': 1.20, 'p_value': 0.400},
+                                'EQI_built_Q4': {'coefficient': -6.10, 'lower_ci': -8.40, 'upper_ci': -3.80, 'p_value': 0.0001},
+                                'EQI_built_Q5': {'coefficient': -3.20, 'lower_ci': -5.60, 'upper_ci': -0.80, 'p_value': 0.010},
+                                'EQI_Sociodemographic_Q1': {'coefficient': 0.0, 'lower_ci': 0.0, 'upper_ci': 0.0, 'p_value': np.nan},
+                                'EQI_Sociodemographic_Q2': {'coefficient': 2.10, 'lower_ci': 0.20, 'upper_ci': 4.00, 'p_value': 0.031},
+                                'EQI_Sociodemographic_Q3': {'coefficient': 3.80, 'lower_ci': 1.70, 'upper_ci': 5.90, 'p_value': 0.0004},
+                                'EQI_Sociodemographic_Q4': {'coefficient': 1.20, 'lower_ci': -1.10, 'upper_ci': 3.50, 'p_value': 0.300},
+                                'EQI_Sociodemographic_Q5': {'coefficient': -0.80, 'lower_ci': -3.20, 'upper_ci': 1.60, 'p_value': 0.510},
+                                'Smoking_Rate': {'coefficient': 15.20, 'lower_ci': 12.80, 'upper_ci': 17.60, 'p_value': 0.0001}
                             }
                         }
                     }

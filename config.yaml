@@ -32,7 +32,7 @@ result_directories:
   # EQI LMM分析结果
   eqi_lmm: "Result/EQI_LMM"
   # EQI LMM多重插补分析结果
-  eqi_lmm_mi: "Result/EQI_LMM_MI"
+  eqi_lmm_mi: "Result/EQI_LMM_MICE"
 
 # 代码目录设置
 code_directories:
@@ -144,6 +144,13 @@ df_outputs:
   eqi_deaths: "Data/df/EQI_Deaths.csv"
   eqi_aamr_point: "Data/df/EQI_AAMR_Point.csv"
   eqi_aamr_interval: "Data/df/EQI_AAMR_Interval.csv"
+
+# 新增：EQI AAMR数据统一输出目录
+eqi_aamr_outputs:
+  base_dir: "Data/Processed/df_EQI_AAMR"
+  eqi_deaths: "EQI_Deaths.csv"
+  eqi_aamr_point: "EQI_AAMR_Point.csv"
+  eqi_aamr_interval: "EQI_AAMR_Interval.csv"
 
 # PyMC分析配置
 pymc_analysis:
@@ -292,13 +299,10 @@ brms_analysis:
   # 数据输入
   data_file: "Data/df/EQI_AAMR_Interval.csv"
 
-  # 结果输出目录
+  # 结果输出目录 - 简化版本，与LMM对齐
   results:
-    base_dir: "Result/brms"
-    model_fits: "Result/brms/model_fits"
-    csv_outputs: "Result/brms/csv_outputs"
-    figures: "Result/brms/figures"
-    reports: "Result/brms/reports"
+    output_dir: "Result/brms"
+    filename_template: "brms_{cancer_type}_Results.csv"
 
   # 采样与后端设置
   settings:
@@ -365,11 +369,10 @@ brms_analysis:
 
   # 模型公式定义
   formulas:
-    random_intercept_quintile: "EQI_quintile + Smoking_Rate_std + (1 | State)"
-    random_slope_quintile: "EQI_quintile + Smoking_Rate_std + (1 + EQI_quintile | State)"
-    total_eqi_quintile: "EQI_quintile + Smoking_Rate_std + (1 | State)"
-    total_eqi_quintile_nore: "EQI_quintile + Smoking_Rate_std"
-    random_slope_eqi: "scale(EQI) + Smoking_Rate_std + (1 + scale(EQI) | State)"
+    # 模型1: 总EQI模型
+    total_eqi: "EQI_quintile + Smoking_Rate_std + (1 | State)"
+    # 模型2: EQI细分域联合模型（5个域同时在一个模型里）
+    multi_eqi_domains: "EQI_air_quintile + EQI_water_quintile + EQI_land_quintile + EQI_built_quintile + EQI_sociodemographic_quintile + Smoking_Rate_std + (1 | State)"
 
   # 字段映射
   field_map:
@@ -382,188 +385,88 @@ brms_analysis:
     aamr_upper: "AAMR_upper"
     smoking_rate: "Smoking_Rate"
 
-  # 分析场景 - 每个场景包含完整的分析定义
-  scenarios:
-    # =================================================================
-    # C00-C97 (所有癌症) 完整分析套件
-    # =================================================================
+  # 分析参数 - 与LMM系统完全对齐的场景定义
+  analysis_parameters:
+    # 基础参数 - 与LMM all_cancer_types对齐
+    cancer_types: [
+      "C00_C97",     # All Cancers
+      "C15_C26",     # Digestive Organs
+      "C18_C21",     # Colorectal
+      "C25",         # Pancreas
+      "C30_C39",     # Respiratory
+      "C34",         # Lung Cancer
+      "C50",         # Breast Cancer
+      "C51_C58",     # Female Genital
+      "C60_C63",     # Male Genital
+      "C61",         # Prostate
+      "C64_C68",     # Urinary Tract
+      "C76_C80",     # Ill-defined
+      "C81_C96"      # Lymphoid/Hematologic
+    ]
     
-    # 1. C00-C97 总EQI分析
-    - name: "AllCancer_TotalEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: null
-      domain: "total"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: ""
-
-    # 2. C00-C97 EQI各领域分析
-    - name: "AllCancer_AirEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: null
-      domain: "air"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Air"
-
-    - name: "AllCancer_WaterEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: null
-      domain: "water"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Water"
-
-    - name: "AllCancer_LandEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: null
-      domain: "land"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Land"
-
-    - name: "AllCancer_BuiltEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: null
-      domain: "built"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Built"
-
-    - name: "AllCancer_SocioEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: null
-      domain: "sociodemographic"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Socio"
-
-    # 3. C00-C97 RUCC分层分析 - 城市地区 (RUCC 1-2)
-    - name: "AllCancer_RUCC_Urban_TotalEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: [1, 2]
-      domain: "total"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Urban"
-
-    - name: "AllCancer_RUCC_Urban_AirEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: [1, 2]
-      domain: "air"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Urban_Air"
-
-    - name: "AllCancer_RUCC_Urban_WaterEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: [1, 2]
-      domain: "water"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Urban_Water"
-
-    # 4. C00-C97 RUCC分层分析 - 农村地区 (RUCC 3-9)
-    - name: "AllCancer_RUCC_Rural_TotalEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: [3, 4, 5, 6, 7, 8, 9]
-      domain: "total"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Rural"
-
-    - name: "AllCancer_RUCC_Rural_AirEQI_Lag5"
-      active: true
-      cancer_type: "C00_C97"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: [3, 4, 5, 6, 7, 8, 9]
-      domain: "air"
-      formula_key: "total_eqi_quintile"
-      prior_key: "default"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: "_Rural_Air"
-
-    # =================================================================
-    # 测试场景 (不启用)
-    # =================================================================
+    # EQI时期和AAMR时期的组合 - 与LMM all_scenarios对齐
+    scenario_combinations:
+      - eqi_period: "0005"
+        aamr_period: "2006-2010"
+        lag_years: 5
+        scenario_name: "EQI0005_AAMR2006_2010"
+      - eqi_period: "0005"
+        aamr_period: "2011-2015"
+        lag_years: 10
+        scenario_name: "EQI0005_AAMR2011_2015"
+      - eqi_period: "0610"
+        aamr_period: "2011-2015"
+        lag_years: 5
+        scenario_name: "EQI0610_AAMR2011_2015"
+      - eqi_period: "0610"
+        aamr_period: "2016-2020"
+        lag_years: 10
+        scenario_name: "EQI0610_AAMR2016_2020"
     
-    # 肺癌测试场景
-    - name: "LungCancer_TotalEQI_Lag5_AllRUCC"
-      active: false
-      cancer_type: "C34"
-      eqi_period: "0005"
-      time_period: "2006-2010"
-      lag_years: 5
-      rucc_filter: null
-      domain: "total"
+    # 模型类型定义 - 两种不同的模型结构
+    model_types:
+      - name: "EQI"
+        description: "总EQI模型"
+        formula_type: "total_eqi"
+      - name: "EQI_domains"  
+        description: "EQI细分域联合模型（5个域在一个模型里）"
+        formula_type: "multi_eqi_domains"
+    
+    # RUCC分层设置 - 与LMM rucc_eqi_variables对齐
+    rucc_strata:
+      - name: null
+        description: "全体分析"
+        rucc_codes: null
+      - name: "RUCC1"
+        description: "RUCC类别1"
+        rucc_codes: [1]
+      - name: "RUCC2"
+        description: "RUCC类别2"
+        rucc_codes: [2]
+      - name: "RUCC3"
+        description: "RUCC类别3"
+        rucc_codes: [3]
+      - name: "RUCC4"
+        description: "RUCC类别4"
+        rucc_codes: [4]
+    
+    # 模型设置（保持不变）
+    model_settings:
       formula_key: "total_eqi_quintile"
       prior_key: "default"
       family: "gaussian"
       use_midpoint: false
-      output_suffix: ""
+  
+  # MCMC采样设置 - 自动并行计算优化
+  mcmc_settings:
+    auto_cores: true           # 自动检测核心数
+    cores_fraction: 0.8        # 使用80%的核心
+    chains: 4                  # 链数
+    iter: 2000                 # 总迭代次数
+    warmup: 1000              # 预热迭代次数
+    max_treedepth: 12         # 最大树深度
+    adapt_delta: 0.95         # 适应参数
+    seed: 12345               # 随机种子
 
 # EQI LMM多重插补分析配置
 eqi_lmm_multiple_imputation:
@@ -581,10 +484,10 @@ eqi_lmm_multiple_imputation:
   
   # 结果路径
   result_paths:
-    base_dir: "Result/EQI_LMM_MI"
-    individual_results: "Result/EQI_LMM_MI/Individual_Results"
-    pooled_results: "Result/EQI_LMM_MI/Pooled_Results"
-    mi_diagnostics: "Result/EQI_LMM_MI/MI_Diagnostics"
+    base_dir: "Result/EQI_LMM_MICE"
+    individual_results: "Result/EQI_LMM_MICE/Individual_Results"
+    pooled_results: "Result/EQI_LMM_MICE/Pooled_Results"
+    mi_diagnostics: "Result/EQI_LMM_MICE/MI_Diagnostics"
   
   # 插补设置
   imputation_settings:

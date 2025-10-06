@@ -50,15 +50,16 @@ logger = logging.getLogger(__name__)
 class LMMPipeline:
     """LMM分析完整流程管理器"""
     
-    def __init__(self, data_file: Optional[str] = None, output_dir: Optional[str] = None):
+    def __init__(self, data_file: Optional[str] = None, output_dir: Optional[str] = None, use_mice: bool = False):
         """初始化流程管理器"""
+        self.use_mice = use_mice
         self.project_root = Path(__file__).resolve().parents[2]
         
         # 支持自定义数据文件
         if data_file:
             self.data_file = Path(data_file)
         else:
-            self.data_file = self.project_root / "Data" / "df" / "EQI_LMM_Delete_df.csv"
+            self.data_file = self.project_root / "Data" / "Processed" / "df_EQI_AAMR" / "EQI_AAMR_Point.csv"
         
         # 支持自定义输出目录
         if output_dir:
@@ -100,7 +101,7 @@ class LMMPipeline:
         logger.info("初始化分析组件...")
         
         # 初始化结果格式化器
-        self.result_formatter = LMMResultFormatter()
+        self.result_formatter = LMMResultFormatter(use_mice=self.use_mice)
         logger.info("结果格式化器初始化完成")
         
     def check_data_availability(self) -> bool:
@@ -338,10 +339,10 @@ def parse_arguments():
         epilog="""
 示例用法:
   python LMM_Main.py                                    # 运行所有癌症类型分析（原始数据）
-  python LMM_Main.py --use-imputed                     # 使用插补后数据分析
+  python LMM_Main.py --mice                            # 使用MICE插补数据分析
   python LMM_Main.py --cancer-types C00_C97            # 仅分析总癌症
   python LMM_Main.py --cancer-types C00_C97,C34,C50    # 分析特定癌症类型
-  python LMM_Main.py --use-imputed --cancer-types C00_C97  # 用插补数据分析总癌症
+  python LMM_Main.py --mice --cancer-types C00_C97     # 用MICE数据分析总癌症
   python LMM_Main.py --test                             # 运行快速测试
   python LMM_Main.py --data-file /path/to/data.csv     # 指定数据文件
   python LMM_Main.py --output-dir /custom/path         # 指定输出目录
@@ -379,9 +380,9 @@ def parse_arguments():
     )
     
     parser.add_argument(
-        '--use-imputed',
+        '--mice',
         action='store_true',
-        help='使用插补后的数据文件进行分析'
+        help='使用MICE插补数据进行分析'
     )
     
     parser.add_argument(
@@ -412,28 +413,28 @@ def main():
     
     # 确定数据文件
     data_file = None
-    if args.use_imputed:
-        # 使用插补后的长格式数据
+    if args.mice:
+        # 使用MICE插补数据
         project_root = Path(__file__).resolve().parents[2]
-        data_file = str(project_root / "Data" / "df" / "EQI_LMM_MI_Imputed_Long.csv")
-        print(f"📊 使用插补后数据: EQI_LMM_MI_Imputed_Long.csv")
+        data_file = str(project_root / "Data" / "Processed" / "df_EQI_AAMR" / "EQI_AAMR_Point_MICE.csv")
+        print(f"📊 使用MICE插补数据: EQI_AAMR_Point_MICE.csv")
     elif args.data_file:
         data_file = args.data_file
         print(f"📊 使用指定数据文件: {data_file}")
     
     # 确定输出目录
     output_dir = None
-    if args.use_imputed and not args.output_dir:
-        # 使用插补数据时，默认输出到MI结果目录
+    if args.mice and not args.output_dir:
+        # 使用MICE数据时，默认输出到MICE结果目录
         project_root = Path(__file__).resolve().parents[2]
-        output_dir = str(project_root / "Result" / "EQI_LMM_MI")
-        print(f"📁 输出目录: Result/EQI_LMM_MI")
+        output_dir = str(project_root / "Result" / "EQI_LMM_MICE")
+        print(f"📁 输出目录: Result/EQI_LMM_MICE")
     elif args.output_dir:
         output_dir = args.output_dir
         print(f"📁 输出目录: {output_dir}")
     
     # 创建流程管理器
-    pipeline = LMMPipeline(data_file=data_file, output_dir=output_dir)
+    pipeline = LMMPipeline(data_file=data_file, output_dir=output_dir, use_mice=args.mice)
     
     # 处理列出癌症类型的请求
     if args.list_cancer_types:

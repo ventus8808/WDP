@@ -4,7 +4,7 @@ EQI × CDC WONDER — AAMR point estimates (long table)
 Outputs a single long CSV with rows per county × time_period × ICD × Lag_Years,
 including RUCC/EQI covariates mapped by lagged EQI period.
 
-Output path (from config.yaml): df_outputs.eqi_aamr_point (default Data/df/EQI_AAMR_Point.csv)
+Output path: config.yaml eqi_aamr_outputs.base_dir + eqi_aamr_outputs.eqi_aamr_point
 """
 import sys
 from pathlib import Path
@@ -21,7 +21,8 @@ with CONFIG_PATH.open('r', encoding='utf-8') as f:
     CFG = yaml.safe_load(f)
 
 CDC_EQI_SRC_DIR = PROJECT_ROOT / CFG['data_sources']['cdc_wonder']['eqi_original']
-DF_OUTPUT = PROJECT_ROOT / CFG.get('df_outputs', {}).get('eqi_aamr_point', 'Data/df/EQI_AAMR_Point.csv')
+# 使用config中的路径配置
+DF_OUTPUT = PROJECT_ROOT / CFG.get('eqi_aamr_outputs', {}).get('base_dir', 'Data/Processed/df_EQI_AAMR') / CFG.get('eqi_aamr_outputs', {}).get('eqi_aamr_point', 'EQI_AAMR_Point.csv')
 EQI_DIR = PROJECT_ROOT / CFG['data_sources']['epa_eqi']['processed']
 SUPPRESSION_THRESHOLD = float(CFG['data_sources']['cdc_wonder'].get('eqi_suppression_threshold', 40.0))
 SMOKING_PATH = PROJECT_ROOT / CFG['data_directories']['processed'] / 'Smoking' / 'County_Smoking.csv'
@@ -107,6 +108,9 @@ def _process_deaths_series(s: pd.Series) -> pd.Series:
             return pd.NA
     return s.apply(conv).astype('Int64')
 
+EQI_COLS = ['RUCC','EQI','EQI_Air','EQI_Water','EQI_Land','EQI_Built','EQI_Social',
+            'RUCC_EQI','RUCC_EQI_Air','RUCC_EQI_Water','RUCC_EQI_Land','RUCC_EQI_Built','RUCC_EQI_Social']
+
 def _extract_meta_from_name(name: str):
     base = name.replace('.csv','')
     m = re.search(r'(\d{4}-\d{4})', base)
@@ -122,20 +126,53 @@ def _suppression_rate(df_raw: pd.DataFrame) -> float:
     sup = (dfc['Deaths'] == 'Suppressed').sum()
     return (sup/tot*100.0) if tot>0 else 0.0
 
-EQI_COLS = ['RUCC','EQI','EQI_air','EQI_water','EQI_land','EQI_built','EQI_Sociodemographic',
-            'RUCC_EQI','RUCC_EQI_air','RUCC_EQI_water','RUCC_EQI_land','RUCC_EQI_built','RUCC_EQI_Sociodemographic']
-
 def _load_eqi_by_period() -> dict:
     d = {}
+    # 列名映射字典：旧列名 -> 新列名
+    column_mapping = {
+        'EQI_air': 'EQI_Air',
+        'EQI_water': 'EQI_Water', 
+        'EQI_land': 'EQI_Land',
+        'EQI_built': 'EQI_Built',
+        'EQI_Sociodemographic': 'EQI_Social',
+        'RUCC_EQI_air': 'RUCC_EQI_Air',
+        'RUCC_EQI_water': 'RUCC_EQI_Water',
+        'RUCC_EQI_land': 'RUCC_EQI_Land', 
+        'RUCC_EQI_built': 'RUCC_EQI_Built',
+        'RUCC_EQI_Sociodemographic': 'RUCC_EQI_Social'
+    }
+    
     fp_0005 = EQI_DIR / 'EQI0005.csv'
     fp_0610 = EQI_DIR / 'EQI0610.csv'
     if fp_0005.exists():
         df = pd.read_csv(fp_0005)
         df['COUNTY_FIPS'] = df['COUNTY_FIPS'].astype(str).str.zfill(5)
+        
+        # 检测并映射列名（如果需要的话）
+        columns_to_rename = {}
+        for old_col, new_col in column_mapping.items():
+            if old_col in df.columns and new_col not in df.columns:
+                columns_to_rename[old_col] = new_col
+        
+        if columns_to_rename:
+            df = df.rename(columns=columns_to_rename)
+            print(f"  📝 EQI0005: 映射列名 {list(columns_to_rename.keys())} -> {list(columns_to_rename.values())}")
+        
         d['0005'] = df
     if fp_0610.exists():
         df = pd.read_csv(fp_0610)
         df['COUNTY_FIPS'] = df['COUNTY_FIPS'].astype(str).str.zfill(5)
+        
+        # 检测并映射列名（如果需要的话）
+        columns_to_rename = {}
+        for old_col, new_col in column_mapping.items():
+            if old_col in df.columns and new_col not in df.columns:
+                columns_to_rename[old_col] = new_col
+        
+        if columns_to_rename:
+            df = df.rename(columns=columns_to_rename)
+            print(f"  📝 EQI0610: 映射列名 {list(columns_to_rename.keys())} -> {list(columns_to_rename.values())}")
+        
         d['0610'] = df
     return d
 
@@ -150,13 +187,31 @@ def _load_smoking() -> pd.DataFrame | None:
     return None
 
 def _map_eqi_period(time_period: str, lag_years: int):
-    # Provide best-available mapping given we only have 0005 and 0610 EQI
+    # Based on available EQI datasets, return corresponding EQI year ranges
+    # EQI 2000-2005 + 5年滞后 → AAMR 2006-2010
+    # EQI 2000-2005 + 10年滞后 → AAMR 2011-2015  
+    # EQI 2006-2010 + 5年滞后 → AAMR 2011-2015
+    # EQI 2006-2010 + 10年滞后 → AAMR 2016-2020
+    if time_period == '2006-2010':
+        return '2000-2005' if lag_years == 5 else None
+    if time_period == '2011-2015':
+        return '2006-2010' if lag_years == 5 else '2000-2005' if lag_years == 10 else None
+    if time_period == '2016-2020':
+        return '2006-2010' if lag_years == 10 else None
+    return None
+
+def _map_eqi_code(time_period: str, lag_years: int):
+    # Helper function to get EQI file codes for loading data
+    # EQI 0005(2000-2005) + 5年滞后 → AAMR 2006-2010
+    # EQI 0005(2000-2005) + 10年滞后 → AAMR 2011-2015  
+    # EQI 0610(2006-2010) + 5年滞后 → AAMR 2011-2015
+    # EQI 0610(2006-2010) + 10年滞后 → AAMR 2016-2020
     if time_period == '2006-2010':
         return '0005' if lag_years == 5 else None
     if time_period == '2011-2015':
-        return '0610' if lag_years == 5 else '0005'
+        return '0610' if lag_years == 5 else '0005' if lag_years == 10 else None
     if time_period == '2016-2020':
-        return None if lag_years == 5 else '0610'
+        return '0610' if lag_years == 10 else None
     return None
 
 # ---------------------- Main build ----------------------
@@ -244,10 +299,11 @@ def main():
                 base = base.drop_duplicates(subset=['COUNTY_FIPS'], keep='first')
 
                 for lag in (5, 10):
-                    eqi_code = _map_eqi_period(period, lag)
+                    eqi_period = _map_eqi_period(period, lag)
+                    eqi_code = _map_eqi_code(period, lag)
                     out = base.copy()
                     out['Lag_Years'] = lag
-                    out['EQI_Period'] = eqi_code if eqi_code is not None else pd.NA
+                    out['EQI_Period'] = eqi_period if eqi_period is not None else pd.NA
                     if eqi_code and eqi_code in eqi_dict:
                         eqidf = eqi_dict[eqi_code][['COUNTY_FIPS'] + EQI_COLS].copy()
                         out = out.merge(eqidf, on='COUNTY_FIPS', how='left')

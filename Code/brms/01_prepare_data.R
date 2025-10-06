@@ -55,18 +55,21 @@ main <- function() {
   lo_col <- get_field(fm, 'aamr_lower', 'AAMR_lower')
   hi_col <- get_field(fm, 'aamr_upper', 'AAMR_upper')
 
-  # Respect existing EQI quintile column (1..5). If missing, derive from continuous EQI when available.
-  if (eqi_q_col %in% names(df)) {
-    if (is.numeric(df[[eqi_q_col]]) || is.integer(df[[eqi_q_col]])) {
-      df[[eqi_q_col]] <- factor(paste0('Q', df[[eqi_q_col]]), levels = paste0('Q', 1:5))
-    } else if (!is.factor(df[[eqi_q_col]])) {
-      df[[eqi_q_col]] <- factor(df[[eqi_q_col]])
-    }
-  } else {
-    eqi_total_col <- get_field(fm, 'eqi_total', 'EQI')
-    if (eqi_total_col %in% names(df)) {
-      df[[eqi_q_col]] <- dplyr::ntile(df[[eqi_total_col]], 5)
-      df[[eqi_q_col]] <- factor(paste0('Q', df[[eqi_q_col]]), levels = paste0('Q', 1:5))
+  # 数据已包含预计算的EQI五分位数（1-5整数）- 与LMM对齐
+  # 检验EQI五分位数列是否存在并且格式正确
+  eqi_columns_to_check <- c('EQI', 'EQI_air', 'EQI_water', 'EQI_land', 'EQI_built', 'EQI_Sociodemographic',
+                           'RUCC_EQI', 'RUCC_EQI_air', 'RUCC_EQI_water', 'RUCC_EQI_land', 'RUCC_EQI_built', 'RUCC_EQI_Sociodemographic')
+  
+  for (eqi_col in eqi_columns_to_check) {
+    if (eqi_col %in% names(df)) {
+      # 检查非缺失值是否都在1-5范围内
+      non_na_values <- df[[eqi_col]][!is.na(df[[eqi_col]])]
+      if (length(non_na_values) > 0 && all(non_na_values %in% 1:5)) {
+        na_count <- sum(is.na(df[[eqi_col]]))
+        cat(sprintf("✓ %s: 有效五分位数 (1-5), %d个缺失值\n", eqi_col, na_count))
+      } else {
+        warning(sprintf("⚠ %s column contains invalid values (not in 1-5 range)", eqi_col))
+      }
     }
   }
 

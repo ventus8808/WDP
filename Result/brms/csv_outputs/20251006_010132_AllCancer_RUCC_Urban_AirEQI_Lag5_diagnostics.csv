@@ -1,2 +1,0 @@
-scenario,timestamp,n_obs,formula_key,family,fallback_mode,rhat_max,ess_bulk_min,ess_tail_min
-AllCancer_RUCC_Urban_AirEQI_Lag5,20251006_010132,1365,total_eqi_quintile,gaussian,_midpoint,1.0066687633873375,10.881684399027332,Inf

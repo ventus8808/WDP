@@ -37,11 +37,11 @@ def clean_eqi_0610(source_path, output_path):
     # 3. 处理全国指数 (直接选择五分位数)
     national_cols_map = {
         'eqi_2jan2018_vc_5': 'EQI',
-        'air_eqi_2jan2018_vc_5': 'EQI_air',
-        'water_eqi_2jan2018_vc_5': 'EQI_water',
-        'land_eqi_2jan2018_vc_5': 'EQI_land',
-        'built_eqi_2jan2018_vc_5': 'EQI_built',
-        'sociod_eqi_2jan2018_vc_5': 'EQI_Sociodemographic'  # 修改列名
+        'air_eqi_2jan2018_vc_5': 'EQI_Air',
+        'water_eqi_2jan2018_vc_5': 'EQI_Water',
+        'land_eqi_2jan2018_vc_5': 'EQI_Land',
+        'built_eqi_2jan2018_vc_5': 'EQI_Built',
+        'sociod_eqi_2jan2018_vc_5': 'EQI_Social'  # 修改列名
     }
     for original_col, new_name in national_cols_map.items():
         if original_col in df.columns:
@@ -52,8 +52,8 @@ def clean_eqi_0610(source_path, output_path):
     domains = ['EQI', 'air', 'water', 'land', 'built', 'sociod']
     
     for domain in domains:
-        # 将sociod显示为Sociodemographic
-        display_domain = 'Sociodemographic' if domain == 'sociod' else domain
+        domain_map = {'EQI': 'EQI', 'air': 'Air', 'water': 'Water', 'land': 'Land', 'built': 'Built', 'sociod': 'Social'}
+        display_domain = domain_map[domain]
         rucc_col_name = f'RUCC_EQI_{display_domain}' if domain != 'EQI' else 'RUCC_EQI'
         df_processed[rucc_col_name] = np.nan
         
@@ -74,8 +74,8 @@ def clean_eqi_0610(source_path, output_path):
 
     # 5. 确保最终列顺序并保存
     final_columns = [
-        'COUNTY_FIPS', 'RUCC', 'EQI', 'EQI_air', 'EQI_water', 'EQI_land', 'EQI_built', 'EQI_Sociodemographic',
-        'RUCC_EQI', 'RUCC_EQI_air', 'RUCC_EQI_water', 'RUCC_EQI_land', 'RUCC_EQI_built', 'RUCC_EQI_Sociodemographic'
+        'COUNTY_FIPS', 'RUCC', 'EQI', 'EQI_Air', 'EQI_Water', 'EQI_Land', 'EQI_Built', 'EQI_Social',
+        'RUCC_EQI', 'RUCC_EQI_Air', 'RUCC_EQI_Water', 'RUCC_EQI_Land', 'RUCC_EQI_Built', 'RUCC_EQI_Social'
     ]
     
     # 检查实际生成的列
@@ -90,7 +90,7 @@ def clean_eqi_0610(source_path, output_path):
     df_final = df_processed[final_columns]
     
     # 将RUCC分层列转换为整数类型（允许NaN）
-    rucc_columns = ['RUCC_EQI', 'RUCC_EQI_air', 'RUCC_EQI_water', 'RUCC_EQI_land', 'RUCC_EQI_built', 'RUCC_EQI_Sociodemographic']
+    rucc_columns = ['RUCC_EQI', 'RUCC_EQI_Air', 'RUCC_EQI_Water', 'RUCC_EQI_Land', 'RUCC_EQI_Built', 'RUCC_EQI_Social']
     for col in rucc_columns:
         if col in df_final.columns:
             df_final[col] = df_final[col].astype('Int64')

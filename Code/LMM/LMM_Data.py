@@ -15,7 +15,7 @@ LMM数据处理模块 - 统一数据整合与预处理
 - 地理数据: Location.csv, Urbanization.csv
 
 输出:
-- 统一数据表: /Users/ventus/Repository/WDP/Data/df/EQI_LMM_Delete_df.csv
+- 统一数据表: Data/df/EQI_LMM_Delete_df.csv
 """
 
 import sys
@@ -42,55 +42,33 @@ with CONFIG_PATH.open("r", encoding="utf-8") as f:
     cfg = yaml.safe_load(f) or {}
 
 class LMMDataIntegrator:
-    """LMM数据整合器 - 统一数据整合和预处理"""
+    """LMM数据整合器 - 基于新数据源的简化处理"""
     
-    def __init__(self):
-        """初始化数据整合器"""
+    def __init__(self, use_mice: bool = False):
+        """初始化数据整合器
+        
+        Args:
+            use_mice: 是否使用MICE插补数据 (True=EQI_AAMR_Point_MICE.csv, False=EQI_AAMR_Point.csv)
+        """
         self.project_root = PROJECT_ROOT
-        self.output_path = self.project_root / "Data" / "df" / "EQI_LMM_Delete_df.csv"
+        self.use_mice = use_mice
+        
+        # 从config获取路径
+        data_dirs = cfg.get("data_directories", {})
+        
+        # 设置输入和输出路径
+        self.input_file = "EQI_AAMR_Point_MICE.csv" if use_mice else "EQI_AAMR_Point.csv"
+        self.input_path = self.project_root / "Data" / "Processed" / "df_EQI_AAMR" / self.input_file
+        
+        # 输出路径 - 区分MICE和非MICE版本
+        output_suffix = "_MI.csv" if use_mice else "_Delete_df.csv"
+        self.output_path = self.project_root / data_dirs.get("df", "Data/df") / f"EQI_LMM{output_suffix}"
         
         # 确保输出目录存在
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
         
         # 数据存储
-        self.eqi_data = {}  # 存储不同时期的EQI数据
-        self.aamr_data = {}  # 存储不同时期的AAMR数据
-        self.smoking_data = None  # 吸烟率协变量数据
-        self.location_data = None
-        self.urbanization_data = None
-        self.integrated_data = None
-        
-        # 分析场景定义
-        self.analysis_scenarios = [
-            {
-                "name": "EQI0005_AAMR2006_2010",
-                "eqi_period": "0005",
-                "aamr_period": "2006_2010",
-                "lag_years": 5,
-                "description": "EQI 2000-2005 → AAMR 2006-2010 (5年滞后)"
-            },
-            {
-                "name": "EQI0005_AAMR2011_2015", 
-                "eqi_period": "0005",
-                "aamr_period": "2011_2015",
-                "lag_years": 10,
-                "description": "EQI 2000-2005 → AAMR 2011-2015 (10年滞后)"
-            },
-            {
-                "name": "EQI0610_AAMR2011_2015",
-                "eqi_period": "0610", 
-                "aamr_period": "2011_2015",
-                "lag_years": 5,
-                "description": "EQI 2006-2010 → AAMR 2011-2015 (5年滞后)"
-            },
-            {
-                "name": "EQI0610_AAMR2016_2020",
-                "eqi_period": "0610",
-                "aamr_period": "2016_2020", 
-                "lag_years": 10,
-                "description": "EQI 2006-2010 → AAMR 2016-2020 (10年滞后)"
-            }
-        ]
+        self.integrated_data = None  # 使用原来的变量名保持兼容性
         
         # 癌症类型映射
         self.cancer_types = {
@@ -109,237 +87,66 @@ class LMMDataIntegrator:
             'C81_C96': 'Lymphoid/Hematologic'
         }
         
-    def _setup_data_paths(self):
-        """设置数据路径"""
-        base_processed = self.project_root / "Data" / "Processed"
-        
-        paths = {
-            'eqi_0005': base_processed / "EQI" / "EQI0005.csv",
-            'eqi_0610': base_processed / "EQI" / "EQI0610.csv",
-            'aamr_2006_2010': base_processed / "CDC" / "CDC_EQI_AAMR_2006_2010.csv",
-            'aamr_2011_2015': base_processed / "CDC" / "CDC_EQI_AAMR_2011_2015.csv", 
-            'aamr_2016_2020': base_processed / "CDC" / "CDC_EQI_AAMR_2016_2020.csv",
-            'smoking': base_processed / "Smoking" / "County_Smoking_EQI.csv",
-            'location': base_processed / "CDC" / "Location.csv",
-            'urbanization': base_processed / "CDC" / "Urbanization.csv"
-        }
-        
-        return paths
-    
     def load_all_data(self):
-        """加载所有必需的数据文件"""
-        logger.info("=== 开始加载所有数据文件 ===")
-        
-        data_paths = self._setup_data_paths()
+        """加载新的整合数据文件 - 保持原方法名"""
+        logger.info("=== 加载整合数据文件 ===")
+        logger.info(f"数据源: {self.input_path}")
+        logger.info(f"使用MICE插补: {self.use_mice}")
         
         try:
-            # 加载EQI数据
-            logger.info("加载EQI数据...")
-            for period in ["0005", "0610"]:
-                path_key = f"eqi_{period}"
-                if path_key in data_paths:
-                    logger.info(f"  加载 EQI{period}: {data_paths[path_key]}")
-                    self.eqi_data[period] = pd.read_csv(data_paths[path_key])
-                    logger.info(f"    形状: {self.eqi_data[period].shape}")
+            if not self.input_path.exists():
+                logger.error(f"数据文件不存在: {self.input_path}")
+                return False
             
-            # 加载AAMR数据
-            logger.info("加载AAMR数据...")
-            for period in ["2006_2010", "2011_2015", "2016_2020"]:
-                path_key = f"aamr_{period}"
-                if path_key in data_paths:
-                    logger.info(f"  加载 AAMR {period}: {data_paths[path_key]}")
-                    self.aamr_data[period] = pd.read_csv(data_paths[path_key])
-                    logger.info(f"    形状: {self.aamr_data[period].shape}")
+            # 加载数据并直接赋值给integrated_data保持兼容性
+            self.integrated_data = pd.read_csv(self.input_path)
+            logger.info(f"数据加载成功: {self.integrated_data.shape}")
             
-            # 加载吸烟率数据
-            logger.info("加载吸烟率协变量数据...")
-            self.smoking_data = pd.read_csv(data_paths['smoking'])
-            logger.info(f"  吸烟率数据: {self.smoking_data.shape}")
+            # 数据预处理 - 确保数据类型正确
+            # COUNTY_FIPS转换为字符串并补零
+            self.integrated_data['COUNTY_FIPS'] = self.integrated_data['COUNTY_FIPS'].astype(str).str.zfill(5)
             
-            # 加载地理数据
-            logger.info("加载地理和城市化数据...")
-            self.location_data = pd.read_csv(data_paths['location'])
-            logger.info(f"  Location数据: {self.location_data.shape}")
+            # 添加必要的派生变量
+            if 'Cancer_Description' not in self.integrated_data.columns:
+                self.integrated_data['Cancer_Description'] = self.integrated_data['Cancer_Type'].map(self.cancer_types)
             
-            # 加载城市化数据（选择2018年作为代表年份）
-            urbanization_full = pd.read_csv(data_paths['urbanization'])
-            self.urbanization_data = urbanization_full[
-                urbanization_full['Year'] == 2018
-            ].copy()
-            logger.info(f"  Urbanization数据 (2018年): {self.urbanization_data.shape}")
+            if 'Analysis_Scenario' not in self.integrated_data.columns:
+                # 构建分析场景名称
+                eqi_period_map = {5.0: '0005', 610.0: '0610'}
+                eqi_period_str = self.integrated_data['EQI_Period'].map(eqi_period_map).fillna('0000')
+                time_period_str = self.integrated_data['Time_Period'].str.replace('-', '_')
+                self.integrated_data['Analysis_Scenario'] = 'EQI' + eqi_period_str + '_AAMR' + time_period_str
             
-            logger.info("所有数据文件加载完成!")
+            if 'State_FIPS' not in self.integrated_data.columns:
+                self.integrated_data['State_FIPS'] = self.integrated_data['COUNTY_FIPS'].str[:2]
+            
+            # 显示基本信息
+            logger.info(f"列名: {list(self.integrated_data.columns)}")
+            logger.info(f"时间段: {sorted(self.integrated_data['Time_Period'].unique())}")
+            logger.info(f"癌症类型: {sorted(self.integrated_data['Cancer_Type'].unique())}")
+            logger.info(f"滞后年数: {sorted(self.integrated_data['Lag_Years'].unique())}")
+            
             return True
             
         except Exception as e:
             logger.error(f"数据加载失败: {e}")
             return False
     
-    def integrate_scenario_data(self, scenario):
-        """整合单个分析场景的数据"""
-        logger.info(f"整合场景数据: {scenario['description']}")
-        
-        try:
-            # 获取EQI和AAMR数据
-            eqi_period = scenario['eqi_period']
-            aamr_period = scenario['aamr_period']
-            
-            if eqi_period not in self.eqi_data:
-                logger.error(f"EQI数据不存在: {eqi_period}")
-                return None
-                
-            if aamr_period not in self.aamr_data:
-                logger.error(f"AAMR数据不存在: {aamr_period}")
-                return None
-            
-            eqi_df = self.eqi_data[eqi_period].copy()
-            aamr_df = self.aamr_data[aamr_period].copy()
-            
-            # 从AAMR开始合并
-            merged_df = aamr_df.copy()
-            logger.info(f"  起始AAMR数据: {len(merged_df)} 行")
-            
-            # 合并EQI数据
-            merged_df = pd.merge(
-                merged_df,
-                eqi_df,
-                on='COUNTY_FIPS',
-                how='left',
-                suffixes=('', '_eqi')
-            )
-            logger.info(f"  合并EQI后: {len(merged_df)} 行")
-            
-            # 合并吸烟率数据（根据EQI时期选择对应的吸烟率）
-            if self.smoking_data is not None:
-                smoking_col = f"{eqi_period}_SR"  # 0005_SR 或 0610_SR
-                if smoking_col in self.smoking_data.columns:
-                    smoking_subset = self.smoking_data[['COUNTY_FIPS', smoking_col]].copy()
-                    smoking_subset = smoking_subset.rename(columns={smoking_col: 'Smoking_Rate'})
-                    merged_df = pd.merge(
-                        merged_df,
-                        smoking_subset,
-                        on='COUNTY_FIPS',
-                        how='left'
-                    )
-                    logger.info(f"  合并吸烟率后: {len(merged_df)} 行")
-                else:
-                    logger.warning(f"吸烟率列 {smoking_col} 不存在")
-            
-            # 跳过Location和Urbanization数据合并，因为不需要这些列
-            
-            # 添加场景标识
-            merged_df['Analysis_Scenario'] = scenario['name']
-            merged_df['Lag_Years'] = scenario['lag_years']
-            merged_df['EQI_Period'] = eqi_period
-            merged_df['AAMR_Period'] = aamr_period
-            
-            return merged_df
-            
-        except Exception as e:
-            logger.error(f"场景数据整合失败: {e}")
-            return None
-    
     def integrate_all_scenarios(self):
-        """整合所有分析场景的数据"""
-        logger.info("=== 开始整合所有分析场景 ===")
-        
-        all_scenario_data = []
-        
-        for scenario in self.analysis_scenarios:
-            scenario_df = self.integrate_scenario_data(scenario)
-            
-            if scenario_df is not None:
-                all_scenario_data.append(scenario_df)
-                logger.info(f"场景 {scenario['name']}: {len(scenario_df)} 行")
-            else:
-                logger.warning(f"场景 {scenario['name']} 整合失败")
-        
-        if not all_scenario_data:
-            logger.error("没有成功整合任何场景数据")
-            return False
-        
-        # 合并所有场景数据
-        self.integrated_data = pd.concat(all_scenario_data, ignore_index=True)
-        logger.info(f"总整合数据: {len(self.integrated_data)} 行")
-        
+        """整合所有场景数据 - 保持原方法名，数据已经是整合格式"""
+        logger.info("=== 数据已是整合格式，跳过场景整合步骤 ===")
+        # 数据已经在load_all_data中处理完毕
         return True
     
     def reshape_to_long_format(self):
-        """将AAMR数据从宽格式转换为长格式"""
-        logger.info("转换数据为长格式...")
-        
-        if self.integrated_data is None:
-            logger.error("整合数据不存在")
-            return False
-        
-        try:
-            # 识别AAMR列
-            aamr_columns = [col for col in self.integrated_data.columns if col.startswith('AAMR_')]
-            logger.info(f"发现 {len(aamr_columns)} 个AAMR列")
-            
-            # 识别非AAMR列（用作id_vars）
-            id_vars = [col for col in self.integrated_data.columns if not col.startswith('AAMR_')]
-            
-            # 执行melt操作
-            long_data = pd.melt(
-                self.integrated_data,
-                id_vars=id_vars,
-                value_vars=aamr_columns,
-                var_name='Cancer_Type_Raw',
-                value_name='AAMR'
-            )
-            
-            # 清理Cancer_Type列名
-            long_data['Cancer_Type'] = long_data['Cancer_Type_Raw'].str.replace('AAMR_', '')
-            long_data = long_data.drop(columns=['Cancer_Type_Raw'])
-            
-            # 转换AAMR为数值类型
-            long_data['AAMR'] = pd.to_numeric(long_data['AAMR'], errors='coerce')
-            
-            # 数据类型转换和标准化
-            # COUNTY_FIPS转换为字符串
-            long_data['COUNTY_FIPS'] = long_data['COUNTY_FIPS'].astype(str).str.zfill(5)
-            
-            # EQI相关变量转换为整型
-            eqi_columns = ['RUCC', 'EQI', 'EQI_air', 'EQI_water', 'EQI_land', 'EQI_built', 
-                          'EQI_Sociodemographic', 'RUCC_EQI', 'RUCC_EQI_air', 'RUCC_EQI_water', 
-                          'RUCC_EQI_land', 'RUCC_EQI_built', 'RUCC_EQI_Sociodemographic']
-            
-            for col in eqi_columns:
-                if col in long_data.columns:
-                    long_data[col] = pd.to_numeric(long_data[col], errors='coerce').astype('Int64')
-            
-            # 转换吸烟率为数值类型
-            if 'Smoking_Rate' in long_data.columns:
-                long_data['Smoking_Rate'] = pd.to_numeric(long_data['Smoking_Rate'], errors='coerce')
-            
-            # 删除不需要的列
-            columns_to_drop = ['Census_Region', 'Census_Division', 'Urbanization_Code', 
-                             'Urbanization_Type', 'RUCC_Category']
-            long_data = long_data.drop(columns=[col for col in columns_to_drop if col in long_data.columns])
-            
-            # 添加癌症类型描述
-            long_data['Cancer_Description'] = long_data['Cancer_Type'].map(self.cancer_types)
-            
-            # 添加地理标识
-            long_data['State_FIPS'] = long_data['COUNTY_FIPS'].str[:2]
-            
-            self.integrated_data = long_data
-            
-            logger.info(f"长格式数据: {len(self.integrated_data)} 行")
-            logger.info(f"缺失AAMR值: {self.integrated_data['AAMR'].isna().sum()} 个")
-            logger.info(f"癌症类型数: {self.integrated_data['Cancer_Type'].nunique()} 种")
-            logger.info(f"分析场景数: {self.integrated_data['Analysis_Scenario'].nunique()} 个")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"数据格式转换失败: {e}")
-            return False
+        """转换为长格式 - 保持原方法名，数据已经是长格式"""
+        logger.info("=== 数据已是长格式，跳过重塑步骤 ===")
+        # 数据已经是长格式
+        return True
     
     def remove_missing_data(self):
-        """删除缺失数据（直接删除策略）"""
-        logger.info("删除缺失数据...")
+        """删除缺失数据 - 保持原方法名"""
+        logger.info("=== 处理缺失数据 ===")
         
         if self.integrated_data is None:
             logger.error("整合数据不存在")
@@ -348,15 +155,24 @@ class LMMDataIntegrator:
         try:
             original_count = len(self.integrated_data)
             
+            # 显示缺失情况
+            missing_summary = self.integrated_data.isnull().sum()
+            missing_cols = missing_summary[missing_summary > 0]
+            if len(missing_cols) > 0:
+                logger.info("缺失数据情况:")
+                for col, count in missing_cols.items():
+                    logger.info(f"  {col}: {count:,} 个缺失值 ({count/original_count*100:.1f}%)")
+            
             # 删除关键变量缺失的行
             key_vars = ['AAMR', 'EQI', 'COUNTY_FIPS', 'Smoking_Rate']
             available_vars = [var for var in key_vars if var in self.integrated_data.columns]
             
+            logger.info(f"删除关键变量缺失的记录: {available_vars}")
             self.integrated_data = self.integrated_data.dropna(subset=available_vars)
             
             final_count = len(self.integrated_data)
             removed_count = original_count - final_count
-            removal_rate = (removed_count / original_count) * 100
+            removal_rate = (removed_count / original_count) * 100 if original_count > 0 else 0
             
             logger.info(f"删除 {removed_count:,} 个缺失记录 ({removal_rate:.1f}%)")
             logger.info(f"保留 {final_count:,} 个完整记录")
@@ -367,8 +183,10 @@ class LMMDataIntegrator:
             return True
             
         except Exception as e:
-            logger.error(f"删除缺失数据失败: {e}")
+            logger.error(f"缺失数据处理失败: {e}")
             return False
+    
+
     
     def _log_final_data_quality(self):
         """记录最终数据质量统计"""
@@ -414,7 +232,7 @@ class LMMDataIntegrator:
             logger.info(f"RUCC分布: {dict(rucc_dist)}")
     
     def save_integrated_data(self):
-        """保存整合后的数据"""
+        """保存整合后的数据 - 保持原方法名"""
         logger.info(f"保存整合数据到: {self.output_path}")
         
         if self.integrated_data is None:
@@ -439,14 +257,17 @@ class LMMDataIntegrator:
     
     def _generate_data_dictionary(self):
         """生成数据字典"""
-        dict_path = self.output_path.parent / "EQI_LMM_Data_Dictionary.txt"
+        suffix = "_MI" if self.use_mice else "_Delete_df"
+        dict_path = self.output_path.parent / f"EQI_LMM{suffix}_Data_Dictionary.txt"
         
         try:
             with open(dict_path, 'w', encoding='utf-8') as f:
                 f.write("EQI LMM 统一数据表 - 数据字典\n")
                 f.write("=" * 50 + "\n\n")
                 f.write(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"数据文件: {self.output_path.name}\n\n")
+                f.write(f"数据文件: {self.output_path.name}\n")
+                f.write(f"数据源: {self.input_file}\n")
+                f.write(f"使用MICE插补: {'是' if self.use_mice else '否'}\n\n")
                 
                 f.write("数据概述:\n")
                 f.write(f"- 总记录数: {len(self.integrated_data):,}\n")
@@ -455,15 +276,13 @@ class LMMDataIntegrator:
                 f.write(f"- 癌症类型: {self.integrated_data['Cancer_Type'].nunique()}\n")
                 f.write(f"- 分析场景: {self.integrated_data['Analysis_Scenario'].nunique()}\n\n")
                 
-                f.write("分析场景:\n")
-                for i, scenario in enumerate(self.analysis_scenarios, 1):
-                    f.write(f"{i}. {scenario['name']}: {scenario['description']}\n")
-                f.write("\n")
-                
                 f.write("列变量说明:\n")
                 column_descriptions = {
                     'COUNTY_FIPS': '县FIPS代码 (主键, 字符串)',
                     'State': '州缩写',
+                    'Time_Period': 'AAMR时间段',
+                    'Lag_Years': '滞后年数 (5或10年)',
+                    'EQI_Period': 'EQI时间段 (5或610)',
                     'RUCC': '农村-城市连续码 (1-4整型)',
                     'EQI': '环境质量指数总分 (1-5五分位数整型)',
                     'EQI_air': '空气质量指数 (1-5整型)',
@@ -478,9 +297,6 @@ class LMMDataIntegrator:
                     'RUCC_EQI_built': 'RUCC分层建成环境质量指数 (1-5整型)',
                     'RUCC_EQI_Sociodemographic': 'RUCC分层社会人口学质量指数 (1-5整型)',
                     'Analysis_Scenario': '分析场景标识',
-                    'Lag_Years': '滞后年数 (5或10年)',
-                    'EQI_Period': 'EQI时间段 (0005或0610)',
-                    'AAMR_Period': 'AAMR时间段',
                     'Cancer_Type': '癌症类型ICD代码',
                     'Cancer_Description': '癌症类型描述',
                     'AAMR': '年龄调整癌症死亡率',
@@ -502,11 +318,11 @@ class LMMDataIntegrator:
             logger.warning(f"数据字典生成失败: {e}")
     
     def get_integrated_data(self):
-        """获取整合后的数据"""
+        """获取整合后的数据 - 保持原方法名"""
         return self.integrated_data
     
     def process_all(self):
-        """执行完整的数据整合流程"""
+        """执行完整的数据整合流程 - 保持原接口"""
         logger.info("=== 开始LMM数据整合流程 ===")
         
         steps = [
@@ -531,9 +347,16 @@ class LMMDataIntegrator:
 
 def main():
     """主函数 - 数据整合演示"""
-    print("=== EQI LMM 数据整合 ===")
+    import argparse
     
-    integrator = LMMDataIntegrator()
+    parser = argparse.ArgumentParser(description="EQI LMM 数据整合")
+    parser.add_argument("--mice", action="store_true", help="使用MICE插补数据")
+    args = parser.parse_args()
+    
+    print("=== EQI LMM 数据整合 ===")
+    print(f"使用MICE插补: {args.mice}")
+    
+    integrator = LMMDataIntegrator(use_mice=args.mice)
     
     if integrator.process_all():
         print(f"\n数据整合成功完成!")
