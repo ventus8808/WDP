@@ -1,0 +1,2 @@
+scenario,timestamp,n_obs,formula_key,family,fallback_mode,rhat_max,ess_bulk_min,ess_tail_min
+AllCancer_RUCC_Rural_TotalEQI_Lag5,20251006_010346,1707,total_eqi_quintile,gaussian,_midpoint,1.0102538590909382,11.171490440987414,Inf

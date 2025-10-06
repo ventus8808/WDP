@@ -313,21 +313,63 @@ brms_analysis:
 
   # 先验设置
   priors:
-    intercept:
-      strategy: "auto_center"
-      fallback_mean: 100.0
-      fallback_sd: 50.0
-    fixed_effects:
-      class_b_sd: 5.0
-    sigma:
-      type: "student_t"
-      df: 3
-      scale: 30.0
-    random_effects:
-      state_sd:
+    default:
+      intercept:
+        strategy: "auto_center"
+        fallback_mean: 100.0
+        fallback_sd: 50.0
+      fixed_effects:
+        class_b_sd: 5.0
+      sigma:
+        type: "student_t"
+        df: 3
+        scale: 30.0
+      random_effects:
+        state_sd:
+          type: "student_t"
+          df: 3
+          scale: 20.0
+    tight:
+      intercept:
+        strategy: "auto_center"
+        fallback_mean: 100.0
+        fallback_sd: 25.0
+      fixed_effects:
+        class_b_sd: 2.0
+      sigma:
         type: "student_t"
         df: 3
         scale: 20.0
+      random_effects:
+        state_sd:
+          type: "student_t"
+          df: 3
+          scale: 10.0
+
+  # EQI列映射 - 解耦硬编码依赖
+  eqi_column_map:
+    no_rucc:
+      total: "EQI"
+      air: "EQI_air"
+      water: "EQI_water"
+      land: "EQI_land"
+      built: "EQI_built"
+      sociodemographic: "EQI_Sociodemographic"
+    with_rucc:
+      total: "RUCC_EQI"
+      air: "RUCC_EQI_air"
+      water: "RUCC_EQI_water"
+      land: "RUCC_EQI_land"
+      built: "RUCC_EQI_built"
+      sociodemographic: "RUCC_EQI_Sociodemographic"
+
+  # 模型公式定义
+  formulas:
+    random_intercept_quintile: "EQI_quintile + Smoking_Rate_std + (1 | State)"
+    random_slope_quintile: "EQI_quintile + Smoking_Rate_std + (1 + EQI_quintile | State)"
+    total_eqi_quintile: "EQI_quintile + Smoking_Rate_std + (1 | State)"
+    total_eqi_quintile_nore: "EQI_quintile + Smoking_Rate_std"
+    random_slope_eqi: "scale(EQI) + Smoking_Rate_std + (1 + scale(EQI) | State)"
 
   # 字段映射
   field_map:
@@ -342,78 +384,174 @@ brms_analysis:
 
   # 分析场景 - 每个场景包含完整的分析定义
   scenarios:
-    # 肺癌 - 总EQI - 滞后5年 - 所有RUCC
-    - name: "LungCancer_TotalEQI_Lag5_AllRUCC"
+    # =================================================================
+    # C00-C97 (所有癌症) 完整分析套件
+    # =================================================================
+    
+    # 1. C00-C97 总EQI分析
+    - name: "AllCancer_TotalEQI_Lag5"
       active: true
-      cancer_type: "C34"
+      cancer_type: "C00_C97"
       eqi_period: "0005"
       time_period: "2006-2010"
       lag_years: 5
       rucc_filter: null
       domain: "total"
       formula_key: "total_eqi_quintile"
+      prior_key: "default"
       family: "gaussian"
       use_midpoint: false
       output_suffix: ""
 
-    # 肺癌 - 空气EQI - 滞后5年 - 城市地区
-    - name: "LungCancer_AirEQI_Lag5_Urban"
+    # 2. C00-C97 EQI各领域分析
+    - name: "AllCancer_AirEQI_Lag5"
       active: true
-      cancer_type: "C34"
+      cancer_type: "C00_C97"
       eqi_period: "0005"
       time_period: "2006-2010"
       lag_years: 5
-      rucc_filter: [1, 2]  # Urban counties
+      rucc_filter: null
       domain: "air"
       formula_key: "total_eqi_quintile"
+      prior_key: "default"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Air"
+
+    - name: "AllCancer_WaterEQI_Lag5"
+      active: true
+      cancer_type: "C00_C97"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: null
+      domain: "water"
+      formula_key: "total_eqi_quintile"
+      prior_key: "default"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Water"
+
+    - name: "AllCancer_LandEQI_Lag5"
+      active: true
+      cancer_type: "C00_C97"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: null
+      domain: "land"
+      formula_key: "total_eqi_quintile"
+      prior_key: "default"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Land"
+
+    - name: "AllCancer_BuiltEQI_Lag5"
+      active: true
+      cancer_type: "C00_C97"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: null
+      domain: "built"
+      formula_key: "total_eqi_quintile"
+      prior_key: "default"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Built"
+
+    - name: "AllCancer_SocioEQI_Lag5"
+      active: true
+      cancer_type: "C00_C97"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: null
+      domain: "sociodemographic"
+      formula_key: "total_eqi_quintile"
+      prior_key: "default"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Socio"
+
+    # 3. C00-C97 RUCC分层分析 - 城市地区 (RUCC 1-2)
+    - name: "AllCancer_RUCC_Urban_TotalEQI_Lag5"
+      active: true
+      cancer_type: "C00_C97"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: [1, 2]
+      domain: "total"
+      formula_key: "total_eqi_quintile"
+      prior_key: "default"
       family: "gaussian"
       use_midpoint: false
       output_suffix: "_Urban"
 
-    # 肺癌 - 水EQI - 滞后5年 - 农村地区
-    - name: "LungCancer_WaterEQI_Lag5_Rural"
-      active: false
-      cancer_type: "C34"
+    - name: "AllCancer_RUCC_Urban_AirEQI_Lag5"
+      active: true
+      cancer_type: "C00_C97"
       eqi_period: "0005"
       time_period: "2006-2010"
       lag_years: 5
-      rucc_filter: [3, 4, 5, 6, 7, 8, 9]  # Rural counties
+      rucc_filter: [1, 2]
+      domain: "air"
+      formula_key: "total_eqi_quintile"
+      prior_key: "default"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Urban_Air"
+
+    - name: "AllCancer_RUCC_Urban_WaterEQI_Lag5"
+      active: true
+      cancer_type: "C00_C97"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: [1, 2]
       domain: "water"
       formula_key: "total_eqi_quintile"
+      prior_key: "default"
+      family: "gaussian"
+      use_midpoint: false
+      output_suffix: "_Urban_Water"
+
+    # 4. C00-C97 RUCC分层分析 - 农村地区 (RUCC 3-9)
+    - name: "AllCancer_RUCC_Rural_TotalEQI_Lag5"
+      active: true
+      cancer_type: "C00_C97"
+      eqi_period: "0005"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: [3, 4, 5, 6, 7, 8, 9]
+      domain: "total"
+      formula_key: "total_eqi_quintile"
+      prior_key: "default"
       family: "gaussian"
       use_midpoint: false
       output_suffix: "_Rural"
 
-    # 乳腺癌 - 总EQI - 滞后3年
-    - name: "BreastCancer_TotalEQI_Lag3_AllRUCC"
-      active: false
-      cancer_type: "C50"
-      eqi_period: "0005"
-      time_period: "2008-2012"
-      lag_years: 3
-      rucc_filter: null
-      domain: "total"
-      formula_key: "total_eqi_quintile"
-      family: "gaussian"
-      use_midpoint: false
-      output_suffix: ""
-
-    # 所有癌症 - 社会人口学EQI - 滞后10年 - 敏感性分析(Student-t)
-    - name: "AllCancer_SocioEQI_Lag10_StudentT"
-      active: false
+    - name: "AllCancer_RUCC_Rural_AirEQI_Lag5"
+      active: true
       cancer_type: "C00_C97"
       eqi_period: "0005"
-      time_period: "2011-2015"
-      lag_years: 10
-      rucc_filter: null
-      domain: "sociodemographic"
+      time_period: "2006-2010"
+      lag_years: 5
+      rucc_filter: [3, 4, 5, 6, 7, 8, 9]
+      domain: "air"
       formula_key: "total_eqi_quintile"
-      family: "student_t"
+      prior_key: "default"
+      family: "gaussian"
       use_midpoint: false
-      output_suffix: "_StudentT"
+      output_suffix: "_Rural_Air"
 
-    # 肺癌 - 连续EQI - 随机斜率模型
-    - name: "LungCancer_ContinuousEQI_RandomSlope"
+    # =================================================================
+    # 测试场景 (不启用)
+    # =================================================================
+    
+    # 肺癌测试场景
+    - name: "LungCancer_TotalEQI_Lag5_AllRUCC"
       active: false
       cancer_type: "C34"
       eqi_period: "0005"
@@ -421,10 +559,11 @@ brms_analysis:
       lag_years: 5
       rucc_filter: null
       domain: "total"
-      formula_key: "random_slope_eqi"
+      formula_key: "total_eqi_quintile"
+      prior_key: "default"
       family: "gaussian"
       use_midpoint: false
-      output_suffix: "_RandomSlope"
+      output_suffix: ""
 
 # EQI LMM多重插补分析配置
 eqi_lmm_multiple_imputation:
