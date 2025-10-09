@@ -63,8 +63,9 @@ if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
 fi
 
-# Self-submit mode: if not in a Slurm job, discover diseases and submit array
-if [ -z "${SLURM_JOB_ID-}" ]; then
+# Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
+# discover diseases and submit an array, then exit.
+if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   CANCER_LIST_FILE="cancer_types.list"
   log INFO "发现所有 Cancer_Type 并生成任务列表: $CANCER_LIST_FILE (位于项目根目录)"
   Rscript - <<'RS'
@@ -88,7 +89,11 @@ RS
 fi
 
 # Worker mode (inside Slurm allocation)
-task_id=${SLURM_ARRAY_TASK_ID:?}
+if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
+  log ERROR "SLURM_ARRAY_TASK_ID 未设置；请用 bash 直接运行脚本让其自提交，或使用 --array 提交"
+  exit 1
+fi
+task_id=${SLURM_ARRAY_TASK_ID}
 CANCERS_FILE=${CANCERS_FILE:-"$PROJECT_ROOT/cancer_types.list"}
 if [ ! -f "$CANCERS_FILE" ]; then
   log WARN "未发现 CANCERS_FILE=$CANCERS_FILE，回退到在线生成列表 (写入项目根目录)"
