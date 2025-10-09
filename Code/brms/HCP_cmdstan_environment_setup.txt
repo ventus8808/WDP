@@ -1,0 +1,52 @@
+# HCP cluster: R + cmdstanr environment setup (reproducible)
+# Goal: build an R environment that can run Code/brms/cmdstan_interval_runner.R using the CmdStan backend only (no rstan)
+# Notes:
+# - Prefer a fresh conda env to avoid system-R conflicts.
+# - Ensure a modern compiler toolchain is available on the cluster (gcc>=8). If modules are used, load them first.
+# - Replace <MIRROR> lines if blocked by CRAN defaults; using Posit Public Package Manager improves reproducibility.
+
+# 0) (Optional) Load modules (example; adjust to your HCP environment)
+# module purge
+# module load gcc/12.2.0
+# module load cmake/3.26.4
+
+# 1) Create and activate a conda env with R + cmdstanr dependencies
+conda create -y -n brms r-base=4.3 r-essentials
+conda activate brms
+
+# 2) Install R packages from CRAN/PPM inside R
+R --vanilla <<'RS'
+options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"))
+install.packages(c(
+  "data.table", "dplyr", "stringr", "tidyr", "readr", "purrr",
+  "cmdstanr", "posterior", "optparse"
+))
+# cmdstanr recommends setting the C++ toolchain; on clusters with modules this might already be set.
+# Validate toolchain and then install CmdStan (choose a version; here default latest).
+library(cmdstanr)
+# Set a persistent install path in your home to avoid re-installation per-job
+install_dir <- file.path(path.expand("~"), ".cmdstan")
+Sys.setenv(CMDSTANR_WRITE_INSTALL_DIR=install_dir)
+if (!dir.exists(install_dir)) dir.create(install_dir, recursive = TRUE)
+install_cmdstan(cores = parallel::detectCores())
+# Show version
+cat("CmdStan path:", cmdstan_path(), "\n")
+RS
+
+# 3) (Optional) Pin a specific CmdStan version for reproducibility
+# In R: install_cmdstan(version = "2.37.0")
+
+# 4) Verify minimal run (from repo root)
+# Rscript Code/brms/cmdstan_interval_runner.R --test --cancer-types C00_C97 --chains 2 --iter 400 --warmup 200
+
+# 5) Submit on HCP via Slurm job array
+# Self-submit wrapper (from repo root):
+# bash Code/brms/submit_cmdstan_interval_array.sh
+# or directly submit an array after creating disease list:
+# Rscript -e 'writeLines(sort(unique(data.table::fread("Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval.csv", select="Cancer_Type")$Cancer_Type)), "logs/cancer_types.list")'
+# sbatch --array=0-$(($(wc -l < logs/cancer_types.list)-1)) Code/brms/submit_cmdstan_interval_array.sh
+
+# 6) Troubleshooting
+# - If cmdstanr complains about the toolchain, ensure gcc/g++ and make are available (via modules or system packages).
+# - For slower nodes, consider fewer chains or higher adapt_delta for stability.
+# - To use a shared cmdstan install, set CMDSTAN before running: export CMDSTAN=$HOME/.cmdstan/cmdstan-2.37.0

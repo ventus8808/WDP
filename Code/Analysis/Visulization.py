@@ -82,20 +82,40 @@ def get_paths(project_root: Path, cfg: dict, model: str = "eqi_lmm") -> Dict[str
 
 
 def _list_icds_for_brms(result_dir: Path, cfg: dict) -> List[str]:
-    # brms filename template likely 'brms_{cancer_type}_Results.csv'
+    """List ICD codes for available BRMS result files.
+
+    Supports multiple filename patterns to be robust to historical outputs:
+    - brms_{ICD}_Results.csv   (default, from config)
+    - {ICD}_brms.csv           (observed in current repo)
+    - brms_{ICD}.csv           (fallback)
+    """
     brms_cfg = cfg.get("brms_analysis", {}).get("results", {})
     template = brms_cfg.get("filename_template", "brms_{cancer_type}_Results.csv")
-    # derive glob pattern by replacing {cancer_type} with *
-    glob_pat = template.replace("{cancer_type}", "*")
-    icds = []
-    for p in sorted((result_dir).glob(glob_pat)):
-        name = p.name
-        # extract cancer_type via regex: text between 'brms_' and '_Results'
-        m = re.match(r"brms_(.+?)_Results", name)
-        if m:
-            icd = m.group(1)
-            if icd not in icds:
-                icds.append(icd)
+    # glob candidates: from template and common alternates
+    patterns = [
+        template.replace("{cancer_type}", "*"),
+        "*_brms.csv",
+        "brms_*.csv",
+    ]
+    icds: List[str] = []
+    seen: set[str] = set()
+    # Regexes for extracting ICD from known patterns
+    regexes = [
+        re.compile(r"^brms_(.+?)_Results\.csv$", re.IGNORECASE),
+        re.compile(r"^(.+?)_brms\.csv$", re.IGNORECASE),
+        re.compile(r"^brms_(.+?)\.csv$", re.IGNORECASE),
+    ]
+    for pat in patterns:
+        for p in sorted(result_dir.glob(pat)):
+            name = p.name
+            for rx in regexes:
+                m = rx.match(name)
+                if m:
+                    icd = m.group(1)
+                    if icd not in seen:
+                        seen.add(icd)
+                        icds.append(icd)
+                    break
     return icds
 
 
@@ -189,8 +209,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.model == "brms":
             brms_cfg = cfg.get("brms_analysis", {}).get("results", {})
             template = brms_cfg.get("filename_template", "brms_{cancer_type}_Results.csv")
-            fname = template.replace("{cancer_type}", icd)
-            result_csv = paths["result"] / fname
+            # Primary expected filename from config template
+            candidates = [
+                paths["result"] / template.replace("{cancer_type}", icd),
+                # Common alternates observed in repo/history
+                paths["result"] / f"{icd}_brms.csv",
+                paths["result"] / f"brms_{icd}.csv",
+            ]
+            result_csv = next((p for p in candidates if p.exists()), candidates[0])
         elif args.model == "mice":
             # Try LMM_{ICD}_MICE.csv first, then fallback to LMM_{ICD}.csv
             candidate = paths["result"] / f"LMM_{icd}_MICE.csv"
