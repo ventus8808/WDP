@@ -57,8 +57,9 @@ main <- function() {
 
   # 数据已包含预计算的EQI五分位数（1-5整数）- 与LMM对齐
   # 检验EQI五分位数列是否存在并且格式正确
-  eqi_columns_to_check <- c('EQI', 'EQI_air', 'EQI_water', 'EQI_land', 'EQI_built', 'EQI_Sociodemographic',
-                           'RUCC_EQI', 'RUCC_EQI_air', 'RUCC_EQI_water', 'RUCC_EQI_land', 'RUCC_EQI_built', 'RUCC_EQI_Sociodemographic')
+  # Updated to reflect new data source column naming (uppercase, Social domain)
+  eqi_columns_to_check <- c('EQI', 'EQI_Air', 'EQI_Water', 'EQI_Land', 'EQI_Built', 'EQI_Social',
+                           'RUCC_EQI', 'RUCC_EQI_Air', 'RUCC_EQI_Water', 'RUCC_EQI_Land', 'RUCC_EQI_Built', 'RUCC_EQI_Social')
   
   for (eqi_col in eqi_columns_to_check) {
     if (eqi_col %in% names(df)) {

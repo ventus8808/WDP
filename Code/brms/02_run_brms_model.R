@@ -107,7 +107,7 @@ parse_scenario_name <- function(scenario_name) {
   lag_years <- as.numeric(gsub("Lag", "", parts[lag_idx]))
   
   # Extract time periods (if specified)
-  eqi_period <- "0005"  # default
+  eqi_period_code <- "0005"  # compressed code (0005 -> 2000-2005)
   time_period <- "2006-2010"  # default
   
   # Look for period specifications (format: 0610_20112015)
@@ -117,15 +117,24 @@ parse_scenario_name <- function(scenario_name) {
     eqi_part <- substr(period_part, 1, 4)
     aamr_part <- substr(period_part, 6, 13)
     
-    eqi_period <- eqi_part
+  eqi_period_code <- eqi_part
     time_period <- paste0(substr(aamr_part, 1, 4), "-", substr(aamr_part, 5, 8))
   } else if (lag_years == 10) {
     time_period <- "2011-2015"
   }
   
+  # Map compressed eqi code to full period string found in new data source
+  code_to_period <- function(code) {
+    if (code == "0005") return("2000-2005")
+    if (code == "0610") return("2006-2010")
+    code  # fallback (already a full period?)
+  }
+  eqi_period_full <- code_to_period(eqi_period_code)
+
   return(list(
     cancer_type = cancer_type,
-    eqi_period = eqi_period,
+    eqi_period_code = eqi_period_code,
+    eqi_period_full = eqi_period_full,  # matches EQI_Period in new data
     time_period = time_period,
     lag_years = lag_years,
     rucc_filter = rucc_filter,
@@ -164,9 +173,9 @@ prepare_brms_data <- function(df, field_map, scenario_params) {
   # 筛选数据：按癌症类型、时间期、滞后年数筛选 - 与LMM对齐
   df_filtered <- df %>%
     filter(
-      Cancer_Type == scenario_params$cancer_type,
+      .data[[cancer_col]] == scenario_params$cancer_type,
       Time_Period == scenario_params$time_period,
-      EQI_Period == scenario_params$eqi_period,
+      EQI_Period == scenario_params$eqi_period_full,
       Lag_Years == scenario_params$lag_years
     )
   
@@ -177,21 +186,22 @@ prepare_brms_data <- function(df, field_map, scenario_params) {
   }
   
   # 根据模型类型创建EQI变量
+  eqi_map <- load_project_config()$brms_analysis$eqi_column_map
   if (scenario_params$model_type == "EQI") {
-    # 模型1: 总EQI模型
     df_prep <- df_filtered %>%
       mutate(
-        EQI_quintile = factor(paste0("Q", .data[["EQI"]]), levels = paste0("Q", 1:5))
+        EQI_quintile = factor(paste0("Q", .data[[eqi_map$no_rucc$total]]), levels = paste0("Q", 1:5))
       )
   } else if (scenario_params$model_type == "EQI_domains") {
-    # 模型2: EQI细分域联合模型 
+    # Determine correct map segment based on RUCC filter presence
+    map_section <- if (is.null(scenario_params$rucc_filter)) eqi_map$no_rucc else eqi_map$with_rucc
     df_prep <- df_filtered %>%
       mutate(
-        EQI_air_quintile = factor(paste0("Q", .data[["EQI_air"]]), levels = paste0("Q", 1:5)),
-        EQI_water_quintile = factor(paste0("Q", .data[["EQI_water"]]), levels = paste0("Q", 1:5)),
-        EQI_land_quintile = factor(paste0("Q", .data[["EQI_land"]]), levels = paste0("Q", 1:5)),
-        EQI_built_quintile = factor(paste0("Q", .data[["EQI_built"]]), levels = paste0("Q", 1:5)),
-        EQI_sociodemographic_quintile = factor(paste0("Q", .data[["EQI_Sociodemographic"]]), levels = paste0("Q", 1:5))
+        EQI_air_quintile = factor(paste0("Q", .data[[map_section$air]]), levels = paste0("Q", 1:5)),
+        EQI_water_quintile = factor(paste0("Q", .data[[map_section$water]]), levels = paste0("Q", 1:5)),
+        EQI_land_quintile = factor(paste0("Q", .data[[map_section$land]]), levels = paste0("Q", 1:5)),
+        EQI_built_quintile = factor(paste0("Q", .data[[map_section$built]]), levels = paste0("Q", 1:5)),
+        EQI_sociodemographic_quintile = factor(paste0("Q", .data[[map_section$sociodemographic]]), levels = paste0("Q", 1:5))
       )
   }
   
@@ -207,13 +217,16 @@ prepare_brms_data <- function(df, field_map, scenario_params) {
       AAMR_midpoint = (.data[[lo_col]] + .data[[hi_col]]) / 2
     )
   
-  message(sprintf("   - 筛选后数据: %d rows (Cancer: %s, Period: %s, EQI: %s, Lag: %d%s)", 
+  message(sprintf("   - 筛选后数据: %d rows (Cancer: %s, AAMR Period: %s, EQI Period: %s, Lag: %d%s)", 
                   nrow(df_prep), 
                   scenario_params$cancer_type,
                   scenario_params$time_period,
-                  scenario_params$eqi_period,
+                  scenario_params$eqi_period_full,
                   scenario_params$lag_years,
                   ifelse(is.null(scenario_params$rucc_filter), "", paste0(", RUCC: ", scenario_params$rucc_filter))))
+  if (nrow(df_prep) == 0) {
+    warning("筛选结果为空，请检查时期映射或场景命名是否与新数据一致。可用 EQI_Period 值: ", paste(unique(df$EQI_Period), collapse=","))
+  }
   
   return(df_prep)
 }
@@ -396,13 +409,16 @@ main <- function() {
     }
   } else if (scenario$model_type == "EQI_domains") {
     # 模型2: EQI细分域联合模型 - 提取5个域的系数并输出5行结果
-    eqi_domains <- c("air", "water", "land", "built", "sociodemographic")
+  # Domain labels aligned with source column naming for output (Social retained)
+  eqi_domains <- c("Air", "Water", "Land", "Built", "Social")
     
     message("   - Extracting coefficients for 5 EQI domains from joint model...")
     
     # 为每个域单独输出一行结果
     for (domain in eqi_domains) {
-      domain_coefs <- fixed_effects[str_detect(fixed_effects$term, paste0("EQI_", domain, "_quintileQ")), ]
+  # internal term uses lowercase per formula definition
+  internal_domain <- tolower(domain)
+  domain_coefs <- fixed_effects[str_detect(fixed_effects$term, paste0("EQI_", internal_domain, "_quintileQ")), ]
       
       if (nrow(domain_coefs) > 0) {
         q_values_domain <- c("0.00") # Q1 is reference
@@ -436,7 +452,7 @@ main <- function() {
         
         result_row <- data.frame(
           ICD_Code = scenario$cancer_type,
-          EQI_Period = paste0("20", substr(scenario$eqi_period, 1, 2), "_20", substr(scenario$eqi_period, 3, 4)),
+          EQI_Period = gsub("-", "_", scenario$eqi_period_full),
           AAMR_Period = gsub("-", "_", scenario$time_period),
           Lag = scenario$lag_years,
           Model = model_name_domain,
@@ -449,7 +465,7 @@ main <- function() {
         )
         
         # 保存结果
-        result_file <- file.path(cfg$project_root, "Result", "brms", paste0("brms_", scenario$cancer_type, "_Results.csv"))
+  result_file <- file.path(cfg$project_root, "Result", "brms", paste0("brms_", scenario$cancer_type, "_Results.csv"))
         
         if (file.exists(result_file)) {
           existing_data <- read_csv(result_file, show_col_types = FALSE)
@@ -481,7 +497,7 @@ main <- function() {
   }
   
   # Format EQI period properly (0005 -> 2000_2005)
-  eqi_period_formatted <- paste0("20", substr(scenario$eqi_period, 1, 2), "_20", substr(scenario$eqi_period, 3, 4))
+  eqi_period_formatted <- gsub("-", "_", scenario$eqi_period_full)
   
   # Create result row
   result_row <- data.frame(

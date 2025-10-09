@@ -354,18 +354,18 @@ brms_analysis:
   eqi_column_map:
     no_rucc:
       total: "EQI"
-      air: "EQI_air"
-      water: "EQI_water"
-      land: "EQI_land"
-      built: "EQI_built"
-      sociodemographic: "EQI_Sociodemographic"
+      air: "EQI_Air"
+      water: "EQI_Water"
+      land: "EQI_Land"
+      built: "EQI_Built"
+      sociodemographic: "EQI_Social"   # Source data uses EQI_Social (keep output label Social)
     with_rucc:
       total: "RUCC_EQI"
-      air: "RUCC_EQI_air"
-      water: "RUCC_EQI_water"
-      land: "RUCC_EQI_land"
-      built: "RUCC_EQI_built"
-      sociodemographic: "RUCC_EQI_Sociodemographic"
+      air: "RUCC_EQI_Air"
+      water: "RUCC_EQI_Water"
+      land: "RUCC_EQI_Land"
+      built: "RUCC_EQI_Built"
+      sociodemographic: "RUCC_EQI_Social"
 
   # 模型公式定义
   formulas:

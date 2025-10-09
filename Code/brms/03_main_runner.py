@@ -215,7 +215,7 @@ def main():
     if args.verbose:
         print(f"[brms] 📋 生成的分析场景详情:")
         for i, scenario in enumerate(active_scenarios, 1):
-            print(f"[brms]   {i:3d}. {scenario['name']} (Cancer: {scenario['cancer_type']}, Domain: {scenario['domain']})")
+            print(f"[brms]   {i:3d}. {scenario['name']} (Cancer: {scenario['cancer_type']}, ModelType: {scenario['model_type']})")
     
     failures = 0
     successes = 0
