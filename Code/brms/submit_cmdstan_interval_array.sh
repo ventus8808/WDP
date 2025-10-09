@@ -12,8 +12,8 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=1-00:00:00
-#SBATCH --output=logs/cmdstan_interval_%A_%a.out
-#SBATCH --error=logs/cmdstan_interval_%A_%a.err
+#SBATCH --output=cmdstan_interval_%A_%a.out
+#SBATCH --error=cmdstan_interval_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -34,7 +34,6 @@ if [ -z "$PROJECT_ROOT" ] || [ ! -f "$PROJECT_ROOT/config.yaml" ]; then
   log ERROR "无法确定项目根目录 (找不到 config.yaml)"; exit 1
 fi
 cd "$PROJECT_ROOT"
-mkdir -p logs
 log INFO "项目根目录: $PROJECT_ROOT"
 
 # --- Activate conda environment (default: brms; override via ENV_NAME) ---
@@ -66,16 +65,15 @@ fi
 
 # Self-submit mode: if not in a Slurm job, discover diseases and submit array
 if [ -z "${SLURM_JOB_ID-}" ]; then
-  CANCER_LIST_FILE="logs/cancer_types.list"
-  log INFO "发现所有 Cancer_Type 并生成任务列表: $CANCER_LIST_FILE"
+  CANCER_LIST_FILE="cancer_types.list"
+  log INFO "发现所有 Cancer_Type 并生成任务列表: $CANCER_LIST_FILE (位于项目根目录)"
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
   path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval.csv"
   dt <- fread(path, select = "Cancer_Type")
   u <- sort(unique(dt$Cancer_Type))
   if (length(u) == 0) stop("No Cancer_Type found in ", path)
-  dir.create("logs", showWarnings = FALSE)
-  writeLines(u, "logs/cancer_types.list")
+  writeLines(u, "cancer_types.list")
   cat(length(u))
 RS
   N=$(wc -l < "$CANCER_LIST_FILE" | tr -d ' ')
@@ -83,7 +81,7 @@ RS
   log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个疾病)"
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
-         --export=ALL,CANCERS_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
+    --export=ALL,CANCERS_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
          "$0"
   log INFO "提交完成。使用 squeue 查看进度。"
   exit 0
@@ -91,19 +89,18 @@ fi
 
 # Worker mode (inside Slurm allocation)
 task_id=${SLURM_ARRAY_TASK_ID:?}
-CANCERS_FILE=${CANCERS_FILE:-"$PROJECT_ROOT/logs/cancer_types.list"}
+CANCERS_FILE=${CANCERS_FILE:-"$PROJECT_ROOT/cancer_types.list"}
 if [ ! -f "$CANCERS_FILE" ]; then
-  log WARN "未发现 CANCERS_FILE=$CANCERS_FILE，回退到在线生成列表"
+  log WARN "未发现 CANCERS_FILE=$CANCERS_FILE，回退到在线生成列表 (写入项目根目录)"
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
   path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval.csv"
   dt <- fread(path, select = "Cancer_Type")
   u <- sort(unique(dt$Cancer_Type))
   if (length(u) == 0) stop("No Cancer_Type found in ", path)
-  dir.create("logs", showWarnings = FALSE)
-  writeLines(u, "logs/cancer_types.list")
+  writeLines(u, "cancer_types.list")
 RS
-  CANCERS_FILE="$PROJECT_ROOT/logs/cancer_types.list"
+  CANCERS_FILE="$PROJECT_ROOT/cancer_types.list"
 fi
 
 if ! CANCER=$(sed -n "$((task_id+1))p" "$CANCERS_FILE"); then
