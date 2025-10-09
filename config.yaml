@@ -297,7 +297,7 @@ pymc_analysis:
 # brms 分析配置（Bayesian multilevel interval regression）
 brms_analysis:
   # 数据输入
-  data_file: "Data/df/EQI_AAMR_Interval.csv"
+  data_file: "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval.csv"
 
   # 结果输出目录 - 简化版本，与LMM对齐
   results:
