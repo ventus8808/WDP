@@ -295,8 +295,10 @@ pymc_analysis:
     batch_size: 5
 
 # brms 分析配置（Bayesian multilevel interval regression）
+# 核心优势：原生支持区间审查回归，能正确建模AAMR区间估计的不确定性
+# 与LMM对比：LMM使用点估计，BRMS使用区间估计，提供更准确的不确定性量化
 brms_analysis:
-  # 数据输入
+  # 数据输入 - 使用区间估计数据源（BRMS的核心优势）
   data_file: "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval.csv"
 
   # 结果输出目录 - 简化版本，与LMM对齐
@@ -367,11 +369,11 @@ brms_analysis:
       built: "RUCC_EQI_Built"
       sociodemographic: "RUCC_EQI_Social"
 
-  # 模型公式定义
+  # 模型公式定义 - 区间回归是BRMS的核心优势
   formulas:
-    # 模型1: 总EQI模型
+    # 模型1: 总EQI模型 (区间回归)
     total_eqi: "EQI_quintile + Smoking_Rate_std + (1 | State)"
-    # 模型2: EQI细分域联合模型（5个域同时在一个模型里）
+    # 模型2: EQI细分域联合模型（5个域同时在一个模型里，区间回归）
     multi_eqi_domains: "EQI_air_quintile + EQI_water_quintile + EQI_land_quintile + EQI_built_quintile + EQI_sociodemographic_quintile + Smoking_Rate_std + (1 | State)"
 
   # 字段映射
