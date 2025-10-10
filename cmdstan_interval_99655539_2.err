@@ -1,0 +1,3 @@
+Error in library(cmdstanr) : there is no package called ‘cmdstanr’
+Calls: suppressPackageStartupMessages -> withCallingHandlers -> library
+Execution halted
