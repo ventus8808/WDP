@@ -1,0 +1,14 @@
+# 创建名为brms的conda环境，指定R 4.3版本
+conda create -n brms -c conda-forge r-base=4.3 \
+  r-optparse \
+  r-data.table \
+  r-dplyr \
+  r-stringr \
+  r-tidyr \
+  r-readr \
+  r-purrr \
+  r-cmdstanr \
+  r-posterior
+
+# 激活环境
+conda activate brms
