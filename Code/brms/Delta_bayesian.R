@@ -208,33 +208,23 @@ message("✓ Stan model compiled successfully")
 
 # Create concise model name from analysis components
 create_model_name <- function(analysis_phase, rucc_stratum, model_type, domain_analyzed) {
-  if (analysis_phase == "National") {
-    # National level: Overall_EQI, Air, Water, Land, Built, Social, Multi_Domain
-    if (model_type == "Overall_EQI") {
-      return("Overall_EQI")
-    } else if (model_type == "Single_Domain") {
-      return(domain_analyzed)  # Air, Water, Land, Built, Social
-    } else if (model_type == "Multi_Domain") {
-      return("Multi_Domain")
-    }
-  } else if (analysis_phase == "Stratified") {
-    # Stratified: RUCC1_EQI, RUCC2_Air, etc.
-    if (model_type == "Overall_EQI") {
-      return(paste0("RUCC", rucc_stratum, "_EQI"))
-    } else if (model_type == "Single_Domain") {
-      return(paste0("RUCC", rucc_stratum, "_", domain_analyzed))
-    } else if (model_type == "Multi_Domain") {
-      return(paste0("RUCC", rucc_stratum, "_Multi"))
-    }
+  # Base name for different model types
+  base_name <- switch(model_type,
+    "Overall_EQI" = "EQI",
+    "Single_Domain" = domain_analyzed,
+    "Multi_Domain" = "Multi",
+    "Unknown"
+  )
+  
+  # Add prefix based on analysis phase
+  if (analysis_phase == "Stratified") {
+    return(paste0("RUCC", rucc_stratum, "_", base_name))
   } else if (analysis_phase == "Within_RUCC") {
-    # Within-RUCC: Within_RUCC_EQI, Within_RUCC_Air, etc.
-    if (model_type == "Overall_EQI") {
-      return("Within_RUCC_EQI")
-    } else if (model_type == "Single_Domain") {
-      return(paste0("Within_RUCC_", domain_analyzed))
-    }
+    return(paste0("Within_RUCC_", base_name))
+  } else {
+    # National: no prefix
+    return(base_name)
   }
-  return("Unknown")
 }
 
 # Significance marker based on p-value
@@ -269,6 +259,17 @@ append_result <- function(result_df, output_path) {
       sep=",", col.names=FALSE, row.names=FALSE, append=TRUE, quote=TRUE
     ))
   }
+}
+
+# Wrapper function to fit model and save results with error handling
+fit_and_save <- function(data, design_fn, model_type, analysis_phase, rucc_stratum,
+                         domain, outcome_var, lag_years, output_file, ...) {
+  result <- fit_delta_model(data, design_fn, ...)
+  effects <- extract_change_effects(result$fit, result$design_info, model_type)
+  row <- format_output_row(effects, analysis_phase, rucc_stratum, model_type,
+                          domain, outcome_var, lag_years, result$design_info$n_counties)
+  append_result(row, output_file)
+  return(effects$Rhat_max)
 }
 
 # ==============================================================================
@@ -462,67 +463,48 @@ extract_change_effects <- function(fit, design_info, model_type) {
 }
 
 # Format results into output row(s)
-# For Multi-Domain models, returns a list of 5 rows (one per domain)
+# For Multi-Domain models, returns 5 rows (one per domain)
 # For other models, returns a single-row data frame
 format_output_row <- function(effects, analysis_phase, rucc_stratum, model_type,
                                domain_analyzed, outcome_var, lag_years, n_counties) {
   
-  # Simplify ICD code (remove delta_AAMR_ prefix)
   icd_code <- gsub("^delta_AAMR_", "", outcome_var)
   
-  # For Multi-Domain models, create one row per domain
-  if (model_type == "Multi_Domain") {
-    domains <- c("Air", "Water", "Land", "Built", "Social")
-    rows_list <- list()
-    
-    for (dom in domains) {
-      # Model name: e.g., "Air_Multi", "RUCC1_Water_Multi", "Within_RUCC_Land_Multi"
-      if (analysis_phase == "National") {
-        model_name <- paste0(dom, "_Multi")
-      } else if (analysis_phase == "Stratified") {
-        model_name <- paste0("RUCC", rucc_stratum, "_", dom, "_Multi")
-      } else if (analysis_phase == "Within_RUCC") {
-        model_name <- paste0("Within_RUCC_", dom, "_Multi")
-      }
-      
-      improved_key <- paste0("MRD_", dom, "_Improved")
-      worsened_key <- paste0("MRD_", dom, "_Worsened")
-      
-      rows_list[[dom]] <- data.frame(
-        Model = model_name,
-        ICD_Code = icd_code,
-        Lag = lag_years,
-        MRD_Q_Improved = format_cell(effects[[improved_key]]),
-        MRD_Q_Worsened = format_cell(effects[[worsened_key]]),
-        Intercept_Baseline_Change = format_cell(effects$Intercept),
-        Control_delta_Smoking_Rate = format_cell(effects$Control_Smoking),
-        N_Counties = n_counties,
-        Rhat_max = round(effects$Rhat_max, 4),
-        stringsAsFactors = FALSE
-      )
-    }
-    
-    # Combine all domain rows into single data frame
-    return(do.call(rbind, rows_list))
-    
-  } else {
-    # For non-multi-domain models, create single row with original logic
-    model_name <- create_model_name(analysis_phase, rucc_stratum, model_type, domain_analyzed)
-    
-    row <- data.frame(
-      Model = model_name,
-      ICD_Code = icd_code,
+  # Helper function to create a single result row
+  create_row <- function(model_name, improved_draws, worsened_draws) {
+    data.frame(
+      ICD_Code = icd_code,                          # Column 1: ICD first
+      Model = model_name,                            # Column 2: Model name
       Lag = lag_years,
-      MRD_Q_Improved = format_cell(effects$MRD_Improved),
-      MRD_Q_Worsened = format_cell(effects$MRD_Worsened),
+      MRD_Q_Improved = format_cell(improved_draws),
+      MRD_Q_Worsened = format_cell(worsened_draws),
       Intercept_Baseline_Change = format_cell(effects$Intercept),
       Control_delta_Smoking_Rate = format_cell(effects$Control_Smoking),
       N_Counties = n_counties,
       Rhat_max = round(effects$Rhat_max, 4),
       stringsAsFactors = FALSE
     )
+  }
+  
+  # For Multi-Domain: create 5 rows (one per domain)
+  if (model_type == "Multi_Domain") {
+    domains <- c("Air", "Water", "Land", "Built", "Social")
+    prefix <- if (analysis_phase == "Stratified") paste0("RUCC", rucc_stratum, "_")
+              else if (analysis_phase == "Within_RUCC") "Within_RUCC_"
+              else ""
     
-    return(row)
+    rows <- lapply(domains, function(dom) {
+      model_name <- paste0(prefix, dom, "_Multi")
+      improved <- effects[[paste0("MRD_", dom, "_Improved")]]
+      worsened <- effects[[paste0("MRD_", dom, "_Worsened")]]
+      create_row(model_name, improved, worsened)
+    })
+    
+    return(do.call(rbind, rows))
+  } else {
+    # For non-multi-domain: single row
+    model_name <- create_model_name(analysis_phase, rucc_stratum, model_type, domain_analyzed)
+    return(create_row(model_name, effects$MRD_Improved, effects$MRD_Worsened))
   }
 }
 
@@ -640,8 +622,6 @@ run_analysis <- function() {
     message("📁 Created output directory: ", out_dir)
   }
   
-  output_file <- file.path(out_dir, "results_summary_delta_analysis.csv")
-  
   # Main loop over cancer types
   for (cancer in selected_cancers) {
     message("\n", paste(rep("=", 70), collapse=""))
@@ -655,7 +635,10 @@ run_analysis <- function() {
       next
     }
     
-    outcome_var <- paste0("delta_AAMR_", cancer)
+    # Output file: {ICD_Code}_delta.csv
+    icd_code <- gsub("^delta_AAMR_", "", cancer)
+    output_file <- file.path(out_dir, paste0(icd_code, "_delta.csv"))
+    outcome_var <- cancer  # Keep full Cancer_Type for internal use
     
     # Get unique lag values in this cancer's data
     lag_values <- sort(unique(cancer_data$Lag))
@@ -679,158 +662,105 @@ run_analysis <- function() {
       # PHASE 1: NATIONAL LEVEL ANALYSIS
       # ========================================================================
       message("  📍 Phase 1: National Level Analysis")
+      domains <- c("Air", "Water", "Land", "Built", "Social")
       
       # Model 1.1: Overall EQI
-      message("    → Model 1.1: Overall EQI change")
+      message("    → Model 1.1: Overall EQI")
       tryCatch({
-        result <- fit_delta_model(cancer_lag_data, build_design_overall_eqi)
-        effects <- extract_change_effects(result$fit, result$design_info, "Overall_EQI")
-        row <- format_output_row(
-          effects, "National", "All", "Overall_EQI", "Overall",
-          outcome_var, lag_years, result$design_info$n_counties
-        )
-        append_result(row, output_file)
-        message("      ✓ Completed (Rhat_max=", round(effects$Rhat_max, 3), ")")
-      }, error = function(e) {
-        message("      ✗ Failed: ", e$message)
-      })
+        rhat <- fit_and_save(cancer_lag_data, build_design_overall_eqi, "Overall_EQI",
+                            "National", "All", "Overall", outcome_var, lag_years, output_file)
+        message("      ✓ Completed (Rhat_max=", round(rhat, 3), ")")
+      }, error = function(e) message("      ✗ Failed: ", e$message))
       
       # Model 1.2: Single domains
-      domains <- c("Air", "Water", "Land", "Built", "Social")
-      for (domain in domains) {
-        message("    → Model 1.2.", which(domains == domain), ": ", domain, " domain")
+      for (i in seq_along(domains)) {
+        message("    → Model 1.2.", i, ": ", domains[i])
         tryCatch({
-          result <- fit_delta_model(cancer_lag_data, build_design_single_domain, domain)
-        effects <- extract_change_effects(result$fit, result$design_info, "Single_Domain")
-        row <- format_output_row(
-          effects, "National", "All", "Single_Domain", domain,
-          outcome_var, lag_years, result$design_info$n_counties
-        )
-        append_result(row, output_file)
-        message("    ✓ Completed (Rhat_max=", round(effects$Rhat_max, 3), ")")
-      }, error = function(e) {
-        message("    ✗ Failed: ", e$message)
-      })
-    }
-    
-    # Model 1.3: Multi-domain
-    message("  → Model 1.3: Multi-domain (all 5 domains)")
-    tryCatch({
-      result <- fit_delta_model(cancer_lag_data, build_design_multi_domain)
-      effects <- extract_change_effects(result$fit, result$design_info, "Multi_Domain")
-      row <- format_output_row(
-        effects, "National", "All", "Multi_Domain", "All",
-        outcome_var, lag_years, result$design_info$n_counties
-      )
-      append_result(row, output_file)
-      message("    ✓ Completed (Rhat_max=", round(effects$Rhat_max, 3), ")")
-    }, error = function(e) {
-      message("    ✗ Failed: ", e$message)
-    })
-    
-    # ========================================================================
-    # PHASE 2: STRATIFIED BY RUCC
-    # ========================================================================
-    message("\n📍 Phase 2: RUCC-Stratified Analysis")
-    
-    for (rucc_level in 1:4) {
-      rucc_data <- cancer_lag_data[RUCC == rucc_level]
-      
-      if (nrow(rucc_data) < opt$`min-n-rucc`) {
-        message("  ⚠️  Skipping RUCC=", rucc_level, " (n=", nrow(rucc_data), 
-                " < min_n_rucc=", opt$`min-n-rucc`, ")")
-        next
+          rhat <- fit_and_save(cancer_lag_data, build_design_single_domain, "Single_Domain",
+                              "National", "All", domains[i], outcome_var, lag_years, output_file, domains[i])
+          message("      ✓ Completed (Rhat_max=", round(rhat, 3), ")")
+        }, error = function(e) message("      ✗ Failed: ", e$message))
       }
       
-      message("  → RUCC=", rucc_level, " (n=", nrow(rucc_data), ")")
-      
-      # Model 1.1 for this RUCC
+      # Model 1.3: Multi-domain
+      message("    → Model 1.3: Multi-domain")
       tryCatch({
-        result <- fit_delta_model(rucc_data, build_design_overall_eqi)
-        effects <- extract_change_effects(result$fit, result$design_info, "Overall_EQI")
-        row <- format_output_row(
-          effects, "Stratified", as.character(rucc_level), "Overall_EQI", "Overall",
-          outcome_var, lag_years, result$design_info$n_counties
-        )
-        append_result(row, output_file)
-        message("      ✓ Model 1.1 completed")
-      }, error = function(e) {
-        message("      ✗ Model 1.1 failed: ", e$message)
-      })
+        rhat <- fit_and_save(cancer_lag_data, build_design_multi_domain, "Multi_Domain",
+                            "National", "All", "All", outcome_var, lag_years, output_file)
+        message("      ✓ Completed (Rhat_max=", round(rhat, 3), ")")
+      }, error = function(e) message("      ✗ Failed: ", e$message))
+    
+      # ========================================================================
+      # PHASE 2: STRATIFIED BY RUCC
+      # ========================================================================
+      message("\n  📍 Phase 2: RUCC-Stratified Analysis")
       
-      # Models 1.2 for this RUCC
-      for (domain in domains) {
+      for (rucc_level in 1:4) {
+        rucc_data <- cancer_lag_data[RUCC == rucc_level]
+        
+        if (nrow(rucc_data) < opt$`min-n-rucc`) {
+          message("    ⚠️  Skipping RUCC=", rucc_level, " (n=", nrow(rucc_data), 
+                  " < min_n=", opt$`min-n-rucc`, ")")
+          next
+        }
+        
+        message("    → RUCC=", rucc_level, " (n=", nrow(rucc_data), ")")
+        rucc_str <- as.character(rucc_level)
+        
+        # Overall EQI
         tryCatch({
-          result <- fit_delta_model(rucc_data, build_design_single_domain, domain)
-          effects <- extract_change_effects(result$fit, result$design_info, "Single_Domain")
-          row <- format_output_row(
-            effects, "Stratified", as.character(rucc_level), "Single_Domain", domain,
-            outcome_var, lag_years, result$design_info$n_counties
-          )
-          append_result(row, output_file)
-        }, error = function(e) {
-          message("      ✗ Model 1.2 (", domain, ") failed: ", e$message)
-        })
+          fit_and_save(rucc_data, build_design_overall_eqi, "Overall_EQI",
+                      "Stratified", rucc_str, "Overall", outcome_var, lag_years, output_file)
+          message("      ✓ EQI")
+        }, error = function(e) message("      ✗ EQI: ", e$message))
+        
+        # Single domains
+        for (dom in domains) {
+          tryCatch({
+            fit_and_save(rucc_data, build_design_single_domain, "Single_Domain",
+                        "Stratified", rucc_str, dom, outcome_var, lag_years, output_file, dom)
+          }, error = function(e) message("      ✗ ", dom, ": ", e$message))
+        }
+        message("      ✓ Single domains")
+        
+        # Multi-domain
+        tryCatch({
+          fit_and_save(rucc_data, build_design_multi_domain, "Multi_Domain",
+                      "Stratified", rucc_str, "All", outcome_var, lag_years, output_file)
+          message("      ✓ Multi")
+        }, error = function(e) message("      ✗ Multi: ", e$message))
       }
-      message("      ✓ Models 1.2 completed")
+    
+      # ========================================================================
+      # PHASE 3: WITHIN-RUCC RELATIVE CHANGE
+      # ========================================================================
+      message("\n  📍 Phase 3: Within-RUCC Relative Change")
       
-      # Model 1.3 for this RUCC
+      # Overall EQI ranking change
+      message("    → Within_RUCC_EQI")
       tryCatch({
-        result <- fit_delta_model(rucc_data, build_design_multi_domain)
-        effects <- extract_change_effects(result$fit, result$design_info, "Multi_Domain")
-        row <- format_output_row(
-          effects, "Stratified", as.character(rucc_level), "Multi_Domain", "All",
-          outcome_var, lag_years, result$design_info$n_counties
-        )
-        append_result(row, output_file)
-        message("      ✓ Model 1.3 completed")
-      }, error = function(e) {
-        message("      ✗ Model 1.3 failed: ", e$message)
-      })
-    }
-    
-    # ========================================================================
-    # PHASE 3: WITHIN-RUCC RELATIVE CHANGE
-    # ========================================================================
-    message("\n📍 Phase 3: Within-RUCC Relative Change Analysis")
-    
-    # Model 3.1: RUCC overall
-    message("  → Model 3.1: Within-RUCC overall ranking change")
-    tryCatch({
-      result <- fit_delta_model(cancer_lag_data, build_design_rucc_overall)
-      effects <- extract_change_effects(result$fit, result$design_info, "Overall_EQI")
-      row <- format_output_row(
-        effects, "Within_RUCC", "All", "Overall_EQI", "Overall",
-        outcome_var, lag_years, result$design_info$n_counties
-      )
-      append_result(row, output_file)
-      message("    ✓ Completed (Rhat_max=", round(effects$Rhat_max, 3), ")")
-    }, error = function(e) {
-      message("    ✗ Failed: ", e$message)
-    })
-    
-    # Model 3.2: RUCC single domains
-    for (domain in domains) {
-      message("  → Model 3.2.", which(domains == domain), ": ", domain, " within-RUCC")
-      tryCatch({
-        result <- fit_delta_model(cancer_lag_data, build_design_rucc_single_domain, domain)
-        effects <- extract_change_effects(result$fit, result$design_info, "Single_Domain")
-        row <- format_output_row(
-          effects, "Within_RUCC", "All", "Single_Domain", domain,
-          outcome_var, lag_years, result$design_info$n_counties
-        )
-        append_result(row, output_file)
-        message("    ✓ Completed (Rhat_max=", round(effects$Rhat_max, 3), ")")
-      }, error = function(e) {
-        message("    ✗ Failed: ", e$message)
-      })
-    }
+        rhat <- fit_and_save(cancer_lag_data, build_design_rucc_overall, "Overall_EQI",
+                            "Within_RUCC", "All", "Overall", outcome_var, lag_years, output_file)
+        message("      ✓ Completed (Rhat_max=", round(rhat, 3), ")")
+      }, error = function(e) message("      ✗ Failed: ", e$message))
+      
+      # Single domain ranking changes
+      for (i in seq_along(domains)) {
+        message("    → Within_RUCC_", domains[i])
+        tryCatch({
+          rhat <- fit_and_save(cancer_lag_data, build_design_rucc_single_domain, "Single_Domain",
+                              "Within_RUCC", "All", domains[i], outcome_var, lag_years, output_file, domains[i])
+          message("      ✓ Completed (Rhat_max=", round(rhat, 3), ")")
+        }, error = function(e) message("      ✗ Failed: ", e$message))
+      }
     } # End lag loop
+    
+    message("📂 Results saved to: ", output_file)
   } # End cancer loop
   
   message("\n", paste(rep("=", 70), collapse=""))
   message("✅ All analyses complete!")
-  message("📂 Results saved to: ", output_file)
+  message("� Output directory: ", out_dir)
   message(paste(rep("=", 70), collapse=""))
 }
 
