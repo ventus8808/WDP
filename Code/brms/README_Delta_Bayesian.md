@@ -130,19 +130,37 @@ C00_C97,EQI,10,"0.45(-0.98,1.87)","2.15(0.62,3.68)**",...
 
 ### 任务失败常见原因
 
-1. **内存不足**
+1. **CmdStan编译错误：TBB_CXX_TYPE未设置**
+   ```
+   Error: "Need to set TBB_CXX_TYPE for non-standard compiler"
+   ```
+   
+   **解决方案**：脚本已自动设置 `export TBB_CXX_TYPE=gcc`
+   
+   如果仍有问题，可在提交前手动设置：
+   ```bash
+   export TBB_CXX_TYPE=gcc
+   bash Code/brms/submit_Delta_bayesian_array.sh
+   ```
+   
+   或者在集群上使用标准gcc编译器：
+   ```bash
+   module load gcc/9.3.0  # 版本号根据集群实际情况调整
+   ```
+
+2. **内存不足**
    ```bash
    # 增加内存限制
    sbatch --mem=64G Code/brms/submit_Delta_bayesian_array.sh
    ```
 
-2. **时间超限**
+3. **时间超限**
    ```bash
    # 延长时间限制
    sbatch --time=2-00:00:00 Code/brms/submit_Delta_bayesian_array.sh
    ```
 
-3. **收敛问题（Rhat > 1.1）**
+4. **收敛问题（Rhat > 1.1）**
    - 检查输出CSV中的Rhat_max列
    - 如果Rhat > 1.1，考虑增加迭代次数或调整adapt_delta
 

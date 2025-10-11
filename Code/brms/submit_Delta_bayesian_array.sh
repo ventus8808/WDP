@@ -126,6 +126,11 @@ log INFO "==================================================================="
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
+# Fix CmdStan compilation issue on non-standard compilers
+# Set TBB_CXX_TYPE for Intel Threading Building Blocks
+export TBB_CXX_TYPE=gcc
+log INFO "Set TBB_CXX_TYPE=gcc for CmdStan compilation"
+
 # Use different seed per task
 SEED=$((1234 + task_id))
 

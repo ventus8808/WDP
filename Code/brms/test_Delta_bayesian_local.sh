@@ -34,6 +34,10 @@ fi
 conda activate "$ENV_NAME" || { echo "ERROR: Failed to activate $ENV_NAME"; exit 1; }
 
 echo "Conda environment: $CONDA_DEFAULT_ENV"
+
+# Fix CmdStan compilation issue (if needed)
+export TBB_CXX_TYPE=gcc
+echo "Set TBB_CXX_TYPE=gcc for CmdStan compilation"
 echo ""
 
 # Run with test parameters (faster sampling for testing)
