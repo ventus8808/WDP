@@ -6,11 +6,13 @@ EQI LMM Visualization
 - Output: {ICD}_{EQI_Period}_{AAMR_Period}_Lag{lag}_{Model}.png
 
 CLI Usage:
-python Code/Analysis/Visulization.py --icd C00_C97 --model eqi_lmm
-python Code/Analysis/Visulization.py --all --model mice
+python Code/Analysis/Visualization.py --icd C00_C97 --model eqi_lmm
+python Code/Analysis/Visualization.py --all --model mice
+python Code/Analysis/Visualization.py --all --model brms
+
 
 Models: eqi_lmm (default), mice, brms
-Output directories: EQI_LMM_Visulization, EQI_LMM_MICE_Visulization, brms_Visulization
+Output directories: EQI_LMM_Visualization, EQI_LMM_MICE_Visualization, brms_Visualization
 """
 from __future__ import annotations
 
@@ -334,6 +336,38 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
         # 筛选数据 - df已经是过滤后的特定场景数据，只需要根据模型筛选
         panel_df = df[df['Model'].isin(panel_models)].copy()
         
+        # 收集当前面板的所有上限值和下限值
+        panel_values = []
+        
+        # 解析数据并收集数值
+        for model_idx, model in enumerate(panel_models):
+            model_data = panel_df[panel_df['Model'] == model]
+            if model_data.empty:
+                continue
+                
+            # 为每个quintile收集数值
+            for q_idx, quintile in enumerate(['Q2', 'Q3', 'Q4', 'Q5']):
+                value_str = model_data[quintile].iloc[0] if not model_data.empty else None
+                # 修复pd.isna的使用问题
+                if value_str is None or pd.isna(value_str) or str(value_str).strip() == '0.00':
+                    continue
+                    
+                # 解析数值
+                pattern = re.compile(r'(-?\d+\.\d+)\s*\((.+?),\s*(.+?)\)([\*†]*)')
+                match = pattern.match(str(value_str))
+                if not match:
+                    continue
+                    
+                try:
+                    mrd = float(match.group(1))
+                    lower = float(match.group(2))
+                    upper = float(match.group(3))
+                    panel_values.append(mrd)
+                    panel_values.append(lower)
+                    panel_values.append(upper)
+                except ValueError:
+                    continue
+        
         # 解析数据并绘制
         for model_idx, model in enumerate(panel_models):
             model_data = panel_df[panel_df['Model'] == model]
@@ -345,7 +379,8 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
             # 为每个quintile绘制点和误差线
             for q_idx, quintile in enumerate(['Q2', 'Q3', 'Q4', 'Q5']):
                 value_str = model_data[quintile].iloc[0] if not model_data.empty else None
-                if pd.isna(value_str) or value_str == '0.00':
+                # 修复pd.isna的使用问题
+                if value_str is None or pd.isna(value_str) or str(value_str).strip() == '0.00':
                     continue
                     
                 # 解析数值
@@ -371,7 +406,16 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
         
         # 设置面板样式
         ax.set_xlim(-0.5, 5.5)
-        ax.set_ylim(-20, 20)
+        
+        # 为每个子图独立计算坐标轴范围
+        if panel_values:
+            max_abs_value = max(abs(v) for v in panel_values)
+            # 向上取整到5的倍数
+            dynamic_limit = ((int(max_abs_value) // 5) + 1) * 5
+            ax.set_ylim(-dynamic_limit, dynamic_limit)
+        else:
+            ax.set_ylim(-20, 20)  # 默认值
+            
         ax.axhline(0, color='gray', linestyle='-', linewidth=0.8)
         ax.grid(True, alpha=0.3)
         
@@ -394,7 +438,8 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
                verticalalignment='center', horizontalalignment='right',
                rotation=90, transform=ax.transAxes)
     
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    # 修复类型错误：将列表改为元组
+    plt.tight_layout(rect=(0, 0, 1, 0.96))
     
     # 保存图片
     if output_dir:
