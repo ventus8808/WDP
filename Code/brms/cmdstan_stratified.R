@@ -51,21 +51,22 @@ cores_avail <- parallel::detectCores(logical=TRUE); cores_used <- max(1,floor(co
 message("Detected cores: ", cores_avail, " | Using: ", cores_used)
 
 # Set environment variables for CmdStan compilation based on OS
-if (.Platform$OS.type == "unix") {
-  if (Sys.info()["sysname"] == "Darwin") {  # macOS
-    Sys.setenv(TBB_CXX_TYPE = "clang++")
-    Sys.setenv(TBB_CXXFLAGS = "-Wno-deprecated-declarations")
-    Sys.setenv(CXX = "clang++")
-    Sys.setenv(CC = "clang")
-  } else {  # Linux (CentOS)
-    Sys.setenv(TBB_CXX_TYPE = "gcc")
-    Sys.setenv(CXX = "g++")
-    Sys.setenv(CC = "gcc")
-    # Additional flags for CentOS
-    Sys.setenv(CXXFLAGS = "-std=c++14 -Wno-deprecated-declarations")
-    Sys.setenv(LDFLAGS = "-ltbb -ltbbmalloc")
-  }
-}
+# Note: Using default settings to match working original script
+# if (.Platform$OS.type == "unix") {
+#   if (Sys.info()["sysname"] == "Darwin") {  # macOS
+#     Sys.setenv(TBB_CXX_TYPE = "clang++")
+#     Sys.setenv(TBB_CXXFLAGS = "-Wno-deprecated-declarations")
+#     Sys.setenv(CXX = "clang++")
+#     Sys.setenv(CC = "clang")
+#   } else {  # Linux (CentOS)
+#     Sys.setenv(TBB_CXX_TYPE = "gcc")
+#     Sys.setenv(CXX = "g++")
+#     Sys.setenv(CC = "gcc")
+#     # For older CentOS g++, use C++11
+#     Sys.setenv(CXXFLAGS = "-std=c++11 -Wno-deprecated-declarations")
+#     Sys.setenv(LDFLAGS = "-ltbb -ltbbmalloc")
+#   }
+# }
 
 # Check and install CmdStan if needed
 tryCatch({
