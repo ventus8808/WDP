@@ -1,0 +1,20 @@
+Detected cores: 32 | Using: 25
+CmdStan version: 2.37.0 is available
+Error in `(function (command = NULL, args = character(), error_on_status = TRUE, …`:
+! System command 'make' failed
+---
+Exit status: 2
+Stderr:
+stan/lib/stan_math/make/libraries:114: *** "Need to set TBB_CXX_TYPE for non-standard compiler other than gcc or clang.".  Stop.
+---
+Backtrace:
+1. cmdstanr::cmdstan_model(stan_file)
+2. CmdStanModel$new(stan_file = stan_file, exe_file = exe_file, …
+3. local initialize(...)
+4. self$compile(...)
+5. cmdstanr:::get_cmdstan_flags("STANCFLAGS")
+6. cmdstanr:::wsl_compatible_run(command = "make", args = c("-s", paste0("print-", …
+7. base::do.call(processx::run, run_args)
+8. (function (command = NULL, args = character(), error_on_status = TRUE, …
+9. processx:::throw(new_process_error(res, call = sys.call(), echo = echo, …
+Execution halted

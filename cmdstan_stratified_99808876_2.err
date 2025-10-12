@@ -1,0 +1,15 @@
+Detected cores: 32 | Using: 25
+CmdStan version: 2.37.0 is available
+g++: error: unrecognized command line option ‘-std=c++14’
+g++: error: unrecognized command line option ‘-std=c++17’
+
+g++: error: unrecognized command line option ‘-std=c++14’
+g++: error: unrecognized command line option ‘-std=c++17’
+make: *** [make/program:30: stan/src/stan/model/model_header.hpp.gch/model_header_4_8.hpp.gch] Error 1
+
+Error: An error occured during compilation! See the message above for more information.
+In addition: Warning message:
+CmdStan's precompiled header (PCH) files may need to be rebuilt.
+If your model failed to compile please run rebuild_cmdstan().
+If the issue persists please open a bug report. 
+Execution halted

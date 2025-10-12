@@ -1,0 +1,445 @@
+[2025-10-12 14:36:17] [INFO] - 项目根目录: /public/home/acf4pijnzl/WDP
+[2025-10-12 14:36:17] [INFO] - 任务ID=1  分层=sex  值=Male  CPU=16
+[1] "EQI"          "EQI_Air"      "EQI_Water"    "EQI_Land"     "EQI_Built"   
+[6] "EQI_Social"   "Smoking_Rate" "State_FIPS"  
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 326.5 seconds.
+Chain 4 finished in 350.9 seconds.
+Chain 2 finished in 371.4 seconds.
+Chain 3 finished in 376.4 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 356.3 seconds.
+Total execution time: 376.6 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 488.6 seconds.
+Chain 2 finished in 520.4 seconds.
+Chain 3 finished in 548.7 seconds.
+Chain 1 finished in 591.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 537.3 seconds.
+Total execution time: 591.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 66.9 seconds.
+Chain 4 finished in 71.4 seconds.
+Chain 3 finished in 77.6 seconds.
+Chain 2 finished in 83.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 74.9 seconds.
+Total execution time: 83.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 101.3 seconds.
+Chain 3 finished in 102.2 seconds.
+Chain 2 finished in 112.2 seconds.
+Chain 4 finished in 119.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 108.9 seconds.
+Total execution time: 119.8 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 14.1 seconds.
+Chain 4 finished in 14.1 seconds.
+Chain 1 finished in 15.0 seconds.
+Chain 3 finished in 15.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 14.7 seconds.
+Total execution time: 15.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 22.6 seconds.
+Chain 4 finished in 24.4 seconds.
+Chain 3 finished in 26.6 seconds.
+Chain 2 finished in 26.8 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 25.1 seconds.
+Total execution time: 26.9 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 49.9 seconds.
+Chain 1 finished in 53.5 seconds.
+Chain 4 finished in 53.6 seconds.
+Chain 3 finished in 59.4 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 54.1 seconds.
+Total execution time: 59.5 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 84.6 seconds.
+Chain 2 finished in 97.3 seconds.
+Chain 3 finished in 117.8 seconds.
+Chain 4 finished in 125.8 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 106.4 seconds.
+Total execution time: 125.9 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 28.9 seconds.
+Chain 1 finished in 30.9 seconds.
+Chain 3 finished in 35.9 seconds.
+Chain 2 finished in 42.8 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 34.6 seconds.
+Total execution time: 42.9 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 59.0 seconds.
+Chain 2 finished in 60.4 seconds.
+Chain 4 finished in 60.5 seconds.
+Chain 1 finished in 70.1 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 62.5 seconds.
+Total execution time: 70.2 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 262.3 seconds.
+Chain 1 finished in 303.7 seconds.
+Chain 4 finished in 309.9 seconds.
+Chain 3 finished in 338.9 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 303.7 seconds.
+Total execution time: 339.1 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 431.7 seconds.
+Chain 1 finished in 446.0 seconds.
+Chain 2 finished in 449.8 seconds.
+Chain 4 finished in 456.1 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 445.9 seconds.
+Total execution time: 456.3 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 72.7 seconds.
+Chain 1 finished in 73.4 seconds.
+Chain 2 finished in 74.8 seconds.
+Chain 4 finished in 81.9 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 75.7 seconds.
+Total execution time: 82.0 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 104.9 seconds.
+Chain 2 finished in 108.6 seconds.
+Chain 3 finished in 122.0 seconds.
+Chain 1 finished in 126.5 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 115.5 seconds.
+Total execution time: 126.5 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 14.4 seconds.
+Chain 3 finished in 14.5 seconds.
+Chain 2 finished in 15.0 seconds.
+Chain 4 finished in 15.5 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 14.8 seconds.
+Total execution time: 15.6 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 22.0 seconds.
+Chain 2 finished in 22.6 seconds.
+Chain 1 finished in 22.8 seconds.
+Chain 4 finished in 25.1 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 23.1 seconds.
+Total execution time: 25.2 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 53.2 seconds.
+Chain 1 finished in 53.8 seconds.
+Chain 2 finished in 68.3 seconds.
+Chain 3 finished in 74.4 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 62.4 seconds.
+Total execution time: 74.6 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 87.7 seconds.
+Chain 4 finished in 88.7 seconds.
+Chain 2 finished in 94.4 seconds.
+Chain 1 finished in 106.3 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 94.3 seconds.
+Total execution time: 106.4 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 27.0 seconds.
+Chain 4 finished in 29.8 seconds.
+Chain 3 finished in 30.6 seconds.
+Chain 2 finished in 33.0 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 30.1 seconds.
+Total execution time: 33.1 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 50.3 seconds.
+Chain 4 finished in 52.2 seconds.
+Chain 3 finished in 58.9 seconds.
+Chain 1 finished in 61.3 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 55.7 seconds.
+Total execution time: 61.4 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 269.1 seconds.
+Chain 3 finished in 295.9 seconds.
+Chain 4 finished in 325.8 seconds.
+Chain 2 finished in 377.9 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 317.2 seconds.
+Total execution time: 378.0 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 430.9 seconds.
+Chain 3 finished in 452.1 seconds.
+Chain 4 finished in 503.7 seconds.
+Chain 1 finished in 548.5 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 483.8 seconds.
+Total execution time: 548.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 78.0 seconds.
+Chain 1 finished in 81.5 seconds.
+Chain 3 finished in 83.0 seconds.
+Chain 2 finished in 93.0 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 83.9 seconds.
+Total execution time: 93.1 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 117.7 seconds.
+Chain 1 finished in 123.3 seconds.
+Chain 3 finished in 125.1 seconds.
+Chain 4 finished in 130.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 124.2 seconds.
+Total execution time: 130.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 13.0 seconds.
+Chain 1 finished in 13.3 seconds.
+Chain 2 finished in 13.6 seconds.
+Chain 3 finished in 15.1 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 13.7 seconds.
+Total execution time: 15.2 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 20.7 seconds.
+Chain 4 finished in 21.2 seconds.
+Chain 1 finished in 23.1 seconds.
+Chain 3 finished in 23.8 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 22.2 seconds.
+Total execution time: 24.0 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 51.5 seconds.
+Chain 1 finished in 55.5 seconds.
+Chain 3 finished in 55.8 seconds.
+Chain 4 finished in 56.2 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 54.7 seconds.
+Total execution time: 56.3 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 87.6 seconds.
+Chain 4 finished in 96.7 seconds.
+Chain 1 finished in 100.9 seconds.
+Chain 3 finished in 109.2 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 98.6 seconds.
+Total execution time: 109.3 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 30.8 seconds.
+Chain 3 finished in 33.4 seconds.
+Chain 1 finished in 42.5 seconds.
+Chain 4 finished in 46.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 38.3 seconds.
+Total execution time: 46.8 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 45.3 seconds.
+Chain 1 finished in 48.4 seconds.
+Chain 4 finished in 54.0 seconds.
+Chain 3 finished in 55.0 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 50.7 seconds.
+Total execution time: 55.1 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 200.3 seconds.
+Chain 1 finished in 224.6 seconds.
+Chain 3 finished in 229.5 seconds.
+Chain 2 finished in 235.3 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 222.4 seconds.
+Total execution time: 235.5 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 341.8 seconds.
+Chain 4 finished in 348.5 seconds.
+Chain 3 finished in 357.7 seconds.
+Chain 2 finished in 361.3 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 352.3 seconds.
+Total execution time: 361.5 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 71.3 seconds.
+Chain 2 finished in 82.2 seconds.
+Chain 3 finished in 90.6 seconds.
+Chain 4 finished in 105.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 87.4 seconds.
+Total execution time: 105.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 138.3 seconds.
+Chain 3 finished in 152.3 seconds.
+Chain 1 finished in 171.3 seconds.
+Chain 4 finished in 189.0 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 162.7 seconds.
+Total execution time: 189.1 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 13.2 seconds.
+Chain 1 finished in 13.4 seconds.
+Chain 2 finished in 14.0 seconds.
+Chain 4 finished in 15.3 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 14.0 seconds.
+Total execution time: 15.4 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 21.9 seconds.
+Chain 4 finished in 21.9 seconds.
+Chain 2 finished in 23.1 seconds.
+Chain 3 finished in 24.2 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 22.8 seconds.
+Total execution time: 24.3 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 49.3 seconds.
+Chain 1 finished in 52.3 seconds.
+Chain 4 finished in 55.6 seconds.
+Chain 2 finished in 63.7 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 55.2 seconds.
+Total execution time: 63.9 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 76.4 seconds.
+Chain 4 finished in 86.2 seconds.
+Chain 2 finished in 100.5 seconds.
+Chain 1 finished in 104.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 91.9 seconds.
+Total execution time: 104.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 25.8 seconds.
+Chain 1 finished in 27.1 seconds.
+Chain 3 finished in 29.5 seconds.
+Chain 2 finished in 38.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 30.3 seconds.
+Total execution time: 38.8 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 42.5 seconds.
+Chain 2 finished in 43.1 seconds.
+Chain 4 finished in 44.2 seconds.
+Chain 1 finished in 51.9 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 45.4 seconds.
+Total execution time: 52.0 seconds.
+
+[2025-10-12 16:09:32] [INFO] - ✅ 完成: sex=Male
