@@ -50,7 +50,28 @@ if (is.na(opt$data)) {
 cores_avail <- parallel::detectCores(logical=TRUE); cores_used <- max(1,floor(cores_avail*0.8)); options(mc.cores=cores_used)
 message("Detected cores: ", cores_avail, " | Using: ", cores_used)
 
-# Stan model (generic design matrix X, group random intercept u)
+# Set environment variables for CmdStan compilation based on OS
+if (.Platform$OS.type == "unix") {
+  if (Sys.info()["sysname"] == "Darwin") {  # macOS
+    Sys.setenv(TBB_CXX_TYPE = "clang++")
+    Sys.setenv(TBB_CXXFLAGS = "-Wno-deprecated-declarations")
+    Sys.setenv(CXX = "clang++")
+    Sys.setenv(CC = "clang")
+  } else {  # Linux (CentOS)
+    Sys.setenv(TBB_CXX_TYPE = "gcc")
+    Sys.setenv(CXX = "g++")
+    Sys.setenv(CC = "gcc")
+  }
+}
+
+# Check and install CmdStan if needed
+tryCatch({
+  cmdstanr::cmdstan_version()
+  message("CmdStan is available")
+}, error = function(e) {
+  message("Installing CmdStan...")
+  cmdstanr::install_cmdstan(cores = cores_used)
+})
 stan_code <- "data {\n  int<lower=1> N;\n  int<lower=1> S;\n  array[N] int<lower=1,upper=S> state;\n  vector[N] y_lower;\n  vector[N] y_upper;\n  array[N] int<lower=0,upper=2> cens;\n  int<lower=1> K;\n  matrix[N,K] X;\n} \nparameters {\n  vector[K] beta;\n  vector[S] z_u;\n  real<lower=0> sigma;\n  real<lower=0> sigma_u;\n} \ntransformed parameters {\n  vector[S] u = sigma_u * z_u;\n} \nmodel {\n  beta ~ normal(0,5);\n  z_u ~ normal(0,1);\n  sigma ~ exponential(1);\n  sigma_u ~ exponential(1);\n  for (i in 1:N) {\n    real mu = X[i] * beta + u[state[i]];\n    if (cens[i]==0) {\n      target += normal_lpdf(y_lower[i] | mu, sigma);\n    } else {\n      real p_up = normal_cdf(y_upper[i] | mu, sigma);\n      real p_lo = normal_cdf(y_lower[i] | mu, sigma);\n      real diff = fmax(p_up - p_lo, 1e-12);\n      target += log(diff);\n    }\n  }\n}";
 stan_file <- file.path(tempdir(), "interval_mixed_model.stan"); writeLines(stan_code, stan_file)
 mod <- cmdstan_model(stan_file)
