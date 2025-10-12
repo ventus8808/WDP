@@ -52,21 +52,9 @@ message("Detected cores: ", cores_avail, " | Using: ", cores_used)
 
 # Set environment variables for CmdStan compilation based on OS
 # Note: Using default settings to match working original script
-# if (.Platform$OS.type == "unix") {
-#   if (Sys.info()["sysname"] == "Darwin") {  # macOS
-#     Sys.setenv(TBB_CXX_TYPE = "clang++")
-#     Sys.setenv(TBB_CXXFLAGS = "-Wno-deprecated-declarations")
-#     Sys.setenv(CXX = "clang++")
-#     Sys.setenv(CC = "clang")
-#   } else {  # Linux (CentOS)
-#     Sys.setenv(TBB_CXX_TYPE = "gcc")
-#     Sys.setenv(CXX = "g++")
-#     Sys.setenv(CC = "gcc")
-#     # For older CentOS g++, use C++11
-#     Sys.setenv(CXXFLAGS = "-std=c++11 -Wno-deprecated-declarations")
-#     Sys.setenv(LDFLAGS = "-ltbb -ltbbmalloc")
-#   }
-# }
+if (.Platform$OS.type == "unix" && Sys.info()["sysname"] != "Darwin") {  # Linux only
+  Sys.setenv(TBB_CXX_TYPE = "gcc")
+}
 
 # Check and install CmdStan if needed
 tryCatch({
