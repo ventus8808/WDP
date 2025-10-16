@@ -1,8 +1,8 @@
 #!/bin/bash
 # Slurm array launcher for the cmdstan cluster interval-censored mixed model pipeline
-# One task per cluster; each task runs all scenarios inside the R runner.
+# One task per cancer type; each task runs all clusters inside the R runner.
 # Usage:
-#   bash Code/brms/submit_cmdstan_cluster_array.sh         # auto-discovers clusters and submits an array
+#   bash Code/brms/submit_cmdstan_cluster_array.sh         # auto-discovers cancer types and submits an array
 #   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_cluster_array.sh
 
 #SBATCH --partition=kshctest
@@ -56,6 +56,9 @@ set -u
 # Load devtoolset for newer g++ on CentOS
 module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
 
+# Set environment variables for CmdStan
+export TBB_CXX_TYPE=gcc
+
 RUNNER="Code/brms/cmdstan_cluster.R"
 
 if [ ! -f "$RUNNER" ]; then
@@ -63,85 +66,57 @@ if [ ! -f "$RUNNER" ]; then
 fi
 
 # Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
-# discover clusters and submit an array, then exit.
+# discover cancers and submit an array, then exit.
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  CLUSTER_LIST_FILE="clusters.list"
-  log INFO "发现所有cluster并生成任务列表: $CLUSTER_LIST_FILE (位于项目根目录)"
+  CANCER_LIST_FILE="cancers.list"
+  log INFO "发现所有癌症类型并生成任务列表: $CANCER_LIST_FILE (位于项目根目录)"
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
   # Load clustered data
   cluster_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval_Clustered.csv"
   if (file.exists(cluster_path)) {
-    dt <- fread(cluster_path, select = "Cluster")
-    u <- unique(dt[!is.na(Cluster), .(Cluster)])
-    u <- u[order(Cluster)]
+    dt <- fread(cluster_path, select = "Cancer_Type")
+    u <- unique(dt[, .(Cancer_Type)])
+    u <- u[order(Cancer_Type)]
   } else {
     stop("Clustered data not found")
   }
-  if (nrow(u) == 0) stop("No clusters found")
-  # Write cluster IDs
-  writeLines(as.character(u$Cluster), "clusters.list")
+  if (nrow(u) == 0) stop("No cancers found")
+  # Write cancer types
+  writeLines(u$Cancer_Type, "cancers.list")
   cat(nrow(u))
 RS
-  N=$(wc -l < "$CLUSTER_LIST_FILE" | tr -d ' ')
-  if [ "$N" -le 0 ]; then log ERROR "未找到任何cluster"; exit 1; fi
-  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个cluster)"
+  N=$(wc -l < "$CANCER_LIST_FILE" | tr -d ' ')
+  if [ "$N" -le 0 ]; then log ERROR "未找到任何癌症类型"; exit 1; fi
+  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型)"
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
-    --export=ALL,CLUSTER_FILE="$PROJECT_ROOT/$CLUSTER_LIST_FILE",ENV_NAME="$ENV_NAME" \
+    --export=ALL,CANCER_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
          "$0"
   log INFO "提交完成。使用 squeue 查看进度。"
   exit 0
 fi
 
-# Worker mode (inside Slurm allocation)
-if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  log ERROR "SLURM_ARRAY_TASK_ID 未设置；请用 bash 直接运行脚本让其自提交，或使用 --array 提交"
-  exit 1
-fi
-task_id=${SLURM_ARRAY_TASK_ID}
-CLUSTER_FILE=${CLUSTER_FILE:-"$PROJECT_ROOT/clusters.list"}
-if [ ! -f "$CLUSTER_FILE" ]; then
-  log WARN "未发现 CLUSTER_FILE=$CLUSTER_FILE，回退到在线生成列表 (写入项目根目录)"
-  Rscript - <<'RS'
-  suppressPackageStartupMessages({library(data.table)})
-  # Load clustered data
-  cluster_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval_Clustered.csv"
-  if (file.exists(cluster_path)) {
-    dt <- fread(cluster_path, select = "Cluster")
-    u <- unique(dt[!is.na(Cluster), .(Cluster)])
-    u <- u[order(Cluster)]
-  } else {
-    stop("Clustered data not found")
-  }
-  if (nrow(u) == 0) stop("No clusters found")
-  # Write cluster IDs
-  writeLines(as.character(u$Cluster), "clusters.list")
-RS
-  CLUSTER_FILE="$PROJECT_ROOT/clusters.list"
-fi
-
-if ! CLUSTER_ID=$(sed -n "$((task_id+1))p" "$CLUSTER_FILE"); then
-  log ERROR "读取cluster列表失败 (index=$task_id)"; exit 1
-fi
-if [ -z "$CLUSTER_ID" ]; then
-  log WARN "索引 $task_id 超出cluster列表范围，跳过。"; exit 0
-fi
-
-log INFO "任务ID=$task_id  Cluster=$CLUSTER_ID  CPU=${SLURM_CPUS_PER_TASK:-NA}"
+# Worker mode: run the actual job
+log INFO "开始处理任务 $SLURM_ARRAY_TASK_ID"
+# Read the cancer type for this task
+CANCER_TYPE=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$CANCER_FILE")
+if [ -z "$CANCER_TYPE" ]; then log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的癌症类型"; exit 1; fi
+log INFO "处理癌症类型: $CANCER_TYPE"
 
 # Limit threading to allocation to be polite on shared nodes
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
 # Use a different seed per task for better chain jitter
-SEED=$((1234 + task_id))
+SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
-# Run the cluster interval-censored pipeline for this cluster
+# Run the cluster interval-censored pipeline for this cancer type
 Rscript "$RUNNER" \
-  --cluster-ids "$CLUSTER_ID" \
+  --cancer-types "$CANCER_TYPE" \
+  --cluster-ids "0,1,2" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \
   --seed "$SEED"
 
-log INFO "✅ 完成: Cluster=$CLUSTER_ID"
+log INFO "✅ 完成: Cancer=$CANCER_TYPE"
