@@ -52,10 +52,17 @@ def clean_eqi_0005(source_path, output_path):
     # 4. 处理并整合城乡分层指数
     # 六个领域: EQI, air, water, land, built, sociod
     domains = ['EQI', 'air', 'water', 'land', 'built', 'sociod']
+    domain_display_map = {
+        'EQI': 'EQI',
+        'air': 'Air',
+        'water': 'Water',
+        'land': 'Land',
+        'built': 'Built',
+        'sociod': 'Social'
+    }
     
     for domain in domains:
-        # 将sociod显示为Sociodemographic
-        display_domain = 'Sociodemographic' if domain == 'sociod' else domain
+        display_domain = domain_display_map[domain]
         rucc_col_name = f'RUCC_EQI_{display_domain}' if domain != 'EQI' else 'RUCC_EQI'
         df_processed[rucc_col_name] = np.nan
         
@@ -110,6 +117,49 @@ def clean_eqi_0005(source_path, output_path):
     print(f"Successfully cleaned data and saved to: {output_path}")
     print(f"Final DataFrame shape: {df_final.shape}")
     print("Final columns:", df_final.columns.tolist())
+
+    # 额外输出：计算标准化后的EQI
+    df_standard = pd.DataFrame()
+    df_standard['COUNTY_FIPS'] = df_processed['COUNTY_FIPS']
+    df_standard['RUCC'] = df_processed['RUCC']
+
+    # 全国指数标准化
+    for original_col, new_name in national_cols_map.items():
+        if original_col in df.columns:
+            mean_val = df[original_col].mean()
+            std_val = df[original_col].std()
+            df_standard[new_name] = ((df[original_col] - mean_val) / std_val).round(4)
+
+    # RUCC分层指数标准化
+    for domain in domains:
+        display_domain = domain_display_map[domain]
+        rucc_col_name = f'RUCC_EQI_{display_domain}' if domain != 'EQI' else 'RUCC_EQI'
+        df_standard[rucc_col_name] = np.nan
+        
+        for i in range(1, 5):
+            if domain == 'EQI':
+                col_name = f'RUCC{i}_EQI_22July2013'
+            else:
+                col_name = f'RUCC{i}_{domain}_EQI_22July2013'
+            
+            matching_cols = [col for col in df.columns if col.lower() == col_name.lower()]
+            if matching_cols:
+                col_name = matching_cols[0]
+                mask = (df['cat_rucc'] == i) & (df[col_name].notna())
+                if mask.sum() > 0:
+                    domain_data = df.loc[mask, col_name]
+                    mean_val = domain_data.mean()
+                    std_val = domain_data.std()
+                    df_standard.loc[mask, rucc_col_name] = ((domain_data - mean_val) / std_val).round(4)
+
+    # 确保最终列顺序
+    df_standard_final = df_standard[final_columns]
+    
+    # 保存标准化文件
+    standard_output_path = output_path.replace('EQI0005.csv', 'EQI0005_Standard.csv')
+    df_standard_final.to_csv(standard_output_path, index=False)
+    print(f"Successfully saved standardized data to: {standard_output_path}")
+    print(f"Standardized DataFrame shape: {df_standard_final.shape}")
 
 
 if __name__ == '__main__':
