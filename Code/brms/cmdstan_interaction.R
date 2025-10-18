@@ -107,7 +107,7 @@ extract_interaction_results <- function(draws_df, names_vec, quintile_prefix, cl
   int_effects <- list()
   for(q in 2:5){
     for(cl in cluster_levels[-1]){  # Skip baseline
-      int_nm <- paste0(quintile_prefix, q, ".Cluster", cl)
+      int_nm <- paste0(quintile_prefix, q, ".", cl)
       idx <- match(int_nm, names_vec)
       if(!is.na(idx)) int_effects[[paste0("Q",q,".",cl)]] <- draws_df[[paste0("beta[",idx,"]")]]
     }
