@@ -76,9 +76,9 @@ if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   climate_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval_Climate.csv"
   if (file.exists(climate_path)) {
     dt <- fread(climate_path, select = c("Cancer_Type", "census_region", "census_division", "rucc", "koppen_code", "koppen_major", "doe_major", "doe_code"))
-    cancers <- unique(dt[, .(Cancer_Type)]) |> sort()
+    cancers <- sort(unique(dt$Cancer_Type))
     strat_vars <- c("census_region", "census_division", "rucc", "koppen_code", "koppen_major", "doe_major", "doe_code")
-    combos <- expand.grid(Cancer_Type = cancers$Cancer_Type, Strat_Var = strat_vars, stringsAsFactors = FALSE)
+    combos <- expand.grid(Cancer_Type = cancers, Strat_Var = strat_vars, stringsAsFactors = FALSE)
     combos <- combos[order(combos$Cancer_Type, combos$Strat_Var), ]
   } else {
     stop("Climate data not found")
