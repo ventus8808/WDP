@@ -143,7 +143,8 @@ for(cancer in selected){
       )
       
       # Initial values
-      init_fun <- function() list(beta=rep(0, data_list$K), z_u=rep(0, data_list$S), sigma=50, sigma_u=10)
+      # Custom initial values to avoid pathological starting points
+  init_fun <- function() list(beta=rep(0, data_list$K), z_u=rep(0, data_list$S), sigma=1, sigma_u=1)
       
       # First run
       fit <- try(mod$sample(data=data_list, chains=opt$chains, iter_sampling=opt$iter-opt$warmup, iter_warmup=opt$warmup,
