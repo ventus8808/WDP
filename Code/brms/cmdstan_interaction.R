@@ -38,7 +38,12 @@ message("Detected cores: ", cores_avail, " | Using: ", cores_used)
 
 # Stan model (same as original)
 # Stan model (generic design matrix X, group random intercept u)
-stan_code <- "data {\n  int<lower=1> N;\n  int<lower=1> S;\n  array[N] int<lower=1,upper=S> state;\n  vector[N] y_lower;\n  vector[N] y_upper;\n  array[N] int<lower=0,upper=2> cens;\n  int<lower=1> K;\n  matrix[N,K] X;\n} \nparameters {\n  vector[K] beta;\n  vector[S] z_u;\n  real sigma_raw;\n  real sigma_u_raw;\n} \ntransformed parameters {\n  real sigma = exp(sigma_raw);\n  real sigma_u = exp(sigma_u_raw);\n  vector[S] u = sigma_u * z_u;\n} \nmodel {\n  beta ~ normal(0,5);\n  z_u ~ normal(0,1);\n  sigma_raw ~ normal(0,1);\n  sigma_u_raw ~ normal(0,1);\n  for (i in 1:N) {\n    real mu = X[i] * beta + u[state[i]];\n    if (cens[i]==0) {\n      target += normal_lpdf(y_lower[i] | mu, sigma);\n    } else {\n      real p_up = normal_cdf(y_upper[i] | mu, sigma);\n      real p_lo = normal_cdf(y_lower[i] | mu, sigma);\n      real diff = fmax(p_up - p_lo, 1e-12);\n      target += log(diff);\n    }\n  }\n}";;
+stan_code <- paste0(
+"data {\n  int<lower=1> N;\n  int<lower=1> S;\n  array[N] int<lower=1,upper=S> state;\n  vector[N] y_lower;\n  vector[N] y_upper;\n  array[N] int<lower=0,upper=2> cens;\n  int<lower=1> K;\n  matrix[N,K] X;\n} \n",
+"parameters {\n  vector[K] beta;\n  vector[S] z_u;\n  real sigma_raw;\n  real sigma_u_raw;\n} \n",
+"transformed parameters {\n  real sigma = exp(sigma_raw);\n  real sigma_u = exp(sigma_u_raw);\n  vector[S] u = sigma_u * z_u;\n} \n",
+"model {\n  beta ~ normal(0,5);\n  z_u ~ normal(0,1);\n  sigma_raw ~ normal(0,1);\n  sigma_u_raw ~ normal(0,1);\n  for (i in 1:N) {\n    real mu = X[i] * beta + u[state[i]];\n    if (cens[i]==0) {\n      target += normal_lpdf(y_lower[i] | mu, sigma);\n    } else {\n      real p_up = normal_cdf(y_upper[i] | mu, sigma);\n      real p_lo = normal_cdf(y_lower[i] | mu, sigma);\n      real diff = fmax(p_up - p_lo, 1e-12);\n      target += log(diff);\n    }\n  }\n}"
+);
 stan_file <- file.path(tempdir(), "interval_mixed_model.stan"); writeLines(stan_code, stan_file)
 mod <- cmdstan_model(stan_file)
 
