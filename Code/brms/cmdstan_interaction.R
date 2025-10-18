@@ -156,7 +156,7 @@ for(cancer in selected){
                 init=rep(list(init_fun()), opt$chains)), silent=TRUE)
       
       # Check convergence
-      if(inherits(fit,"try-error") || any(summary(fit)$rhat > 1.01)){
+      if(inherits(fit,"try-error") || any(fit$summary()$rhat > 1.01)){
         message("[Retry] ", scen_key, " ", dom_lab, " with iter=4000")
         opt$iter <- 4000; opt$warmup <- 2000
         fit <- try(mod$sample(data=data_list, chains=opt$chains, iter_sampling=opt$iter-opt$warmup, iter_warmup=opt$warmup,
