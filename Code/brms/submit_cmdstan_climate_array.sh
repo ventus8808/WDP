@@ -66,34 +66,31 @@ if [ ! -f "$RUNNER" ]; then
 fi
 
 # Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
-# discover cancers and stratification vars, generate combinations, and submit an array, then exit.
+# discover cancers and submit an array (one task per cancer, each task runs all stratification vars), then exit.
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  COMBO_LIST_FILE="combinations.list"
-  log INFO "发现所有癌症类型和分层变量组合并生成任务列表: $COMBO_LIST_FILE (位于项目根目录)"
+  CANCER_LIST_FILE="cancers.list"
+  log INFO "发现所有癌症类型并生成任务列表: $CANCER_LIST_FILE (位于项目根目录)"
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
   # Load climate data
   climate_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval_Climate.csv"
   if (file.exists(climate_path)) {
-    dt <- fread(climate_path, select = c("Cancer_Type", "census_region", "census_division", "rucc", "koppen_code", "koppen_major", "doe_major", "doe_code"))
+    dt <- fread(climate_path, select = "Cancer_Type")
     cancers <- sort(unique(dt$Cancer_Type))
-    strat_vars <- c("census_region", "census_division", "rucc", "koppen_code", "koppen_major", "doe_major", "doe_code")
-    combos <- expand.grid(Cancer_Type = cancers, Strat_Var = strat_vars, stringsAsFactors = FALSE)
-    combos <- combos[order(combos$Cancer_Type, combos$Strat_Var), ]
   } else {
     stop("Climate data not found")
   }
-  if (nrow(combos) == 0) stop("No combinations found")
-  # Write combinations as "Cancer_Type,Strat_Var"
-  writeLines(apply(combos, 1, paste, collapse=","), "combinations.list")
-  cat(nrow(combos))
+  if (length(cancers) == 0) stop("No cancers found")
+  # Write cancer types
+  writeLines(cancers, "cancers.list")
+  cat(length(cancers))
 RS
-  N=$(wc -l < "$COMBO_LIST_FILE" | tr -d ' ')
-  if [ "$N" -le 0 ]; then log ERROR "未找到任何组合"; exit 1; fi
-  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个组合)"
+  N=$(wc -l < "$CANCER_LIST_FILE" | tr -d ' ')
+  if [ "$N" -le 0 ]; then log ERROR "未找到任何癌症类型"; exit 1; fi
+  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型，每个任务运行所有分层变量)"
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
-    --export=ALL,COMBO_FILE="$PROJECT_ROOT/$COMBO_LIST_FILE",ENV_NAME="$ENV_NAME" \
+    --export=ALL,CANCER_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
          "$0"
   log INFO "提交完成。使用 squeue 查看进度。"
   exit 0
@@ -101,12 +98,10 @@ fi
 
 # Worker mode: run the actual job
 log INFO "开始处理任务 $SLURM_ARRAY_TASK_ID"
-# Read the combination for this task
-COMBO=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$COMBO_FILE")
-if [ -z "$COMBO" ]; then log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的组合"; exit 1; fi
-CANCER_TYPE=$(echo "$COMBO" | cut -d',' -f1)
-STRAT_VAR=$(echo "$COMBO" | cut -d',' -f2)
-log INFO "处理组合: Cancer=$CANCER_TYPE, Strat_Var=$STRAT_VAR"
+# Read the cancer type for this task
+CANCER_TYPE=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$CANCER_FILE")
+if [ -z "$CANCER_TYPE" ]; then log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的癌症类型"; exit 1; fi
+log INFO "处理癌症类型: $CANCER_TYPE (将运行所有分层变量)"
 
 # Limit threading to allocation to be polite on shared nodes
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
@@ -115,12 +110,19 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 # Use a different seed per task for better chain jitter
 SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
-# Run the climate stratification interval-censored pipeline for this combination
-Rscript "$RUNNER" \
-  --cancer-types "$CANCER_TYPE" \
-  --stratification-var "$STRAT_VAR" \
-  --chains 4 --iter 2000 --warmup 1000 \
-  --adapt-delta 0.95 --max-treedepth 12 \
-  --seed "$SEED"
+# Stratification variables
+STRAT_VARS=("census_region" "census_division" "rucc" "koppen_code" "koppen_major" "doe_major" "doe_code")
 
-log INFO "✅ 完成: Cancer=$CANCER_TYPE, Strat_Var=$STRAT_VAR"
+# Run for each stratification variable
+for STRAT_VAR in "${STRAT_VARS[@]}"; do
+  log INFO "运行分层变量: $STRAT_VAR"
+  Rscript "$RUNNER" \
+    --cancer-types "$CANCER_TYPE" \
+    --stratification-var "$STRAT_VAR" \
+    --chains 4 --iter 2000 --warmup 1000 \
+    --adapt-delta 0.95 --max-treedepth 12 \
+    --seed "$SEED"
+  log INFO "完成分层变量: $STRAT_VAR"
+done
+
+log INFO "✅ 完成: Cancer=$CANCER_TYPE"
