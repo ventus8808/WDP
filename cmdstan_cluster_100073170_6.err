@@ -1,4 +1,0 @@
-Detected cores: 32 | Using: 25
-Cluster IDs to analyze: 0,1,2
-Error: unexpected symbol in "  message("Cancer type to analyze: ", paste(selected,collapse=","))out_dir"
-Execution halted
