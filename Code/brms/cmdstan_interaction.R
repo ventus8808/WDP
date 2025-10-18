@@ -103,30 +103,35 @@ extract_interaction_results <- function(draws_df, names_vec, quintile_prefix, cl
     if(!is.na(idx)) q_main[[paste0("Q",q)]] <- draws_df[[paste0("beta[",idx,"]")]]
   }
   
-  # Interaction effects
+  # Interaction effects for each quintile and cluster
   int_effects <- list()
-  for(cl in cluster_levels[-1]){  # Skip baseline
-    int_nm <- paste0(quintile_prefix, "5:", "Cluster", cl)
-    idx <- match(int_nm, names_vec)
-    if(!is.na(idx)) int_effects[[cl]] <- draws_df[[paste0("beta[",idx,"]")]]
-  }
-  
-  # For each cluster, compute MRD_Q5 = Q5_main + interaction (if not baseline)
-  mrd_q5 <- list()
-  baseline_q5 <- if(length(q_main$Q5)>0) q_main$Q5 else rep(0, nrow(draws_df))
-  for(cl in cluster_levels){
-    if(cl == "Advantageous"){
-      mrd_q5[[cl]] <- baseline_q5
-    } else {
-      int_draws <- int_effects[[cl]]
-      if(length(int_draws)>0) mrd_q5[[cl]] <- baseline_q5 + int_draws else mrd_q5[[cl]] <- baseline_q5
+  for(q in 2:5){
+    for(cl in cluster_levels[-1]){  # Skip baseline
+      int_nm <- paste0(quintile_prefix, q, ".Cluster", cl)
+      idx <- match(int_nm, names_vec)
+      if(!is.na(idx)) int_effects[[paste0("Q",q,".",cl)]] <- draws_df[[paste0("beta[",idx,"]")]]
     }
   }
   
-  # Interaction p-values
+  # For each quintile and cluster, compute MRD_Qi = Q_i_main + interaction (if not baseline)
+  mrd <- list()
+  for(q in 2:5){
+    mrd[[paste0("Q",q)]] <- list()
+    baseline_q <- if(length(q_main[[paste0("Q",q)]])>0) q_main[[paste0("Q",q)]] else rep(0, nrow(draws_df))
+    for(cl in cluster_levels){
+      if(cl == "Advantageous"){
+        mrd[[paste0("Q",q)]][[cl]] <- baseline_q
+      } else {
+        int_draws <- int_effects[[paste0("Q",q,".",cl)]]
+        if(length(int_draws)>0) mrd[[paste0("Q",q)]][[cl]] <- baseline_q + int_draws else mrd[[paste0("Q",q)]][[cl]] <- baseline_q
+      }
+    }
+  }
+  
+  # Interaction p-values (for Q5, as in original)
   int_p <- list()
   for(cl in cluster_levels[-1]){
-    int_draws <- int_effects[[cl]]
+    int_draws <- int_effects[[paste0("Q5.",cl)]]
     if(length(int_draws)>0){
       p <- 2*min(mean(int_draws>0), mean(int_draws<0))
       int_p[[cl]] <- sprintf("%.3f", p)
@@ -135,7 +140,7 @@ extract_interaction_results <- function(draws_df, names_vec, quintile_prefix, cl
     }
   }
   
-  list(mrd_q5 = mrd_q5, int_p = int_p)
+  list(mrd_q2 = mrd$Q2, mrd_q3 = mrd$Q3, mrd_q4 = mrd$Q4, mrd_q5 = mrd$Q5, int_p = int_p)
 }
 
 # Domains
@@ -202,9 +207,9 @@ for(cancer in selected){
           Model = paste0(dom_lab, "_", cl),
           Interaction_P_Value = int_p_val,
           Q1 = "0.00",
-          Q2 = "",
-          Q3 = "",
-          Q4 = "",
+          Q2 = format_cell(res$mrd_q2[[cl]]),
+          Q3 = format_cell(res$mrd_q3[[cl]]),
+          Q4 = format_cell(res$mrd_q4[[cl]]),
           Q5 = format_cell(res$mrd_q5[[cl]])
         )
         append_rows(outfile, row)
