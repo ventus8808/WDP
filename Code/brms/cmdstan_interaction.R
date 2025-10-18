@@ -95,28 +95,47 @@ build_design_interaction <- function(d, quintile_var){
 
 # Extract quintiles and interaction p-values
 extract_interaction_results <- function(draws_df, names_vec, quintile_prefix, cluster_levels){
-  # Quintile effects: Q2-Q5 relative to Q1
-  q_effects <- list(Q1="0.00", Q2="", Q3="", Q4="", Q5="")
+  # Quintile main effects
+  q_main <- list()
   for(q in 2:5){
     nm <- paste0(quintile_prefix, q)
     idx <- match(nm, names_vec)
-    if(!is.na(idx)) q_effects[[paste0("Q",q)]] <- format_cell(draws_df[[paste0("beta[",idx,"]")]])
+    if(!is.na(idx)) q_main[[paste0("Q",q)]] <- draws_df[[paste0("beta[",idx,"]")]]
   }
   
-  # Interaction p-values for each cluster vs baseline (Advantageous)
-  int_p <- list()
+  # Interaction effects
+  int_effects <- list()
   for(cl in cluster_levels[-1]){  # Skip baseline
     int_nm <- paste0(quintile_prefix, "5:", "Cluster", cl)
     idx <- match(int_nm, names_vec)
-    if(!is.na(idx)){
-      draws <- draws_df[[paste0("beta[",idx,"]")]]
-      p <- 2*min(mean(draws>0), mean(draws<0))
+    if(!is.na(idx)) int_effects[[cl]] <- draws_df[[paste0("beta[",idx,"]")]]
+  }
+  
+  # For each cluster, compute MRD_Q5 = Q5_main + interaction (if not baseline)
+  mrd_q5 <- list()
+  baseline_q5 <- if(length(q_main$Q5)>0) q_main$Q5 else rep(0, nrow(draws_df))
+  for(cl in cluster_levels){
+    if(cl == "Advantageous"){
+      mrd_q5[[cl]] <- baseline_q5
+    } else {
+      int_draws <- int_effects[[cl]]
+      if(length(int_draws)>0) mrd_q5[[cl]] <- baseline_q5 + int_draws else mrd_q5[[cl]] <- baseline_q5
+    }
+  }
+  
+  # Interaction p-values
+  int_p <- list()
+  for(cl in cluster_levels[-1]){
+    int_draws <- int_effects[[cl]]
+    if(length(int_draws)>0){
+      p <- 2*min(mean(int_draws>0), mean(int_draws<0))
       int_p[[cl]] <- sprintf("%.3f", p)
     } else {
       int_p[[cl]] <- ""
     }
   }
-  list(q_effects = q_effects, int_p = int_p)
+  
+  list(mrd_q5 = mrd_q5, int_p = int_p)
 }
 
 # Domains
@@ -182,11 +201,11 @@ for(cancer in selected){
           Lag = lagv,
           Model = paste0(dom_lab, "_", cl),
           Interaction_P_Value = int_p_val,
-          Q1 = res$q_effects$Q1,
-          Q2 = res$q_effects$Q2,
-          Q3 = res$q_effects$Q3,
-          Q4 = res$q_effects$Q4,
-          Q5 = res$q_effects$Q5
+          Q1 = "0.00",
+          Q2 = "",
+          Q3 = "",
+          Q4 = "",
+          Q5 = format_cell(res$mrd_q5[[cl]])
         )
         append_rows(outfile, row)
       }
