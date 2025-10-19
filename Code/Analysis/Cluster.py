@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from math import pi
+import seaborn as sns
 
 def get_config():
     """Load configuration from config.yaml"""
@@ -216,6 +217,103 @@ def create_heatmap(profiles_df, residual_cols, output_dir):
     plt.close()
     print(f"Heatmap saved to: {heatmap_path}")
 
+def create_swarm_plot(residuals_df, residual_cols, output_dir):
+    """Create swarm plot for residuals by cluster"""
+    print("Creating swarm plot...")
+    
+    # Melt data for plotting
+    melted_df = residuals_df.melt(id_vars=['Cluster'], value_vars=residual_cols, 
+                                  var_name='EQI_Dimension', value_name='Residual')
+    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('_residual', '').str.replace('EQI_', '')
+    
+    plt.figure(figsize=(12, 8))
+    sns.swarmplot(data=melted_df, x='EQI_Dimension', y='Residual', hue='Cluster', palette='Set1', dodge=True)
+    plt.title('Swarm Plot of Residuals by Cluster and EQI Dimension')
+    plt.xticks(rotation=45)
+    plt.legend(title='Cluster')
+    plt.grid(True, alpha=0.3)
+    
+    swarm_path = os.path.join(output_dir, 'Cluster_Swarm_Plot.png')
+    plt.savefig(swarm_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Swarm plot saved to: {swarm_path}")
+
+def create_violin_plot(residuals_df, residual_cols, output_dir):
+    """Create violin plot for residuals by cluster"""
+    print("Creating violin plot...")
+    
+    # Melt data for plotting
+    melted_df = residuals_df.melt(id_vars=['Cluster'], value_vars=residual_cols, 
+                                  var_name='EQI_Dimension', value_name='Residual')
+    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('_residual', '').str.replace('EQI_', '')
+    
+    plt.figure(figsize=(12, 8))
+    sns.violinplot(data=melted_df, x='EQI_Dimension', y='Residual', hue='Cluster', palette='Set1', split=True)
+    plt.title('Violin Plot of Residuals by Cluster and EQI Dimension')
+    plt.xticks(rotation=45)
+    plt.legend(title='Cluster')
+    plt.grid(True, alpha=0.3)
+    
+    violin_path = os.path.join(output_dir, 'Cluster_Violin_Plot.png')
+    plt.savefig(violin_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Violin plot saved to: {violin_path}")
+
+def create_box_plot(residuals_df, residual_cols, output_dir):
+    """Create box plot for residuals by cluster"""
+    print("Creating box plot...")
+    
+    # Melt data for plotting
+    melted_df = residuals_df.melt(id_vars=['Cluster'], value_vars=residual_cols, 
+                                  var_name='EQI_Dimension', value_name='Residual')
+    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('_residual', '').str.replace('EQI_', '')
+    
+    plt.figure(figsize=(12, 8))
+    sns.boxplot(data=melted_df, x='EQI_Dimension', y='Residual', hue='Cluster', palette='Set1')
+    plt.title('Box Plot of Residuals by Cluster and EQI Dimension')
+    plt.xticks(rotation=45)
+    plt.legend(title='Cluster')
+    plt.grid(True, alpha=0.3)
+    
+    box_path = os.path.join(output_dir, 'Cluster_Box_Plot.png')
+    plt.savefig(box_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Box plot saved to: {box_path}")
+
+def create_raincloud_plot(residuals_df, residual_cols, output_dir):
+    """Create raincloud plot (violin + swarm) for residuals by cluster"""
+    print("Creating raincloud plot...")
+    
+    # Melt data for plotting
+    melted_df = residuals_df.melt(id_vars=['Cluster'], value_vars=residual_cols, 
+                                  var_name='EQI_Dimension', value_name='Residual')
+    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('_residual', '').str.replace('EQI_', '')
+    
+    # Create subplots for each EQI dimension
+    dimensions = melted_df['EQI_Dimension'].unique()
+    n_dims = len(dimensions)
+    fig, axes = plt.subplots(n_dims, 1, figsize=(10, 6 * n_dims), sharex=False)
+    if n_dims == 1:
+        axes = [axes]
+    
+    for i, dim in enumerate(dimensions):
+        ax = axes[i]
+        dim_data = melted_df[melted_df['EQI_Dimension'] == dim]
+        
+        # Violin plot
+        sns.violinplot(data=dim_data, x='Cluster', y='Residual', ax=ax, palette='Set1', inner=None)
+        # Swarm plot overlay
+        sns.swarmplot(data=dim_data, x='Cluster', y='Residual', ax=ax, color='black', alpha=0.6, size=3)
+        
+        ax.set_title(f'Raincloud Plot: {dim}')
+        ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    raincloud_path = os.path.join(output_dir, 'Cluster_Raincloud_Plot.png')
+    plt.savefig(raincloud_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Raincloud plot saved to: {raincloud_path}")
+
 def save_final_results(original_df, residuals_df, output_dir):
     """Save final clustered dataset"""
     print("Saving final results...")
@@ -264,6 +362,10 @@ def main():
     # Step 6: Create visualizations
     create_radar_chart(profiles_df, residual_cols, output_dir)
     create_heatmap(profiles_df, residual_cols, output_dir)
+    create_swarm_plot(residuals_df, residual_cols, output_dir)
+    create_violin_plot(residuals_df, residual_cols, output_dir)
+    create_box_plot(residuals_df, residual_cols, output_dir)
+    create_raincloud_plot(residuals_df, residual_cols, output_dir)
     
     # Step 7: Save final results
     save_final_results(df, residuals_df, output_dir)
