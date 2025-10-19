@@ -69,9 +69,22 @@ fi
 # discover cancers and submit an array (one task per cancer), then exit.
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   CANCER_LIST_FILE="cancers_interaction_cluster.list"
-  log INFO "生成任务列表: $CANCER_LIST_FILE (位于项目根目录)"
-  # Hardcode to C00_C97 only
-  echo "C00_C97" > "$CANCER_LIST_FILE"
+  log INFO "发现所有癌症类型并生成任务列表: $CANCER_LIST_FILE (位于项目根目录)"
+  Rscript - <<'RS'
+  suppressPackageStartupMessages({library(data.table)})
+  # Load clustered data
+  clustered_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval_Clustered.csv"
+  if (file.exists(clustered_path)) {
+    dt <- fread(clustered_path, select = "Cancer_Type")
+    cancers <- sort(unique(dt$Cancer_Type))
+  } else {
+    stop("Clustered data not found")
+  }
+  if (length(cancers) == 0) stop("No cancers found")
+  # Write cancer types
+  writeLines(cancers, "cancers_interaction_cluster.list")
+  cat(length(cancers))
+RS
   N=$(wc -l < "$CANCER_LIST_FILE" | tr -d ' ')
   if [ "$N" -le 0 ]; then log ERROR "未找到任何癌症类型"; exit 1; fi
   log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型)"
