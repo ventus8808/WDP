@@ -87,48 +87,92 @@ build_design_interaction <- function(d, quintile_var){
 
 # Extract quintiles and interaction p-values (relative to Cluster2 baseline)
 extract_interaction_results <- function(draws_df, names_vec, quintile_prefix, cluster_levels){
-  # Quintile main effects
+  message("Design matrix columns: ", paste(names_vec, collapse = ", "))
+  
+  # Cluster numeric mapping: Cluster1=baseline(Advantageous), Cluster2=Unbalanced, Cluster3=Disadvantaged
+  # Note: After factor(), levels are c("Advantageous","Unbalanced","Disadvantaged")
+  # But model.matrix uses numeric codes, so we need to map:
+  # Cluster2 in colname = Unbalanced (2nd level)
+  # Cluster3 in colname = Disadvantaged (3rd level)
+  cluster_map <- list(
+    "Unbalanced" = "Cluster2",
+    "Disadvantaged" = "Cluster3"
+  )
+  
+  # Quintile main effects (relative to Q1)
   q_main <- list()
   for(q in 2:5){
     nm <- paste0(quintile_prefix, q)
     idx <- match(nm, names_vec)
-    if(!is.na(idx)) q_main[[paste0("Q",q)]] <- draws_df[[paste0("beta[",idx,"]")]]
-  }
-  
-  # Interaction effects for each quintile and cluster (skip baseline Cluster2)
-  int_effects <- list()
-  for(q in 2:5){
-    for(cl in cluster_levels[-1]){  # Skip baseline "Advantageous"
-      int_nm <- paste0(quintile_prefix, q, ":", cl)  # Use : instead of .
-      idx <- match(int_nm, names_vec)
-      if(!is.na(idx)) int_effects[[paste0("Q",q,".",cl)]] <- draws_df[[paste0("beta[",idx,"]")]]
+    if(!is.na(idx)) {
+      q_main[[paste0("Q",q)]] <- draws_df[[paste0("beta[",idx,"]")]]
+      message("Found main effect: ", nm, " at index ", idx)
+    } else {
+      message("WARNING: Main effect not found: ", nm)
     }
   }
   
-  # For each quintile and cluster, compute MRD_Qi = Q_i_main + interaction (relative to baseline)
+  # Interaction effects: QuintileX.ClusterY (after make.names, colon becomes dot)
+  int_effects <- list()
+  for(q in 2:5){
+    for(cl in names(cluster_map)){  # Loop through Unbalanced and Disadvantaged
+      cluster_num <- cluster_map[[cl]]
+      # After make.names: "Quintile2:Cluster2" becomes "Quintile2.Cluster2"
+      int_nm <- paste0(quintile_prefix, q, ".", cluster_num)
+      idx <- match(int_nm, names_vec)
+      if(!is.na(idx)) {
+        int_effects[[paste0("Q",q,".",cl)]] <- draws_df[[paste0("beta[",idx,"]")]]
+        message("Found interaction: ", int_nm, " (", cl, ") at index ", idx)
+      } else {
+        message("WARNING: Interaction term not found: ", int_nm)
+      }
+    }
+  }
+  
+  # 对于每个quintile和cluster，计算完整效应
+  # 效应 = 主效应(相对Q1) + 交互效应(相对baseline cluster)
   mrd <- list()
   for(q in 2:5){
     mrd[[paste0("Q",q)]] <- list()
     baseline_q <- if(length(q_main[[paste0("Q",q)]])>0) q_main[[paste0("Q",q)]] else rep(0, nrow(draws_df))
-    for(cl in cluster_levels[-1]){  # Only output for Unbalanced and Disadvantaged
+    
+    # 对于baseline cluster (Advantageous)，只有主效应
+    mrd[[paste0("Q",q)]][["Advantageous"]] <- baseline_q
+    
+    # 对于其他clusters，主效应 + 交互效应
+    for(cl in names(cluster_map)){
       int_draws <- int_effects[[paste0("Q",q,".",cl)]]
-      if(length(int_draws)>0) mrd[[paste0("Q",q)]][[cl]] <- baseline_q + int_draws else mrd[[paste0("Q",q)]][[cl]] <- baseline_q
+      if(length(int_draws)>0) {
+        mrd[[paste0("Q",q)]][[cl]] <- baseline_q + int_draws
+        message("Q", q, " ", cl, ": mean main=", round(mean(baseline_q),2), 
+                ", mean interaction=", round(mean(int_draws),2),
+                ", mean total=", round(mean(baseline_q + int_draws),2))
+      } else {
+        mrd[[paste0("Q",q)]][[cl]] <- baseline_q
+        message("Q", q, " ", cl, ": no interaction found, using main effect only")
+      }
     }
   }
   
-  # Interaction p-values (for Q5, as in original)
+  # Interaction p-values for Q5 (testing if interaction is significant)
   int_p <- list()
-  for(cl in cluster_levels[-1]){
+  int_effect_q5 <- list()
+  for(cl in names(cluster_map)){
     int_draws <- int_effects[[paste0("Q5.",cl)]]
     if(length(int_draws)>0){
       p <- 2*min(mean(int_draws>0), mean(int_draws<0))
       int_p[[cl]] <- sprintf("%.3f", p)
+      int_effect_q5[[cl]] <- format_cell(int_draws)  # Format the pure interaction effect
+      message("Interaction p-value for Q5 x ", cl, ": ", p, ", effect: ", mean(int_draws))
     } else {
-      int_p[[cl]] <- ""
+      int_p[[cl]] <- "NA"
+      int_effect_q5[[cl]] <- ""
+      message("No interaction p-value for ", cl)
     }
   }
   
-  list(mrd_q2 = mrd$Q2, mrd_q3 = mrd$Q3, mrd_q4 = mrd$Q4, mrd_q5 = mrd$Q5, int_p = int_p)
+  list(mrd_q2 = mrd$Q2, mrd_q3 = mrd$Q3, mrd_q4 = mrd$Q4, mrd_q5 = mrd$Q5, 
+       int_p = int_p, int_effect_q5 = int_effect_q5)
 }
 
 # Domains
@@ -186,12 +230,14 @@ for(cancer in selected){
       for(cl_idx in seq_along(clusters)){
         cl <- clusters[cl_idx]
         int_p_val <- res$int_p[[cl]]
+        int_effect <- res$int_effect_q5[[cl]]  # Pure interaction effect for Q5
         row <- tibble(
           ICD_Code = cancer,
           EQI_Period = eqi_out,
           AAMR_Period = aamr_out,
           Lag = lagv,
           Model = paste0(dom_lab, "_", cl),
+          Interaction_Q5 = int_effect,
           Interaction_P_Value = int_p_val,
           Q1 = "0.00",
           Q2 = format_cell(res$mrd_q2[[cl]]),
