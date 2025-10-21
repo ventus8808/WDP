@@ -88,7 +88,7 @@ if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
 RS
   N=$(wc -l < "$CANCER_LIST_FILE" | tr -d ' ')
   if [ "$N" -le 0 ]; then log ERROR "未找到任何癌症类型"; exit 1; fi
-  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型)"
+  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型，每个任务运行k=3,4,5,6)"
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
     --export=ALL,CANCER_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
@@ -114,7 +114,6 @@ SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 # Run the cluster interval-censored pipeline for this cancer type
 Rscript "$RUNNER" \
   --cancer-types "$CANCER_TYPE" \
-  --cluster-ids "0,1,2" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \
   --seed "$SEED"

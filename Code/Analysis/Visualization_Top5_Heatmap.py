@@ -6,7 +6,7 @@ from matplotlib.colors import ListedColormap
 
 # Set font
 plt.rcParams['font.family'] = 'Georgia'
-plt.rcParams['font.size'] = 10
+plt.rcParams['font.size'] = 12
 
 # Load the data
 csv_path = '/Users/ventus/Repository/WDP/Result/brms_heatmap/brms_heatmap_2000_2005.csv'
@@ -107,7 +107,7 @@ for group_name, models_group, models_data_group in model_groups:
                 ax.plot(x, y_est, marker='o', color='#333333', linewidth=2, markersize=2.5)
 
                 # Fill CI
-                ax.fill_between(x, y_ci_low, y_ci_high, color='#333333', alpha=0.6)
+                ax.fill_between(x, y_ci_low, y_ci_high, color='#333333', alpha=0.2)
 
                 # Set background color based on Q5_est
                 if norm and cmap:

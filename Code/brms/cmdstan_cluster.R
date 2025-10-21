@@ -19,8 +19,9 @@ utils::globalVariables(c('EQI','EQI_Air','EQI_Water','EQI_Land','EQI_Built','EQI
 option_list <- list(
   make_option(c("--data"), type="character", default="Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval_Clustered.csv", help="Input interval data with cluster IDs"),
   make_option(c("--output-dir"), type="character", default="Result/brms_cluster", help="Output directory"),
-  make_option(c("--cancer-types"), type="character", default="C00_C97", help="Comma separated ICD codes (fixed to C00_C97)"),
-  make_option(c("--cluster-ids"), type="character", default="0,1,2", help="Comma separated cluster IDs to analyze"),
+  make_option(c("--cancer-types"), type="character", default="C00_C97", help="Comma separated ICD codes"),
+  make_option(c("--k"), type="character", default="3,4,5,6", help="Comma separated k values to analyze (default: 3,4,5,6)"),
+  make_option(c("--cluster-ids"), type="character", default="", help="Comma separated cluster IDs to analyze (overrides --k)"),
   make_option(c("--chains"), type="integer", default=4),
   make_option(c("--iter"), type="integer", default=2000),
   make_option(c("--warmup"), type="integer", default=1000),
@@ -48,10 +49,10 @@ path <- file.path(project_root,opt$data); if(!file.exists(path)) stop("Data not 
 dt <- fread(path)
 
 # Parse cluster IDs
-cluster_ids <- str_split(opt$`cluster-ids`,",",simplify=TRUE) |> as.vector() |> str_trim() |> as.integer()
-message("Cluster IDs to analyze: ", paste(cluster_ids,collapse=","))
+k_values <- str_split(opt$k,",",simplify=TRUE) |> as.vector() |> str_trim() |> as.integer()
+message("K values to analyze: ", paste(k_values,collapse=","))
 
-req <- c("COUNTY_FIPS","EQI_Period","Time_Period","Lag_Years","Cancer_Type","AAMR_lower","AAMR_upper","Smoking_Rate","RUCC","EQI","EQI_Air","EQI_Water","EQI_Land","EQI_Built","EQI_Social","Cluster")
+req <- c("COUNTY_FIPS","EQI_Period","Time_Period","Lag_Years","Cancer_Type","AAMR_lower","AAMR_upper","Smoking_Rate","RUCC","EQI","EQI_Air","EQI_Water","EQI_Land","EQI_Built","EQI_Social")
 miss <- setdiff(req, names(dt)); if(length(miss)) stop("Missing cols: ", paste(miss,collapse=","))
 
 if(!"State_FIPS" %in% names(dt)) dt[, State_FIPS := substr(sprintf("%05s", COUNTY_FIPS),1,2)]
@@ -59,9 +60,6 @@ if(!"State_FIPS" %in% names(dt)) dt[, State_FIPS := substr(sprintf("%05s", COUNT
 # interval censoring code
 dt <- dt[!is.na(AAMR_lower) & !is.na(AAMR_upper)]
 dt[, cens := ifelse(AAMR_lower == AAMR_upper, 0, 2)]
-
-# Filter to valid clusters
-dt <- dt[Cluster %in% cluster_ids]
 
 scenario_list <- list(
   list(key="EQI0005_AAMR2006_2010", eqi="2000-2005", aamr="2006-2010", lag=5),
@@ -72,9 +70,7 @@ scenario_list <- list(
 
 all_cancers <- sort(unique(dt$Cancer_Type))
   selected <- if (is.na(opt$`cancer-types`)) all_cancers else { reqc <- str_split(opt$`cancer-types`,",",simplify=TRUE) |> as.vector() |> str_trim(); inv <- setdiff(reqc,all_cancers); if(length(inv)) stop("Invalid cancer types: ", paste(inv,collapse=",")); reqc }
-  # Force to single cancer for cluster analysis
-  if (length(selected) != 1) stop("For cluster analysis, exactly one cancer type must be specified")
-  message("Cancer type to analyze: ", paste(selected,collapse=","))
+  message("Cancer types to analyze: ", paste(selected,collapse=","))
   out_dir <- file.path(project_root,opt$`output-dir`); if(!dir.exists(out_dir)) dir.create(out_dir,recursive=TRUE)
 
 sig_mark <- function(p){ if(is.na(p)) return(""); if(p<0.001) return("***"); if(p<0.01) return("**"); if(p<0.05) return("*"); "" }
@@ -117,11 +113,24 @@ extract_quintiles <- function(draw_df, names_vec, prefix){
 
 for(cancer in selected){
   message("===== Disease: ", cancer, " =====")
-  for(cluster_id in cluster_ids){
-    cluster_title <- paste0("Cluster", cluster_id)
-    outfile <- file.path(out_dir, paste0(cancer, "_brms_", cluster_title, ".csv"))
-    cluster_dt <- dt[Cluster == cluster_id]
-    message("Analyzing ", cluster_title, " (n=", nrow(cluster_dt), ")")
+  
+  for(k_val in k_values){
+    cluster_ids <- 0:(k_val - 1)
+    message("Processing k=", k_val, " with clusters: ", paste(cluster_ids,collapse=","))
+    
+    # Select the appropriate cluster column based on k
+    cluster_col <- paste0("cluster_", k_val)
+    if(!cluster_col %in% names(dt)) stop("Cluster column '", cluster_col, "' not found in data. Available columns: ", paste(names(dt), collapse=", "))
+    dt_k <- dt[, Cluster := get(cluster_col)]
+    
+    # Single output file per cancer type and k value
+    outfile <- file.path(out_dir, paste0(cancer, "_k", k_val, ".csv"))
+    message("Output file: ", outfile)
+    
+    for(cluster_id in cluster_ids){
+      cluster_title <- paste0("Cluster", cluster_id)
+      cluster_dt <- dt_k[Cluster == cluster_id]
+      message("Analyzing ", cluster_title, " (n=", nrow(cluster_dt), ")")
     
     for(sc in scenario_list){
       scen_key <- sc$key; eqi_p <- sc$eqi; aamr_p <- sc$aamr; lagv <- sc$lag
