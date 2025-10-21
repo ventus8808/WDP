@@ -1,0 +1,7 @@
+Cancer_Type,Outcome,Deaths,National,Metropolitan Urbanized (RUCC1),Nonmetropolitan Urbanized (RUCC2),Less Urbanized (RUCC3),Thinly Populated (RUCC4)
+C00-C97,All-site cancer,2830603,176.66 ± 0.11,172.32 ± 0.12,183.52 ± 0.39,186.33 ± 0.36,180.42 ± 0.72
+C34,Lung cancer,792213,49.48 ± 0.06,45.67 ± 0.06,52.29 ± 0.21,53.41 ± 0.19,53.29 ± 0.40
+C18-C21,Colorectal cancer,265472,16.56 ± 0.03,15.89 ± 0.04,16.80 ± 0.12,17.96 ± 0.11,18.93 ± 0.27
+C50,Breast cancer,205719,12.73 ± 0.03,12.72 ± 0.03,11.82 ± 0.10,12.55 ± 0.10,13.54 ± 0.28
+C25,Pancreatic cancer,175323,10.91 ± 0.03,10.84 ± 0.03,10.54 ± 0.09,11.20 ± 0.09,12.60 ± 0.28
+C61,Prostate cancer,142586,9.03 ± 0.02,8.73 ± 0.03,8.81 ± 0.08,9.97 ± 0.09,11.25 ± 0.27

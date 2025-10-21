@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from math import pi
 import seaborn as sns
+import geopandas as gpd
+import matplotlib.patches as mpatches
+from pathlib import Path
 
 def get_config():
     """Load configuration from config.yaml"""
@@ -25,58 +28,23 @@ def load_and_prepare_data(standard_file_path):
     
     # Select relevant columns
     eqi_columns = ['EQI_Air', 'EQI_Water', 'EQI_Land', 'EQI_Built', 'EQI_Social']
-    required_cols = ['COUNTY_FIPS', 'RUCC'] + eqi_columns
+    required_cols = ['COUNTY_FIPS'] + eqi_columns
     
     if not all(col in df.columns for col in required_cols):
         raise ValueError(f"Missing required columns. Expected: {required_cols}")
     
     df_clean = df[required_cols].dropna()
-    # Filter valid RUCC values (1-4)
-    df_clean = df_clean[df_clean['RUCC'].isin([1, 2, 3, 4])]
     print(f"Data loaded: {df_clean.shape[0]} counties, {len(eqi_columns)} EQI dimensions")
     
     return df_clean, eqi_columns
 
-def compute_residuals_and_diagnostics(df, eqi_columns, output_dir):
-    """Compute residuals after regressing out RUCC effects and save diagnostics"""
-    print("Computing residuals and regression diagnostics...")
-    
-    residuals_df = df[['COUNTY_FIPS', 'RUCC']].copy()
-    diagnostics = []
-    
-    for col in eqi_columns:
-        # Prepare data for regression
-        # Use statsmodels formula API for categorical variables
-        import statsmodels.formula.api as smf
-        formula = f'{col} ~ C(RUCC)'
-        model = smf.ols(formula, data=df).fit()
-        
-        # Extract residuals
-        residuals_df[f'{col}_residual'] = model.resid
-        
-        # Collect diagnostics
-        diagnostics.append({
-            'Domain': col,
-            'R_squared': model.rsquared,
-            'F_statistic': model.fvalue,
-            'F_p_value': model.f_pvalue,
-            'Intercept': model.params['Intercept'],
-            'RUCC_coefficients': {k: v for k, v in model.params.items() if k.startswith('C(RUCC)')},
-            'RUCC_p_values': {k: v for k, v in model.pvalues.items() if k.startswith('C(RUCC)')}
-        })
-    
-    # Save diagnostics
-    diagnostics_df = pd.DataFrame(diagnostics)
-    diagnostics_path = os.path.join(output_dir, 'Regression_Diagnostics.csv')
-    diagnostics_df.to_csv(diagnostics_path, index=False)
-    print(f"Regression diagnostics saved to: {diagnostics_path}")
-    
-    # Standardize residuals
-    residual_cols = [f'{col}_residual' for col in eqi_columns]
+def standardize_data(df, eqi_columns):
+    """Standardize EQI data for clustering"""
+    print("Standardizing EQI data...")
     scaler = StandardScaler()
-    residuals_df[residual_cols] = scaler.fit_transform(residuals_df[residual_cols])
-    
-    return residuals_df, residual_cols
+    df_standardized = df.copy()
+    df_standardized[eqi_columns] = scaler.fit_transform(df[eqi_columns])
+    return df_standardized, scaler
 
 def evaluate_clusters(X, k_range, output_dir):
     """Evaluate different numbers of clusters using elbow method and silhouette score"""
@@ -136,43 +104,54 @@ def perform_clustering(X, n_clusters):
     labels = kmeans.fit_predict(X)
     return labels, kmeans
 
-def profile_clusters(residuals_df, residual_cols, labels, output_dir):
+def profile_clusters(df, eqi_columns, labels):
     """Create cluster profiles"""
     print("Creating cluster profiles...")
     
-    residuals_df['Cluster'] = labels
+    df['Cluster'] = labels
     profiles = []
     
     for cluster in np.unique(labels):
-        cluster_data = residuals_df[residuals_df['Cluster'] == cluster]
+        cluster_data = df[df['Cluster'] == cluster]
         profile = {'Cluster': cluster, 'Count': len(cluster_data)}
         
-        for col in residual_cols:
+        for col in eqi_columns:
             profile[f'{col}_mean'] = cluster_data[col].mean()
             profile[f'{col}_std'] = cluster_data[col].std()
         
         profiles.append(profile)
     
     profiles_df = pd.DataFrame(profiles)
-    profiles_path = os.path.join(output_dir, 'Cluster_Profiles.csv')
-    profiles_df.to_csv(profiles_path, index=False)
-    print(f"Cluster profiles saved to: {profiles_path}")
     
-    return residuals_df, profiles_df
+    return df, profiles_df
 
-def create_radar_chart(profiles_df, residual_cols, output_dir):
+def sort_clusters_by_radar_area(profiles_df, eqi_columns):
+    """Sort clusters by radar chart area (larger area = worse environment)"""
+    # Calculate radar area as sum of standardized means (positive = worse, negative = better)
+    profiles_df['radar_area'] = profiles_df[[f'{col}_mean' for col in eqi_columns]].sum(axis=1)
+    
+    # Sort by radar area ascending (smaller sum = better environment = lower cluster number)
+    profiles_df = profiles_df.sort_values('radar_area').reset_index(drop=True)
+    
+    # Reassign cluster labels from 0 (best) to k-1 (worst)
+    old_to_new = {old: new for new, old in enumerate(profiles_df['Cluster'])}
+    profiles_df['new_cluster'] = range(len(profiles_df))
+    
+    return profiles_df, old_to_new
+
+def create_radar_chart(profiles_df, eqi_columns, output_dir, k):
     """Create radar chart for cluster profiles"""
     print("Creating radar chart...")
     
     # Prepare data
-    categories = [col.replace('_residual', '').replace('EQI_', '') for col in residual_cols]
+    categories = [col.replace('EQI_', '') for col in eqi_columns]
     fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='polar'))
     
     angles = [n / float(len(categories)) * 2 * pi for n in range(len(categories))]
     angles += angles[:1]  # Close the loop
     
     for _, row in profiles_df.iterrows():
-        values = [row[f'{col}_mean'] for col in residual_cols]
+        values = [row[f'{col}_mean'] for col in eqi_columns]
         values += values[:1]  # Close the loop
         
         ax.plot(angles, values, 'o-', linewidth=2, label=f'Cluster {int(row["Cluster"])}')
@@ -180,28 +159,28 @@ def create_radar_chart(profiles_df, residual_cols, output_dir):
     
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(categories)
-    ax.set_ylim(-2, 2)  # Assuming standardized residuals
-    ax.set_title('Cluster Profiles - Standardized Residuals', size=16, fontweight='bold')
+    ax.set_ylim(-2, 2)  # Assuming standardized data
+    ax.set_title('Cluster Profiles - Standardized EQI', size=16, fontweight='bold')
     ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.0))
     ax.grid(True)
     
-    radar_path = os.path.join(output_dir, 'Cluster_Radar_Chart.png')
+    radar_path = os.path.join(output_dir, f'{k}_Cluster_Radar_Chart.png')
     plt.savefig(radar_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Radar chart saved to: {radar_path}")
 
-def create_heatmap(profiles_df, residual_cols, output_dir):
+def create_heatmap(profiles_df, eqi_columns, output_dir, k):
     """Create heatmap for cluster profiles"""
     print("Creating heatmap...")
     
     # Prepare data for heatmap
-    heatmap_data = profiles_df[[f'{col}_mean' for col in residual_cols]].T
+    heatmap_data = profiles_df[[f'{col}_mean' for col in eqi_columns]].T
     heatmap_data.columns = [f'Cluster {i}' for i in range(len(profiles_df))]
-    heatmap_data.index = [col.replace('_residual', '').replace('EQI_', '') for col in residual_cols]
+    heatmap_data.index = [col.replace('EQI_', '') for col in eqi_columns]
     
     plt.figure(figsize=(10, 6))
-    plt.imshow(heatmap_data, cmap='RdYlBu_r', aspect='auto')
-    plt.colorbar(label='Standardized Residual')
+    plt.imshow(heatmap_data, cmap='RdYlBu', aspect='auto')  # Changed to RdYlBu (not reversed)
+    plt.colorbar(label='Standardized EQI')
     plt.xticks(range(len(heatmap_data.columns)), heatmap_data.columns)
     plt.yticks(range(len(heatmap_data.index)), heatmap_data.index)
     plt.title('Cluster Profiles Heatmap', fontweight='bold')
@@ -212,82 +191,61 @@ def create_heatmap(profiles_df, residual_cols, output_dir):
             plt.text(j, i, f'{heatmap_data.iloc[i, j]:.2f}', 
                     ha='center', va='center', color='black', fontsize=8)
     
-    heatmap_path = os.path.join(output_dir, 'Cluster_Heatmap.png')
+    heatmap_path = os.path.join(output_dir, f'{k}_Cluster_Heatmap.png')
     plt.savefig(heatmap_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Heatmap saved to: {heatmap_path}")
 
-def create_swarm_plot(residuals_df, residual_cols, output_dir):
-    """Create swarm plot for residuals by cluster"""
+def create_swarm_plot(df, eqi_columns, output_dir, k):
+    """Create swarm plot for EQI by cluster"""
     print("Creating swarm plot...")
     
     # Melt data for plotting
-    melted_df = residuals_df.melt(id_vars=['Cluster'], value_vars=residual_cols, 
-                                  var_name='EQI_Dimension', value_name='Residual')
-    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('_residual', '').str.replace('EQI_', '')
+    melted_df = df.melt(id_vars=['Cluster'], value_vars=eqi_columns, 
+                                  var_name='EQI_Dimension', value_name='EQI_Value')
+    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('EQI_', '')
     
     plt.figure(figsize=(12, 8))
-    sns.swarmplot(data=melted_df, x='EQI_Dimension', y='Residual', hue='Cluster', palette='Set1', dodge=True)
-    plt.title('Swarm Plot of Residuals by Cluster and EQI Dimension')
+    sns.swarmplot(data=melted_df, x='EQI_Dimension', y='EQI_Value', hue='Cluster', palette='Set1', dodge=True)
+    plt.title('Swarm Plot of EQI by Cluster and EQI Dimension')
     plt.xticks(rotation=45)
     plt.legend(title='Cluster')
     plt.grid(True, alpha=0.3)
     
-    swarm_path = os.path.join(output_dir, 'Cluster_Swarm_Plot.png')
+    swarm_path = os.path.join(output_dir, f'{k}_Cluster_Swarm_Plot.png')
     plt.savefig(swarm_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Swarm plot saved to: {swarm_path}")
 
-def create_violin_plot(residuals_df, residual_cols, output_dir):
-    """Create violin plot for residuals by cluster"""
-    print("Creating violin plot...")
-    
-    # Melt data for plotting
-    melted_df = residuals_df.melt(id_vars=['Cluster'], value_vars=residual_cols, 
-                                  var_name='EQI_Dimension', value_name='Residual')
-    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('_residual', '').str.replace('EQI_', '')
-    
-    plt.figure(figsize=(12, 8))
-    sns.violinplot(data=melted_df, x='EQI_Dimension', y='Residual', hue='Cluster', palette='Set1', split=True)
-    plt.title('Violin Plot of Residuals by Cluster and EQI Dimension')
-    plt.xticks(rotation=45)
-    plt.legend(title='Cluster')
-    plt.grid(True, alpha=0.3)
-    
-    violin_path = os.path.join(output_dir, 'Cluster_Violin_Plot.png')
-    plt.savefig(violin_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Violin plot saved to: {violin_path}")
-
-def create_box_plot(residuals_df, residual_cols, output_dir):
-    """Create box plot for residuals by cluster"""
+def create_box_plot(df, eqi_columns, output_dir, k):
+    """Create box plot for EQI by cluster"""
     print("Creating box plot...")
     
     # Melt data for plotting
-    melted_df = residuals_df.melt(id_vars=['Cluster'], value_vars=residual_cols, 
-                                  var_name='EQI_Dimension', value_name='Residual')
-    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('_residual', '').str.replace('EQI_', '')
+    melted_df = df.melt(id_vars=['Cluster'], value_vars=eqi_columns, 
+                                  var_name='EQI_Dimension', value_name='EQI_Value')
+    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('EQI_', '')
     
     plt.figure(figsize=(12, 8))
-    sns.boxplot(data=melted_df, x='EQI_Dimension', y='Residual', hue='Cluster', palette='Set1')
-    plt.title('Box Plot of Residuals by Cluster and EQI Dimension')
+    sns.boxplot(data=melted_df, x='EQI_Dimension', y='EQI_Value', hue='Cluster', palette='Set1')
+    plt.title('Box Plot of EQI by Cluster and EQI Dimension')
     plt.xticks(rotation=45)
     plt.legend(title='Cluster')
     plt.grid(True, alpha=0.3)
     
-    box_path = os.path.join(output_dir, 'Cluster_Box_Plot.png')
+    box_path = os.path.join(output_dir, f'{k}_Cluster_Box_Plot.png')
     plt.savefig(box_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Box plot saved to: {box_path}")
 
-def create_raincloud_plot(residuals_df, residual_cols, output_dir):
-    """Create raincloud plot (violin + swarm) for residuals by cluster"""
+def create_raincloud_plot(df, eqi_columns, output_dir, k):
+    """Create raincloud plot (violin + swarm) for EQI by cluster"""
     print("Creating raincloud plot...")
     
     # Melt data for plotting
-    melted_df = residuals_df.melt(id_vars=['Cluster'], value_vars=residual_cols, 
-                                  var_name='EQI_Dimension', value_name='Residual')
-    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('_residual', '').str.replace('EQI_', '')
+    melted_df = df.melt(id_vars=['Cluster'], value_vars=eqi_columns, 
+                                  var_name='EQI_Dimension', value_name='EQI_Value')
+    melted_df['EQI_Dimension'] = melted_df['EQI_Dimension'].str.replace('EQI_', '')
     
     # Create subplots for each EQI dimension
     dimensions = melted_df['EQI_Dimension'].unique()
@@ -301,77 +259,174 @@ def create_raincloud_plot(residuals_df, residual_cols, output_dir):
         dim_data = melted_df[melted_df['EQI_Dimension'] == dim]
         
         # Violin plot
-        sns.violinplot(data=dim_data, x='Cluster', y='Residual', ax=ax, palette='Set1', inner=None)
+        sns.violinplot(data=dim_data, x='Cluster', y='EQI_Value', ax=ax, palette='Set1', inner=None)
         # Swarm plot overlay
-        sns.swarmplot(data=dim_data, x='Cluster', y='Residual', ax=ax, color='black', alpha=0.6, size=3)
+        sns.swarmplot(data=dim_data, x='Cluster', y='EQI_Value', ax=ax, color='black', alpha=0.6, size=3)
         
         ax.set_title(f'Raincloud Plot: {dim}')
         ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    raincloud_path = os.path.join(output_dir, 'Cluster_Raincloud_Plot.png')
+    raincloud_path = os.path.join(output_dir, f'{k}_Cluster_Raincloud_Plot.png')
     plt.savefig(raincloud_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Raincloud plot saved to: {raincloud_path}")
 
-def save_final_results(original_df, residuals_df, output_dir):
+def create_map_for_k(df_clusters, k, shapefile_path, output_dir):
+    """Create and save choropleth map for given k"""
+    print(f"Creating map for k={k}...")
+
+    # Load shapefile
+    counties = gpd.read_file(shapefile_path)
+    counties['COUNTY_FIPS'] = counties['STATEFP'] + counties['COUNTYFP']
+
+    # Filter to contiguous US
+    contiguous_states = ['01', '04', '05', '06', '08', '09', '10', '11', '12', '13', '16', '17', '18', '19',
+                        '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33',
+                        '34', '35', '36', '37', '38', '39', '40', '41', '42', '44', '45', '46', '47', '48',
+                        '49', '50', '51', '53', '54', '55', '56']
+    counties_contiguous = counties[counties['STATEFP'].isin(contiguous_states)].copy()
+
+    # Merge with cluster data
+    counties_merged = counties_contiguous.merge(df_clusters[['COUNTY_FIPS', f'cluster_{k}']],
+                                               on='COUNTY_FIPS', how='left')
+
+    # Assign colors
+    # Best environment (cluster 0) = #44a05c, worst (cluster k-1) = #ebf0b5, interpolate in between
+    best_color = '#44a05c'
+    worst_color = '#ebf0b5'
+    
+    from matplotlib.colors import LinearSegmentedColormap
+    cmap = LinearSegmentedColormap.from_list("env_gradient", [best_color, worst_color], N=k)
+    colors = [cmap(i / (k - 1)) for i in range(k)]
+    color_map = {i: colors[i] for i in range(k)}
+    color_map['No Data'] = color_map[0]  # No data as cluster 0
+    
+    cluster_names = {i: f'Cluster {i}' for i in range(k)}
+    cluster_names['No Data'] = 'No Data'
+
+    # Apply colors, handle NaN
+    def get_color(cluster):
+        if pd.isna(cluster):
+            return color_map['No Data']
+        return color_map.get(int(cluster), color_map['No Data'])
+
+    counties_merged['cluster_color'] = counties_merged[f'cluster_{k}'].apply(get_color)
+
+    # Plot
+    fig, ax = plt.subplots(1, 1, figsize=(16, 10))
+    counties_merged.plot(color=counties_merged['cluster_color'], linewidth=0.1, edgecolor='black', ax=ax)
+
+    # State boundaries
+    state_boundaries = counties_merged.dissolve(by='STATEFP')
+    state_boundaries.boundary.plot(ax=ax, color='black', linewidth=1.2, alpha=0.9)
+
+    ax.set_axis_off()
+    ax.set_title(f'Environmental Quality Clusters (k={k})\nContiguous United States Counties', fontsize=18, pad=20)
+
+    # Legend
+    legend_elements = [mpatches.Patch(color=color_map[i], label=cluster_names[i]) for i in range(k)]
+    ax.legend(handles=legend_elements, bbox_to_anchor=(0.02, 0.02), loc='lower left', fontsize=12, frameon=True)
+
+    plt.tight_layout()
+
+    # Save
+    output_filename = os.path.join(output_dir, f"{k}_Cluster_Map.png")
+    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    print(f"Map saved to: {output_filename}")
+    plt.close()
+
+def save_final_results(df, output_dir):
     """Save final clustered dataset"""
     print("Saving final results...")
     
-    # Merge back to original data
-    final_df = original_df.merge(residuals_df[['COUNTY_FIPS', 'Cluster']], on='COUNTY_FIPS', how='left')
-    
     # Ensure COUNTY_FIPS is properly formatted as 5-digit string
-    final_df['COUNTY_FIPS'] = final_df['COUNTY_FIPS'].astype(str).str.zfill(5)
+    df['COUNTY_FIPS'] = df['COUNTY_FIPS'].astype(str).str.zfill(5)
     
     final_path = os.path.join(output_dir, 'EQI_Clusters.csv')
-    final_df.to_csv(final_path, index=False)
+    df.to_csv(final_path, index=False)
     print(f"Final clustered data saved to: {final_path}")
 
 def main():
-    """Main clustering analysis pipeline"""
-    print("Starting EQI Clustering Analysis...")
+    """Main clustering analysis pipeline for k=3 to 10"""
+    print("Starting EQI Clustering Analysis for k=3 to 10...")
     
     # Configuration
     config = get_config()
     base_path = config['data_directories']['processed']
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    output_dir = os.path.join(project_root, 'Result', 'Cluster_Analysis')
-    os.makedirs(output_dir, exist_ok=True)
+    project_root = Path(__file__).resolve().parents[2]
+    output_dir_base = os.path.join(project_root, 'Result', 'Cluster_Visualization')
+    map_output_dir = os.path.join(project_root, 'Result', 'Cluster_Visualization')
+    os.makedirs(output_dir_base, exist_ok=True)
+    os.makedirs(map_output_dir, exist_ok=True)
     
     # File paths
     standard_file = os.path.join(base_path, 'EQI', 'EQI0005_Standard.csv')
+    shapefile_path = os.path.join(project_root, config['data_sources']['tiger']['shapefile'])
     
     # Step 1: Load and prepare data
     df, eqi_columns = load_and_prepare_data(standard_file)
     
-    # Step 2: Compute residuals and diagnostics
-    residuals_df, residual_cols = compute_residuals_and_diagnostics(df, eqi_columns, output_dir)
+    # Step 2: Standardize data
+    df_standardized, scaler = standardize_data(df, eqi_columns)
     
-    # Step 3: Evaluate optimal number of clusters
-    k_range = range(2, 11)
-    optimal_k = evaluate_clusters(residuals_df[residual_cols].values, k_range, output_dir)
+    # Step 3: Perform clustering for k=3 to 10 and create results
+    k_range = range(3, 11)
+    cluster_results = {}
+    profiles_list = []
     
-    # Step 4: Perform clustering
-    X = residuals_df[residual_cols].values
-    labels, kmeans = perform_clustering(X, optimal_k)
+    for k in k_range:
+        print(f"\nProcessing k={k}...")
+        
+        # Perform clustering
+        X = df_standardized[eqi_columns].values
+        labels, kmeans = perform_clustering(X, k)
+        
+        # Profile clusters
+        df_clustered = df_standardized.copy()
+        df_clustered['Cluster'] = labels
+        df_clustered, profiles_df = profile_clusters(df_clustered, eqi_columns, labels)
+        
+        # Sort clusters by radar area
+        profiles_df, old_to_new = sort_clusters_by_radar_area(profiles_df, eqi_columns)
+        
+        # Reassign cluster labels
+        df_clustered['Cluster'] = df_clustered['Cluster'].map(old_to_new)
+        labels = df_clustered['Cluster'].values
+        
+        # Update profiles_df
+        profiles_df['Cluster'] = profiles_df['new_cluster']
+        profiles_df = profiles_df.drop(columns=['new_cluster'])
+        profiles_path = os.path.join(output_dir_base, f'{k}_Cluster_Profiles.csv')
+        profiles_df.to_csv(profiles_path, index=False)
+        
+        cluster_results[k] = labels
+        profiles_df['k'] = k
+        profiles_list.append(profiles_df)
+        
+        # Create visualizations for this k
+        create_radar_chart(profiles_df, eqi_columns, output_dir_base, k)
+        create_heatmap(profiles_df, eqi_columns, output_dir_base, k)
+        create_swarm_plot(df_clustered, eqi_columns, output_dir_base, k)
+        create_box_plot(df_clustered, eqi_columns, output_dir_base, k)
+        create_raincloud_plot(df_clustered, eqi_columns, output_dir_base, k)
+        
+        # Create map for this k
+        df_clusters = df[['COUNTY_FIPS']].copy()
+        df_clusters[f'cluster_{k}'] = labels
+        df_clusters['COUNTY_FIPS'] = df_clusters['COUNTY_FIPS'].astype(str).str.zfill(5)
+        create_map_for_k(df_clusters, k, shapefile_path, map_output_dir)
     
-    # Step 5: Profile clusters
-    residuals_df, profiles_df = profile_clusters(residuals_df, residual_cols, labels, output_dir)
+    # Step 4: Save final results for all k
+    df_all_clusters = df[['COUNTY_FIPS']].copy()
+    for k in k_range:
+        df_all_clusters[f'cluster_{k}'] = cluster_results[k]
+    df_all_clusters['COUNTY_FIPS'] = df_all_clusters['COUNTY_FIPS'].astype(str).str.zfill(5)
+    final_path = os.path.join(output_dir_base, 'EQI_Clusters_All_K.csv')
+    df_all_clusters.to_csv(final_path, index=False)
+    print(f"Final clustered data for all k saved to: {final_path}")
     
-    # Step 6: Create visualizations
-    create_radar_chart(profiles_df, residual_cols, output_dir)
-    create_heatmap(profiles_df, residual_cols, output_dir)
-    create_swarm_plot(residuals_df, residual_cols, output_dir)
-    create_violin_plot(residuals_df, residual_cols, output_dir)
-    create_box_plot(residuals_df, residual_cols, output_dir)
-    create_raincloud_plot(residuals_df, residual_cols, output_dir)
-    
-    # Step 7: Save final results
-    save_final_results(df, residuals_df, output_dir)
-    
-    print("Clustering analysis completed successfully!")
-    print(f"All results saved to: {output_dir}")
+    print("Clustering analysis completed for all k=3 to 10!")
 
 if __name__ == '__main__':
     main()

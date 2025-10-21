@@ -12,7 +12,7 @@ output_dir = os.path.join(base_dir, 'Result', 'brms_extract')
 os.makedirs(output_dir, exist_ok=True)
 
 # List of files to read for top5
-top5_files = ['C00_C97_brms.csv', 'C34_brms.csv', 'C18_C21_brms.csv', 'C50_brms.csv', 'C61_brms.csv','C15_C26_brms.csv']
+top5_files = ['C00_C97_brms.csv', 'C34_brms.csv', 'C18_C21_brms.csv', 'C50_brms.csv', 'C25_brms.csv', 'C61_brms.csv']
 
 # Get all brms files
 all_files = [f for f in os.listdir(result_dir) if f.endswith('_brms.csv')]
@@ -75,7 +75,7 @@ def process_files(files, output_name, period='2000_2005'):
         combined_df = combined_df[['ICD_Code', 'Outcome', 'EQI_Period', 'Lag', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5']]
         # Sort by ICD_Code, EQI_Period, Lag for non-Top5, or by custom order for Top5
         if 'Top5' in output_name:
-            order_mapping = {'C00_C97': 0, 'C34': 1, 'C18_C21': 2, 'C50': 3, 'C61': 4, 'C15_C26': 5}
+            order_mapping = {'C00_C97': 0, 'C34': 1, 'C18_C21': 2, 'C50': 3, 'C25': 4, 'C61': 5}
             combined_df['order'] = combined_df['ICD_Code'].map(order_mapping)
             combined_df = combined_df.sort_values(by=['order', 'EQI_Period', 'Lag'])
             combined_df = combined_df.drop(columns=['order'])
@@ -122,7 +122,7 @@ if dfs_top5:
     combined_top5 = combined_top5.rename(columns={'Chinese_Name': 'Outcome'})
     combined_top5 = combined_top5[['ICD_Code', 'Outcome', 'EQI_Period', 'Lag', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5']]
     # Sort by custom order for Top5
-    order_mapping = {'C00_C97': 0, 'C34': 1, 'C18_C21': 2, 'C50': 3, 'C61': 4, 'C15_C26': 5}
+    order_mapping = {'C00_C97': 0, 'C34': 1, 'C18_C21': 2, 'C50': 3, 'C25': 4, 'C61': 5}
     combined_top5['order'] = combined_top5['ICD_Code'].map(order_mapping)
     combined_top5 = combined_top5.sort_values(by=['order', 'EQI_Period', 'Lag'])
     combined_top5 = combined_top5.drop(columns=['order'])

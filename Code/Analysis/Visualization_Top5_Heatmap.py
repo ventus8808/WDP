@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 import numpy as np
+from matplotlib.colors import ListedColormap
 
 # Set font
 plt.rcParams['font.family'] = 'Georgia'
@@ -35,7 +36,7 @@ for col in ['Q1', 'Q2', 'Q3', 'Q4', 'Q5']:
     df[f'{col}_est'], df[f'{col}_ci'] = zip(*df[col].apply(parse_q))
 
 # Define outcomes and models in order
-outcomes = ['All-site\nCancer', 'Lung\nCancer', 'Colorectal\nCancer', 'Breast\nCancer', 'Prostate\nCancer', 'Digestive\nSystem\nCancer']
+outcomes = ['All-site\nCancer', 'Lung\nCancer', 'Colorectal\nCancer', 'Breast\nCancer', 'Pancreatic\nCancer', 'Prostate\nCancer']
 models = ['RUCC1', 'RUCC2', 'RUCC3', 'RUCC4', 'EQI', 'Air', 'Water', 'Land', 'Built', 'Social']
 models_data = ['RUCC1_EQI', 'RUCC2_EQI', 'RUCC3_EQI', 'RUCC4_EQI', 'EQI', 'EQI_Air', 'EQI_Water', 'EQI_Land', 'EQI_Built', 'EQI_Social']
 
@@ -61,7 +62,7 @@ for group_name, models_group, models_data_group in model_groups:
         # Normalize to -1 to 1 for diverging colormap
         abs_max = max(abs(q5_values.min()), abs(q5_values.max()))
         norm = plt.Normalize(vmin=-abs_max, vmax=abs_max)
-        cmap = plt.cm.RdBu_r  # Red for positive, blue for negative, white for neutral
+        cmap = ListedColormap(plt.cm.RdBu_r(np.linspace(0.1, 0.9, 256)))  # Lighter extremes by using middle portion of RdBu_r
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
     else:
@@ -69,12 +70,12 @@ for group_name, models_group, models_data_group in model_groups:
         cmap = None
         sm = None
 
-    for i, model_display in enumerate(models_group):
-        # Calculate ylim for this model? Wait, now per model
-        model_df = df[df['Model'] == models_data_group[i]]
+    # Calculate ylim for each outcome (disease)
+    outcome_ylims = {}
+    for outcome in outcomes:
         all_y = []
-        for outcome in outcomes:
-            row = model_df[model_df['Outcome'] == outcome.replace('\n', ' ')]
+        for model_data in models_data_group:
+            row = df[(df['Outcome'] == outcome.replace('\n', ' ')) & (df['Model'] == model_data)]
             if not row.empty:
                 y_est = [0.0] + [row[f'Q{k}_est'].values[0] for k in [2,3,4,5]]
                 y_ci_low = [0.0] + [row[f'Q{k}_ci'].values[0][0] for k in [2,3,4,5]]
@@ -82,11 +83,14 @@ for group_name, models_group, models_data_group in model_groups:
                 all_y.extend(y_est + y_ci_low + y_ci_high)
         if all_y:
             max_abs = max(abs(min(all_y)), abs(max(all_y)))
-            ylim_min = -max_abs * 0.5
-            ylim_max = max_abs * 1.1
+            ylim_max = max(max_abs * 1.1, 5)  # At least 5
+            ylim_min = max(-ylim_max * 0.5, -5)  # At least -5
         else:
-            ylim_min = -10
-            ylim_max = 10
+            ylim_max = 3
+     
+        outcome_ylims[outcome] = (ylim_min, ylim_max)
+
+    for i, model_display in enumerate(models_group):
 
         for j, outcome in enumerate(outcomes):
             ax = axes[i][j]
@@ -99,27 +103,11 @@ for group_name, models_group, models_data_group in model_groups:
                 y_ci_low = [0.0] + [row[f'Q{k}_ci'].values[0][0] for k in [2,3,4,5]]
                 y_ci_high = [0.0] + [row[f'Q{k}_ci'].values[0][1] for k in [2,3,4,5]]
 
-                # Determine significance for Q5
-                q5_ci_low = row['Q5_ci'].values[0][0]
-                q5_ci_high = row['Q5_ci'].values[0][1]
-                if q5_ci_low > 0:
-                    line_color = '#333333'  # Dark gray for significant
-                    fill_color = '#333333'
-                    alpha = 0.3
-                elif q5_ci_high < 0:
-                    line_color = '#333333'  # Dark gray for significant
-                    fill_color = '#333333'
-                    alpha = 0.3
-                else:
-                    line_color = 'lightgray'  # Light gray for non-significant
-                    fill_color = 'lightgray'
-                    alpha = 0.1
-
-                # Plot line
-                ax.plot(x, y_est, color=line_color, linewidth=2)
+                # Plot line with points
+                ax.plot(x, y_est, marker='o', color='#333333', linewidth=2, markersize=2.5)
 
                 # Fill CI
-                ax.fill_between(x, y_ci_low, y_ci_high, color=fill_color, alpha=alpha)
+                ax.fill_between(x, y_ci_low, y_ci_high, color='#333333', alpha=0.6)
 
                 # Set background color based on Q5_est
                 if norm and cmap:
@@ -137,8 +125,8 @@ for group_name, models_group, models_data_group in model_groups:
                 ax.set_xticklabels([])
                 ax.set_yticklabels([])
 
-                # Set ylim for this model
-                ax.set_ylim(ylim_min, ylim_max)
+                # Set ylim for this outcome
+                ax.set_ylim(outcome_ylims[outcome])
 
             # Set row and column labels - transposed
             if j == 0:

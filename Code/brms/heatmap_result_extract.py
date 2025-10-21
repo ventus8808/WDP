@@ -12,7 +12,7 @@ output_dir = os.path.join(base_dir, 'Result', 'brms_heatmap')
 os.makedirs(output_dir, exist_ok=True)
 
 # List of files to read for top5
-top5_files = ['C00_C97_brms.csv', 'C34_brms.csv', 'C18_C21_brms.csv', 'C50_brms.csv', 'C61_brms.csv','C15_C26_brms.csv']
+top5_files = ['C00_C97_brms.csv', 'C34_brms.csv', 'C18_C21_brms.csv', 'C50_brms.csv', 'C25_brms.csv', 'C61_brms.csv']
 
 # Models to extract
 models = ['EQI', 'EQI_Air', 'EQI_Water', 'EQI_Land', 'EQI_Built', 'EQI_Social', 'RUCC1_EQI', 'RUCC2_EQI', 'RUCC3_EQI', 'RUCC4_EQI', 'RUCC5_EQI', 'RUCC6_EQI', 'RUCC7_EQI', 'RUCC8_EQI', 'RUCC9_EQI']
@@ -76,7 +76,7 @@ def process_model(model, period='2000_2005'):
         # Reorder columns: Model, ICD_Code, Outcome, EQI_Period, Lag, Q1, Q2, Q3, Q4, Q5
         combined_df = combined_df[['Model', 'ICD_Code', 'Outcome', 'EQI_Period', 'Lag', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5']]
         # Sort by custom order for Top5
-        order_mapping = {'C00_C97': 0, 'C34': 1, 'C18_C21': 2, 'C50': 3, 'C61': 4, 'C15_C26': 5}
+        order_mapping = {'C00_C97': 0, 'C34': 1, 'C18_C21': 2, 'C50': 3, 'C25': 4, 'C61': 5}
         combined_df['order'] = combined_df['ICD_Code'].map(order_mapping)
         combined_df = combined_df.sort_values(by=['order', 'EQI_Period', 'Lag'])
         combined_df = combined_df.drop(columns=['order'])
