@@ -13,7 +13,7 @@ Usage:
     python Code/Analysis/Visualization_Delta_Combine_lag.py --icd C00_C97
     python Code/Analysis/Visualization_Delta_Combine_lag.py --all
 
-Output: Result/brms_Delta_Visulization/{ICD}_Delta.png
+Output: Result/brms_Delta_Visualization/{ICD}_Delta.png
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ def load_config(project_root: Path) -> dict:
 def get_paths(project_root: Path) -> dict:
     """Get input/output directories for Delta visualization."""
     result_dir = project_root / "Result" / "brms_delta"
-    vis_dir = project_root / "Result" / "brms_Delta_Visulization"
+    vis_dir = project_root / "Result" / "brms_Delta_Visualization"
     vis_dir.mkdir(parents=True, exist_ok=True)
     return {"result": result_dir, "vis": vis_dir}
 

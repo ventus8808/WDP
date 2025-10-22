@@ -205,11 +205,11 @@ def plot_eqi_stratified_forest(df: pd.DataFrame, domain: str, eqi_period: str, a
     """
     # Define panel configurations
     panel_labels = [
-        'mostratified',
-        'metropolitan urban', 
-        'nonmetropolitan urban',
-        'less urban',
-        'thinly populated'
+        'National',
+        'Metropolitan Urbanized', 
+        'Nonmetropolitan Urban',
+        'Less Urban',
+        'Thinly Populated'
     ]
     
     # Color map for quintiles
@@ -302,7 +302,7 @@ def plot_eqi_stratified_forest(df: pd.DataFrame, domain: str, eqi_period: str, a
         
         # Y label
         if panel_idx == 2:
-            ax.set_ylabel('Mortality Rate Difference (95% CI)', fontsize=12, labelpad=20)
+            ax.set_ylabel('Mortality Rate Difference (95% CI)', fontsize=12, labelpad=22)
         
         # Border
         for spine in ax.spines.values():
@@ -311,7 +311,7 @@ def plot_eqi_stratified_forest(df: pd.DataFrame, domain: str, eqi_period: str, a
             spine.set_linewidth(1.0)
         
         # Panel label
-        ax.text(-0.05, 0.5, panel_label, fontsize=11, fontweight='bold', 
+        ax.text(-0.03, 0.5, panel_label, fontsize=11, fontweight='bold', 
                verticalalignment='center', horizontalalignment='right',
                rotation=90, transform=ax.transAxes)
     

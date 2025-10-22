@@ -227,11 +227,11 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
     """
     # 定义面板配置 - 按照参考图片显示的顺序
     panel_labels = [
-        'mostratified',
-        'metropolitan urban',
-        'nonmetropolitan urban',
-        'less urban',
-        'thinly populated'
+        'National',
+        'Metropolitan Urbanized', 
+        'Nonmetropolitan Urban',
+        'Less Urban',
+        'Thinly Populated'
     ]
 
     # 定义EQI类型

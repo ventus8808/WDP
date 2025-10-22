@@ -64,7 +64,7 @@ def get_paths(project_root: Path, cfg: dict, model: str = "eqi_lmm") -> Dict[str
     # Determine result directory for the chosen model
     if model == "mice":
         result_dir = project_root / cfg["result_directories"].get("eqi_lmm_mi", cfg["result_directories"]["eqi_lmm"])
-        vis_dir = project_root / "Result" / "EQI_LMM_MICE_Visulization"
+        vis_dir = project_root / "Result" / "EQI_LMM_MICE_Visualization"
     elif model == "brms":
         # prefer brms_analysis.results.output_dir if present
         brms_cfg = cfg.get("brms_analysis", {}).get("results", {})
@@ -72,12 +72,12 @@ def get_paths(project_root: Path, cfg: dict, model: str = "eqi_lmm") -> Dict[str
             result_dir = project_root / brms_cfg.get("output_dir")
         else:
             result_dir = project_root / cfg["result_directories"]["eqi_lmm"]
-        vis_dir = project_root / "Result" / "brms_Visulization"
+        vis_dir = project_root / "Result" / "brms_Visualization"
     else:
         result_dir = project_root / cfg["result_directories"]["eqi_lmm"]
-        vis_dir = project_root / "Result" / "EQI_LMM_Visulization"
+        vis_dir = project_root / "Result" / "EQI_LMM_Visualization"
 
-    combined_dir = project_root / "Result" / "EQI_LMM_Visulization_Combined"
+    combined_dir = project_root / "Result" / "EQI_LMM_Visualization_Combined"
     vis_dir.mkdir(parents=True, exist_ok=True)
     combined_dir.mkdir(parents=True, exist_ok=True)
     return {"result": result_dir, "vis": vis_dir, "combined": combined_dir}
@@ -298,11 +298,11 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
     """
     # 定义面板配置 - 按照参考图片显示的顺序
     panel_labels = [
-        'mostratified',
-        'metropolitan urban', 
-        'nonmetropolitan urban',
-        'less urban',
-        'thinly populated'
+        'National',
+        'Metropolitan Urbanized', 
+        'Nonmetropolitan Urban',
+        'Less Urban',
+        'Thinly Populated'
     ]
     
     # 定义EQI类型
@@ -434,7 +434,7 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
             spine.set_linewidth(1.0)
         
         # 添加竖直的面板标签，放在左边贴边
-        ax.text(-0.05, 0.5, panel_label, fontsize=11, fontweight='bold', 
+        ax.text(-0.06, 0.5, panel_label, fontsize=11, fontweight='bold', 
                verticalalignment='center', horizontalalignment='right',
                rotation=90, transform=ax.transAxes)
     
