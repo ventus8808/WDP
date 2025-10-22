@@ -176,4 +176,5 @@ for(cancer in selected){
   }
   message("===== Completed: ", cancer, " =====")
 }
+}
 message("All requested analyses complete. Output directory: ", out_dir)
