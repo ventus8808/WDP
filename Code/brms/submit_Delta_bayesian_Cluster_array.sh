@@ -1,8 +1,8 @@
 #!/bin/bash
 # Slurm array launcher for Delta_bayesian_Cluster.R - EQI change vs cancer mortality change analysis with cluster stratification
-# One task per Cancer_Type x K combination
+# One task per Cancer_Type; each task runs all k values (3, 4) for that cancer
 # Usage:
-#   bash Code/brms/submit_Delta_bayesian_Cluster_array.sh         # auto-discovers diseases and k values, submits array
+#   bash Code/brms/submit_Delta_bayesian_Cluster_array.sh         # auto-discovers diseases and submits array
 #   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_Delta_bayesian_Cluster_array.sh
 
 #SBATCH --partition=kshctest
@@ -63,36 +63,28 @@ if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
 fi
 
-# Controller mode: if not running as an array worker, discover diseases and k values, submit array
+# Controller mode: if not running as an array worker, discover diseases and submit array
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  TASK_LIST_FILE="delta_cluster_tasks.list"
-  log INFO "发现所有 Cancer_Type 和 k 值组合并生成任务列表: $TASK_LIST_FILE"
+  CANCER_LIST_FILE="cancer_types_delta_cluster.list"
+  log INFO "发现所有 Cancer_Type 并生成任务列表: $CANCER_LIST_FILE"
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
   path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Delta.csv"
   dt <- fread(path, select = "Cancer_Type")
   cancers <- sort(unique(dt$Cancer_Type))
   if (length(cancers) == 0) stop("No Cancer_Type found in ", path)
-  
-  # Define k values (clusters)
-  k_values <- c(3, 4)
-  
-  # Generate all combinations
-  tasks <- expand.grid(cancer = cancers, k = k_values, stringsAsFactors = FALSE)
-  task_lines <- paste0(tasks$cancer, ",", tasks$k)
-  
-  writeLines(task_lines, "delta_cluster_tasks.list")
-  cat(length(task_lines), "tasks generated (", length(cancers), " cancers x ", length(k_values), " k values)\n")
+  writeLines(cancers, "cancer_types_delta_cluster.list")
+  cat(length(cancers), "cancer types found\n")
 RS
-  N=$(wc -l < "$TASK_LIST_FILE" | tr -d ' ')
-  if [ "$N" -le 0 ]; then log ERROR "未找到任何任务"; exit 1; fi
-  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个任务)"
+  N=$(wc -l < "$CANCER_LIST_FILE" | tr -d ' ')
+  if [ "$N" -le 0 ]; then log ERROR "未找到任何Cancer_Type"; exit 1; fi
+  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个疾病，每个疾病运行所有k值)"
   
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
-    --export=ALL,TASKS_FILE="$PROJECT_ROOT/$TASK_LIST_FILE",ENV_NAME="$ENV_NAME" \
+    --export=ALL,CANCERS_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
          "$0"
-  log INFO "提交完成。每个任务分析一个癌症类型和k值的组合。"
+  log INFO "提交完成。每个任务分析一个癌症类型的所有k值组合。"
   log INFO "使用 squeue 查看进度，结果保存至 Result/brms_delta_cluster/"
   exit 0
 fi
@@ -104,42 +96,30 @@ if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
 fi
 
 task_id=${SLURM_ARRAY_TASK_ID}
-TASKS_FILE=${TASKS_FILE:-"$PROJECT_ROOT/delta_cluster_tasks.list"}
+CANCERS_FILE=${CANCERS_FILE:-"$PROJECT_ROOT/cancer_types_delta_cluster.list"}
 
-if [ ! -f "$TASKS_FILE" ]; then
-  log WARN "未发现 TASKS_FILE，在线生成列表"
+if [ ! -f "$CANCERS_FILE" ]; then
+  log WARN "未发现 CANCERS_FILE，在线生成列表"
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
   path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Delta.csv"
   dt <- fread(path, select = "Cancer_Type")
   cancers <- sort(unique(dt$Cancer_Type))
   if (length(cancers) == 0) stop("No Cancer_Type found in ", path)
-  
-  k_values <- c(3, 4)
-  tasks <- expand.grid(cancer = cancers, k = k_values, stringsAsFactors = FALSE)
-  task_lines <- paste0(tasks$cancer, ",", tasks$k)
-  writeLines(task_lines, "delta_cluster_tasks.list")
+  writeLines(cancers, "cancer_types_delta_cluster.list")
 RS
-  TASKS_FILE="$PROJECT_ROOT/delta_cluster_tasks.list"
+  CANCERS_FILE="$PROJECT_ROOT/cancer_types_delta_cluster.list"
 fi
 
-if ! TASK_LINE=$(sed -n "$((task_id+1))p" "$TASKS_FILE"); then
-  log ERROR "读取任务列表失败 (index=$task_id)"; exit 1
+if ! CANCER=$(sed -n "$((task_id+1))p" "$CANCERS_FILE"); then
+  log ERROR "读取疾病列表失败 (index=$task_id)"; exit 1
 fi
-if [ -z "$TASK_LINE" ]; then
-  log WARN "索引 $task_id 超出任务列表范围，跳过"; exit 0
-fi
-
-# Parse task line: CANCER,K
-CANCER=$(echo "$TASK_LINE" | cut -d',' -f1)
-K=$(echo "$TASK_LINE" | cut -d',' -f2)
-
-if [ -z "$CANCER" ] || [ -z "$K" ]; then
-  log ERROR "解析任务失败: $TASK_LINE"; exit 1
+if [ -z "$CANCER" ]; then
+  log WARN "索引 $task_id 超出疾病列表范围，跳过"; exit 0
 fi
 
 log INFO "==================================================================="
-log INFO "任务ID=$task_id  疾病=$CANCER  k=$K  CPU=${SLURM_CPUS_PER_TASK:-NA}"
+log INFO "任务ID=$task_id  疾病=$CANCER  CPU=${SLURM_CPUS_PER_TASK:-NA}"
 log INFO "==================================================================="
 
 # Limit threading to allocation
@@ -150,19 +130,27 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export TBB_CXX_TYPE=gcc
 log INFO "Set TBB_CXX_TYPE=gcc for CmdStan compilation"
 
-# Use different seed per task
-SEED=$((1234 + task_id))
+# Define k values to run for this cancer
+K_VALUES=(3 4)
 
-# Run Delta Cluster analysis for this cancer and k
-# Output: Result/brms_delta_cluster/{ICD_Code}_k{K}_delta.csv
-Rscript "$RUNNER" \
-  --cancer-types "$CANCER" \
-  --k "$K" \
-  --chains 4 \
-  --iter 2000 \
-  --warmup 1000 \
-  --adapt-delta 0.95 \
-  --max-treedepth 12 \
-  --seed "$SEED"
+# Run Delta Cluster analysis for this cancer with all k values
+for K in "${K_VALUES[@]}"; do
+  log INFO "开始分析: $CANCER (k=$K)"
+  
+  # Use different seed per task and k
+  SEED=$((1234 + task_id * 10 + K))
+  
+  Rscript "$RUNNER" \
+    --cancer-types "$CANCER" \
+    --k "$K" \
+    --chains 4 \
+    --iter 2000 \
+    --warmup 1000 \
+    --adapt-delta 0.95 \
+    --max-treedepth 12 \
+    --seed "$SEED"
+  
+  log INFO "✅ 完成: $CANCER (k=$K) (输出: Result/brms_delta_cluster/$(echo $CANCER | sed 's/^delta_AAMR_//')_k${K}_delta.csv)"
+done
 
-log INFO "✅ 完成: $CANCER (k=$K) (输出: Result/brms_delta_cluster/$(echo $CANCER | sed 's/^delta_AAMR_//')_k${K}_delta.csv)"
+log INFO "✅ 任务完成: $CANCER (所有k值)"
