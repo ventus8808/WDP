@@ -1,12 +1,12 @@
 """
 EQI BRMS Cluster Visualization
 
-- Reads cluster BRMS results from Result/brms_cluster_combined (e.g., C00_C97.csv)
-- Builds forest-plot style figures with 3 panels (one per cluster) per ICD/scenario.
+- Reads cluster BRMS results from Result/brms_cluster (e.g., C00_C97_k3.csv)
+- Builds forest-plot style figures with panels per cluster per ICD/scenario.
 - Output: {ICD}_AllClusters_{EQI_Period}_{AAMR_Period}_Lag{lag}_brms.png
 
 CLI Usage:
-python Code/Analysis/Visualization_Cluster.py --icd C00_C97
+python Code/Analysis/Visualization_Cluster.py --icd C00_C97 --k 3
 python Code/Analysis/Visualization_Cluster.py --all
 """
 from __future__ import annotations
@@ -57,7 +57,7 @@ def load_config(project_root: Path) -> dict:
 
 
 def get_cluster_paths(project_root: Path) -> Dict[str, Path]:
-    cluster_result_dir = project_root / "Result" / "brms_cluster_combined"
+    cluster_result_dir = project_root / "Result" / "brms_cluster"
     vis_dir = project_root / "Result" / "brms_cluster_Visualization"
     combined_dir = project_root / "Result" / "brms_cluster_Visualization_Combined"
     vis_dir.mkdir(parents=True, exist_ok=True)
@@ -135,8 +135,9 @@ CLUSTER_GROUPS = {
 
 def main(argv: Optional[List[str]] = None) -> int:
     project_root = Path(__file__).resolve().parents[2]
-    parser = argparse.ArgumentParser(description="Generate 3-panel cluster comparison figures per ICD")
+    parser = argparse.ArgumentParser(description="Generate cluster comparison figures per ICD")
     parser.add_argument("--icd", type=str, default=None, help="Specific ICD code, e.g., C00_C97")
+    parser.add_argument("--k", type=int, default=None, help="Number of clusters (e.g., 3 for k3), default detects from data")
     parser.add_argument("--all", action="store_true", help="Generate for all ICDs found")
 
     args = parser.parse_args(argv)
@@ -153,7 +154,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         icds = [args.icd] if args.icd else []
 
     for icd in icds:
-        result_csv = paths["result"] / f"{icd}.csv"
+        # Construct filename based on k
+        if args.k:
+            result_csv = paths["result"] / f"{icd}_k{args.k}.csv"
+        else:
+            result_csv = paths["result"] / f"{icd}.csv"
         if not result_csv.exists():
             print(f"Result CSV not found for {icd}: {result_csv}; skip.")
             continue
@@ -184,7 +189,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     lag=lag,
                     output_dir=str(paths["vis"]),
                     icd_code=icd,
-                    cluster="all",  # Not used in the function anymore
+                    k=args.k,
                     model_type="brms"
                 )
                 print(f"Generated plot: {out_path}")
@@ -194,7 +199,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     return 0
 
 
-def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=None, icd_code="C00_C97", cluster="0", model_type="brms"):
+def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=None, icd_code="C00_C97", k=None, model_type="brms"):
     """
     创建cluster分层的森林图 - 显示所有cluster的比较
 
@@ -212,19 +217,21 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
         输出目录，默认为当前工作目录
     icd_code : str
         ICD代码，默认为 'C00_C97'
-    cluster : str
-        cluster ID，如 '0'（这里实际上不会用到，因为我们显示所有cluster）
+    k : int, optional
+        聚类数量，用于生成面板标签
+    model_type : str
+        模型类型，默认为 'brms'
 
     Returns:
     --------
     str : 生成的图片文件路径
     """
-    # 定义面板配置 - 按照cluster分层显示
-    panel_labels = [
-        'Cluster 0\nDisadvantaged',
-        'Cluster 1\nUnbalanced',
-        'Cluster 2\nAdvantageous'
-    ]
+    # 获取所有clusters
+    clusters = sorted(set(model.split('_')[0].replace('Cluster', '') for model in df['Model'].unique() if model.startswith('Cluster')))
+    num_clusters = len(clusters)
+
+    # 定义面板配置 - 根据k值生成标签
+    panel_labels = [f'Cluster {c}' for c in clusters]
 
     # 定义EQI类型
     eqi_types = ['EQI', 'Air', 'Water', 'Land', 'Built', 'Social']
@@ -237,15 +244,17 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
         'Q5': '#000000',  # 黑（0%）
     }
 
-    # 创建图形 - 3个面板，每个对应一个cluster
-    fig, axes = plt.subplots(3, 1, figsize=(8, 10))
+    # 创建图形 - 动态面板数量
+    fig, axes = plt.subplots(num_clusters, 1, figsize=(8, 10))
+    if num_clusters == 1:
+        axes = [axes]  # 确保axes是列表
     fig.suptitle(f'{icd_code} | Lag {lag} years | AAMR {aamr_period} | EQI {eqi_period}',
                  fontsize=14, y=0.98)
 
     # 为每个cluster面板绘制数据
-    for panel_idx, panel_label in enumerate(panel_labels):
+    for panel_idx, cluster_id in enumerate(clusters):
         ax = axes[panel_idx]
-        cluster_id = str(panel_idx)  # 0, 1, 2
+        panel_label = panel_labels[panel_idx] if panel_idx < len(panel_labels) else f'Cluster {cluster_id}'
 
         # 筛选当前cluster的数据
         cluster_df = df[df['Model'].str.startswith(f'Cluster{cluster_id}_')].copy()
@@ -310,7 +319,7 @@ def plot_reference_style_forest(df, eqi_period, aamr_period, lag, output_dir=Non
         ax.set_xticklabels(eqi_types)
 
         # 设置y轴标签
-        if panel_idx == 1:  # 中间面板
+        if panel_idx == num_clusters // 2:  # 中间面板
             ax.set_ylabel('Mortality Rate Difference (95% CI)', fontsize=12, labelpad=20)
 
         # 添加黑色边框

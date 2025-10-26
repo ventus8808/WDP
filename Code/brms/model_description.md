@@ -75,3 +75,16 @@ $$
 ## 共同参数
 - 先验：$\beta \sim \mathcal{N}(0, 5^2)$, $\sigma \sim \text{Exponential}(1)$, $\sigma_u \sim \text{Exponential}(1)$
 - 随机效应：$u_{\text{state}} \sim \mathcal{N}(0, \sigma_u^2)$
+
+带似然函数的完整公式
+$$
+
+\log p(\beta, z, \sigma, \sigma_u \mid \text{data}) \propto
+
+\sum_{i:\,\text{cens}_i=0} \log \varphi(y_i;\mu_i,\sigma)
+
++ \sum_{i:\,\text{cens}_i=2} \log\Big(\Phi\Big(\frac{y_i^{(u)}-\mu_i}{\sigma}\Big) - \Phi\Big(\frac{y_i^{(l)}-\mu_i}{\sigma}\Big)\Big)
+
++ \sum_j \log p(\beta_j) + \sum_s \log p(z_s) + \log p(\sigma) + \log p(\sigma_u)
+
+$$
