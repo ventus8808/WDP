@@ -1,0 +1,172 @@
+import os
+import yaml
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from pathlib import Path
+
+# ... (您的 plt.rcParams 和 EQI_COLORS 定义保持不变) ...
+# Set matplotlib parameters for consistent styling
+plt.rcParams["font.family"] = "Georgia"
+plt.rcParams["font.size"] = 12
+plt.rcParams["font.weight"] = "normal"
+plt.rcParams["axes.titlesize"] = 16
+plt.rcParams["axes.labelsize"] = 12
+plt.rcParams["xtick.labelsize"] = 12
+plt.rcParams["ytick.labelsize"] = 12
+plt.rcParams["legend.fontsize"] = 12
+
+# EQI color map
+EQI_COLORS = {
+    1: "#2170b5",
+    2: "#6baed6",
+    3: "#c6dbef",
+    4: "#fee0d2",
+    5: "#fc9271",
+    "No Data": "#cccccc",  # For missing data
+}
+
+
+def plot_eqi_map(period, config):
+    """
+    Plot EQI distribution map for a given time period
+    FOR CONTIGUOUS US ONLY, using an oblique projection.
+    """
+    print(f"Creating EQI map for period {period}...")
+
+    # Paths from config
+    shapefile_path = config["data_sources"]["tiger"]["shapefile"]
+    eqi_dir = config["data_sources"]["epa_eqi"]["processed"]
+    output_dir = "Result/EQI_Map"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Load shapefile
+    counties = gpd.read_file(shapefile_path)
+    counties["COUNTY_FIPS"] = counties["STATEFP"] + counties["COUNTYFP"]
+
+    # Filter to contiguous US (保留您原来的逻辑)
+    contiguous_states = [
+        "01",
+        "04",
+        "05",
+        "06",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12",
+        "13",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "44",
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "51",
+        "53",
+        "54",
+        "55",
+        "56",
+    ]
+    counties_contiguous = counties[counties["STATEFP"].isin(contiguous_states)].copy()
+
+    # Load EQI data
+    eqi_file = os.path.join(eqi_dir, f"EQI{period}.csv")
+    df_eqi = pd.read_csv(eqi_file, usecols=["COUNTY_FIPS", "EQI"])
+    df_eqi["COUNTY_FIPS"] = df_eqi["COUNTY_FIPS"].astype(str).str.zfill(5)
+
+    # Merge with shapefile
+    counties_merged = counties_contiguous.merge(df_eqi, on="COUNTY_FIPS", how="left")
+
+    # Assign colors
+    counties_merged["color"] = (
+        counties_merged["EQI"].map(EQI_COLORS).fillna(EQI_COLORS["No Data"])
+    )
+
+    # 【*** 关键修改 ***】
+    # 1. 定义斜轴投影 (Oblique Mercator)
+    #    您可以调整 alpha= (旋转角度) 和 lonc= (中心经度) 来获得想要的效果
+    oblique_crs = "+proj=omerc +lat_0=37 +lonc=-96 +alpha=1 +k=0.9996 +x_0=0 +y_0=0 +gamma=0 +ellps=WGS84 +units=m +no_defs"
+
+    # 2. 在绘图前转换坐标系
+    counties_proj = counties_merged.to_crs(oblique_crs)
+    # *** 结束修改 ***
+
+    # Plot
+    fig, ax = plt.subplots(1, 1, figsize=(16, 10))
+
+    # 【修改】: 使用投影后的 `counties_proj` 绘图
+    counties_proj.plot(
+        color=counties_proj["color"], linewidth=0.1, edgecolor="black", ax=ax
+    )
+
+    # State boundaries (也需要使用投影后的数据)
+    state_boundaries = counties_proj.dissolve(by="STATEFP")
+    state_boundaries.boundary.plot(ax=ax, color="black", linewidth=1.2, alpha=0.9)
+
+    ax.set_axis_off()
+
+    # Legend (恢复到您原来的左下角位置)
+    legend_elements = [
+        mpatches.Patch(color=EQI_COLORS[i], label=f"EQI {i}") for i in range(1, 6)
+    ]
+    ax.legend(
+        handles=legend_elements,
+        bbox_to_anchor=(0.02, 0.02),
+        loc="lower left",
+        frameon=True,
+    )
+
+    # Title
+    period_labels = {"0005": "2000-2005", "0610": "2006-2010"}
+    title_period = period_labels.get(period, period)
+    plt.suptitle(f"EQI Distribution Map ({title_period})", y=0.82)
+
+    # Save
+    output_filename = os.path.join(
+        output_dir, f"EQI_Map_{period}_Oblique_Contiguous.png"
+    )
+    plt.savefig(output_filename, dpi=300, bbox_inches="tight")
+    print(f"Map saved to: {output_filename}")
+    plt.close()
+
+
+if __name__ == "__main__":
+    # Load config
+    project_root = Path(__file__).resolve().parents[2]
+    config_path = project_root / "config.yaml"
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
+
+    # Plot for both periods
+    for period in ["0005", "0610"]:
+        plot_eqi_map(period, config)
