@@ -92,7 +92,37 @@ data_sources:
     download_urls:
       base: "https://water.usgs.gov/nawqa/pnsp/usage/maps/county-level/PesticideUseEstimates/"
       filename_pattern: "EPest.county.estimates.{year}.txt"
-    years: [1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
+    years:
+      [
+        1992,
+        1993,
+        1994,
+        1995,
+        1996,
+        1997,
+        1998,
+        1999,
+        2000,
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+      ]
 
   # Environmental Data
   nldas:
@@ -108,7 +138,7 @@ data_sources:
     processed: "Data/Processed/Environmental"
   tiger:
     shapefile: "Data/Original/County Shapeline/tl_2015_us_county.shp"
-  
+
   # EPA Environmental Quality Index数据
   epa_eqi:
     original: "Data/Original/EPA EQI"
@@ -191,11 +221,25 @@ pymc_analysis:
     M5_SVI:
       name: "svi_interaction"
       description: "Full main effects + SVI * exposure interaction"
-      covariates: ["SVI_std", "Climate1_std", "Climate2_std", "Climate3_std", "SVI_std * exposure"]
+      covariates:
+        [
+          "SVI_std",
+          "Climate1_std",
+          "Climate2_std",
+          "Climate3_std",
+          "SVI_std * exposure",
+        ]
     M6_ENV1:
       name: "env1_interaction"
       description: "Full main effects + Climate1 * exposure interaction"
-      covariates: ["SVI_std", "Climate1_std", "Climate2_std", "Climate3_std", "Climate1_std * exposure"]
+      covariates:
+        [
+          "SVI_std",
+          "Climate1_std",
+          "Climate2_std",
+          "Climate3_std",
+          "Climate1_std * exposure",
+        ]
 
   # 分析参数
   analysis:
@@ -360,7 +404,7 @@ brms_analysis:
       water: "EQI_Water"
       land: "EQI_Land"
       built: "EQI_Built"
-      sociodemographic: "EQI_Social"   # Source data uses EQI_Social (keep output label Social)
+      sociodemographic: "EQI_Social" # Source data uses EQI_Social (keep output label Social)
     with_rucc:
       total: "RUCC_EQI"
       air: "RUCC_EQI_Air"
@@ -387,25 +431,52 @@ brms_analysis:
     aamr_upper: "AAMR_upper"
     smoking_rate: "Smoking_Rate"
 
+  # ICD-10 代码映射到癌症名称
+  icd_mapping:
+    "C00_C97": "All-site Cancer"
+    "C15_C26": "Digestive System Cancer"
+    "C18_C21": "Colorectal Cancer"
+    "C22": "Liver Cancer"
+    "C25": "Pancreatic Cancer"
+    "C30_C39": "Respiratory System Cancer"
+    "C34": "Lung Cancer"
+    "C40_C41": "Bone and Articular Cartilage Cancer"
+    "C43_C44": "Skin Cancer"
+    "C45_C49": "Mesothelial and Soft Tissue Cancer"
+    "C50": "Breast Cancer"
+    "C51_C58": "Female Genital Organs Cancer"
+    "C60_C63": "Male Genital Organs Cancer"
+    "C61": "Prostate Cancer"
+    "C64_C68": "Urinary Tract Cancer"
+    "C64": "Kidney Cancer"
+    "C67": "Bladder Cancer"
+    "C69_C72": "Brain and Central Nervous System Cancer"
+    "C73_C75": "Thyroid and Endocrine Glands Cancer"
+    "C76_C80": "Ill-defined and Secondary Sites Cancer"
+    "C81_C96": "Lymphoid and Hematopoietic Cancer"
+    "C82_C86": "Non-Hodgkin Lymphoma"
+    "C91_C95": "Leukemia"
+    "C97": "Multiple Primary Sites Cancer"
+
   # 分析参数 - 与LMM系统完全对齐的场景定义
   analysis_parameters:
     # 基础参数 - 与LMM all_cancer_types对齐
     cancer_types: [
-      "C00_C97",     # All Cancers
-      "C15_C26",     # Digestive Organs
-      "C18_C21",     # Colorectal
-      "C25",         # Pancreas
-      "C30_C39",     # Respiratory
-      "C34",         # Lung Cancer
-      "C50",         # Breast Cancer
-      "C51_C58",     # Female Genital
-      "C60_C63",     # Male Genital
-      "C61",         # Prostate
-      "C64_C68",     # Urinary Tract
-      "C76_C80",     # Ill-defined
-      "C81_C96"      # Lymphoid/Hematologic
-    ]
-    
+        "C00_C97", # All Cancers
+        "C15_C26", # Digestive Organs
+        "C18_C21", # Colorectal
+        "C25", # Pancreas
+        "C30_C39", # Respiratory
+        "C34", # Lung Cancer
+        "C50", # Breast Cancer
+        "C51_C58", # Female Genital
+        "C60_C63", # Male Genital
+        "C61", # Prostate
+        "C64_C68", # Urinary Tract
+        "C76_C80", # Ill-defined
+        "C81_C96", # Lymphoid/Hematologic
+      ]
+
     # EQI时期和AAMR时期的组合 - 与LMM all_scenarios对齐
     scenario_combinations:
       - eqi_period: "0005"
@@ -424,16 +495,16 @@ brms_analysis:
         aamr_period: "2016-2020"
         lag_years: 10
         scenario_name: "EQI0610_AAMR2016_2020"
-    
+
     # 模型类型定义 - 两种不同的模型结构
     model_types:
       - name: "EQI"
         description: "总EQI模型"
         formula_type: "total_eqi"
-      - name: "EQI_domains"  
+      - name: "EQI_domains"
         description: "EQI细分域联合模型（5个域在一个模型里）"
         formula_type: "multi_eqi_domains"
-    
+
     # RUCC分层设置 - 与LMM rucc_eqi_variables对齐
     rucc_strata:
       - name: null
@@ -451,82 +522,82 @@ brms_analysis:
       - name: "RUCC4"
         description: "RUCC类别4"
         rucc_codes: [4]
-    
+
     # 模型设置（保持不变）
     model_settings:
       formula_key: "total_eqi_quintile"
       prior_key: "default"
       family: "gaussian"
       use_midpoint: false
-  
+
   # MCMC采样设置 - 自动并行计算优化
   mcmc_settings:
-    auto_cores: true           # 自动检测核心数
-    cores_fraction: 0.8        # 使用80%的核心
-    chains: 4                  # 链数
-    iter: 2000                 # 总迭代次数
-    warmup: 1000              # 预热迭代次数
-    max_treedepth: 12         # 最大树深度
-    adapt_delta: 0.95         # 适应参数
-    seed: 12345               # 随机种子
+    auto_cores: true # 自动检测核心数
+    cores_fraction: 0.8 # 使用80%的核心
+    chains: 4 # 链数
+    iter: 2000 # 总迭代次数
+    warmup: 1000 # 预热迭代次数
+    max_treedepth: 12 # 最大树深度
+    adapt_delta: 0.95 # 适应参数
+    seed: 12345 # 随机种子
 
 # EQI LMM多重插补分析配置
 eqi_lmm_multiple_imputation:
   # 基础设置
-  n_imputations: 20              # 插补次数
-  max_iterations: 10             # MICE最大迭代次数
-  random_seed: 42               # 随机种子
-  convergence_threshold: 0.01    # 收敛阈值
-  
+  n_imputations: 20 # 插补次数
+  max_iterations: 10 # MICE最大迭代次数
+  random_seed: 42 # 随机种子
+  convergence_threshold: 0.01 # 收敛阈值
+
   # 数据路径
   data_paths:
     mi_source: "Data/df/EQI_LMM_MI_df.csv"
     mi_datasets_dir: "Data/df/MI_Datasets"
     diagnostics_dir: "Data/MI_Diagnostics"
-  
+
   # 结果路径
   result_paths:
     base_dir: "Result/EQI_LMM_MICE"
     individual_results: "Result/EQI_LMM_MICE/Individual_Results"
     pooled_results: "Result/EQI_LMM_MICE/Pooled_Results"
     mi_diagnostics: "Result/EQI_LMM_MICE/MI_Diagnostics"
-  
+
   # 插补设置
   imputation_settings:
-    method: "mice"                # 插补方法 (MICE/FCS)
+    method: "mice" # 插补方法 (MICE/FCS)
     predictive_mean_matching: true # 使用PMM处理连续变量
-    min_observed_ratio: 0.1       # 最小观测比例
-    auxiliary_variables:          # 辅助变量
+    min_observed_ratio: 0.1 # 最小观测比例
+    auxiliary_variables: # 辅助变量
       - "RUCC"
       - "STATE_FIPS"
       - "Population"
       - "Area"
-    
+
   # 变量特定插补方法
   variable_methods:
-    AAMR: "pmm"                   # 预测均值匹配
+    AAMR: "pmm" # 预测均值匹配
     EQI: "pmm"
-    EQI_air: "pmm" 
+    EQI_air: "pmm"
     EQI_water: "pmm"
     EQI_land: "pmm"
     EQI_built: "pmm"
     EQI_Sociodemographic: "pmm"
-    SR: "pmm"                     # 吸烟率
-    
+    SR: "pmm" # 吸烟率
+
   # 质量控制
   quality_control:
-    check_convergence: true       # 检查收敛性
-    plot_diagnostics: true        # 生成诊断图
-    validate_distributions: true   # 验证分布匹配
-    
+    check_convergence: true # 检查收敛性
+    plot_diagnostics: true # 生成诊断图
+    validate_distributions: true # 验证分布匹配
+
   # 池化设置
   pooling_settings:
-    confidence_level: 0.95        # 置信水平
-    rubin_rules: true             # 使用Rubin规则
-    calculate_fmi: true           # 计算缺失信息分数
-    
+    confidence_level: 0.95 # 置信水平
+    rubin_rules: true # 使用Rubin规则
+    calculate_fmi: true # 计算缺失信息分数
+
   # 并行处理
   parallel_processing:
-    enabled: true                 # 启用并行处理
-    n_cores: 4                   # 使用核心数
-    batch_size: 5                # 批处理大小
+    enabled: true # 启用并行处理
+    n_cores: 4 # 使用核心数
+    batch_size: 5 # 批处理大小
