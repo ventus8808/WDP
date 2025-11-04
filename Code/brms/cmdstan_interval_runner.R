@@ -62,6 +62,7 @@ dt <- dt[RUCC %in% 1:4 | is.na(RUCC)]
 scenario_list <- list(
   list(key="EQI0005_AAMR2006_2010", eqi="2000-2005", aamr="2006-2010", lag=5),
   list(key="EQI0005_AAMR2011_2015", eqi="2000-2005", aamr="2011-2015", lag=10),
+  list(key="EQI0005_AAMR2016_2020", eqi="2000-2005", aamr="2016-2020", lag=15),
   list(key="EQI0610_AAMR2011_2015", eqi="2006-2010", aamr="2011-2015", lag=5),
   list(key="EQI0610_AAMR2016_2020", eqi="2006-2010", aamr="2016-2020", lag=10)
 )
@@ -75,6 +76,42 @@ out_dir <- file.path(project_root,opt$`output-dir`); if(!dir.exists(out_dir)) di
 sig_mark <- function(p){ if(is.na(p)) return(""); if(p<0.001) return("***"); if(p<0.01) return("**"); if(p<0.05) return("*"); "" }
 format_cell <- function(draws){ if(length(draws)==0) return(""); ci <- quantile(draws,c(0.025,0.975),na.rm=TRUE); p <- 2*min(mean(draws>0), mean(draws<0)); sprintf("%0.2f(%0.2f,%0.2f)%s", mean(draws), ci[1], ci[2], sig_mark(p)) }
 append_rows <- function(path, df){ if(!file.exists(path)) write_csv(df,path) else suppressWarnings(write.table(df,path,sep=",",col.names=FALSE,row.names=FALSE,append=TRUE)) }
+
+# Posterior diagnostics helpers
+# p_posterior is the two-sided posterior tail-area probability:
+#   p = 2 * min(Pr(beta > 0), Pr(beta < 0)) estimated by the proportion of draws above/below zero.
+# R-hat, ESS (bulk and tail) are computed from split-chain draws using posterior::summarize_draws.
+compute_p <- function(draws){
+  if(length(draws)==0) return(NA_real_)
+  2*min(mean(draws > 0), mean(draws < 0))
+}
+
+# Extract per-quintile diagnostics (p, R-hat, ESS) for columns constructed via treatment contrasts.
+extract_quintile_metrics <- function(draw_df, names_vec, prefix, summ_df){
+  out <- list(
+    Q2_p=NA_real_, Q3_p=NA_real_, Q4_p=NA_real_, Q5_p=NA_real_,
+    Q2_rhat=NA_real_, Q3_rhat=NA_real_, Q4_rhat=NA_real_, Q5_rhat=NA_real_,
+    Q2_ess_bulk=NA_real_, Q3_ess_bulk=NA_real_, Q4_ess_bulk=NA_real_, Q5_ess_bulk=NA_real_,
+    Q2_ess_tail=NA_real_, Q3_ess_tail=NA_real_, Q4_ess_tail=NA_real_, Q5_ess_tail=NA_real_
+  )
+  if(any(grepl(paste0(prefix,"\\.L"), names_vec))){ return(out) }
+  for(q in 2:5){
+    nm <- paste0(prefix, q)
+    idx <- match(nm, names_vec)
+    if(!is.na(idx)){
+      col <- paste0("beta[", idx, "]")
+      draws_col <- draw_df[[col]]
+      out[[paste0("Q",q,"_p")]] <- compute_p(draws_col)
+      sr <- summ_df[summ_df$variable == col, , drop=FALSE]
+      if(nrow(sr)){
+        out[[paste0("Q",q,"_rhat")]] <- sr$rhat
+        out[[paste0("Q",q,"_ess_bulk")]] <- sr$ess_bulk
+        out[[paste0("Q",q,"_ess_tail")]] <- sr$ess_tail
+      }
+    }
+  }
+  out
+}
 
 build_design_overall <- function(d){ # Intercept + Smoking + EQI Q2..Q5
   d <- d %>% mutate(EQI_factor = factor(EQI, levels=1:5))
@@ -150,9 +187,18 @@ for(cancer in selected){
       if(inherits(fit_overall,"try-error")){ message("[Fail] Overall EQI model ", scen_key, " ", lay); } else {
         draws <- as_draws_df(fit_overall$draws("beta"))
         # Add column names mapping beta indices
-  colnames(draws) <- paste0("beta[",seq_len(ncol(draws)),"]")
+        colnames(draws) <- paste0("beta[",seq_len(ncol(draws)),"]")
         q_over <- extract_quintiles(draws, des_overall$names, "EQI_factor")
-        row_over <- tibble(ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag,"EQI"), Q1=q_over$Q1,Q2=q_over$Q2,Q3=q_over$Q3,Q4=q_over$Q4,Q5=q_over$Q5)
+        summ_over <- posterior::summarize_draws(fit_overall$draws("beta"))
+        met_over <- extract_quintile_metrics(draws, des_overall$names, "EQI_factor", summ_over)
+        row_over <- tibble(
+          ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag,"EQI"),
+          Q1=q_over$Q1, Q2=q_over$Q2, Q3=q_over$Q3, Q4=q_over$Q4, Q5=q_over$Q5,
+          Q2_p=met_over$Q2_p, Q3_p=met_over$Q3_p, Q4_p=met_over$Q4_p, Q5_p=met_over$Q5_p,
+          Q2_rhat=met_over$Q2_rhat, Q3_rhat=met_over$Q3_rhat, Q4_rhat=met_over$Q4_rhat, Q5_rhat=met_over$Q5_rhat,
+          Q2_ess_bulk=met_over$Q2_ess_bulk, Q3_ess_bulk=met_over$Q3_ess_bulk, Q4_ess_bulk=met_over$Q4_ess_bulk, Q5_ess_bulk=met_over$Q5_ess_bulk,
+          Q2_ess_tail=met_over$Q2_ess_tail, Q3_ess_tail=met_over$Q3_ess_tail, Q4_ess_tail=met_over$Q4_ess_tail, Q5_ess_tail=met_over$Q5_ess_tail
+        )
         append_rows(outfile,row_over); message("[OK] ", scen_key, " ", lay, " Overall")
       }
 
@@ -167,7 +213,20 @@ for(cancer in selected){
       if(inherits(fit_multi,"try-error")){ message("[Fail] Multi-domain model ", scen_key, " ", lay) } else {
   draws_m <- as_draws_df(fit_multi$draws("beta")); colnames(draws_m) <- paste0("beta[",seq_len(ncol(draws_m)),"]")
         domain_prefix <- c("EQI_Air_factor","EQI_Water_factor","EQI_Land_factor","EQI_Built_factor","EQI_Social_factor")
-        for(dom in domain_prefix){ qd <- extract_quintiles(draws_m, des_multi$names, dom); row_dom <- tibble(ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag, sub("_factor","",dom)), Q1=qd$Q1,Q2=qd$Q2,Q3=qd$Q3,Q4=qd$Q4,Q5=qd$Q5); append_rows(outfile,row_dom) }
+        summ_m <- posterior::summarize_draws(fit_multi$draws("beta"))
+        for(dom in domain_prefix){
+          qd <- extract_quintiles(draws_m, des_multi$names, dom)
+          md <- extract_quintile_metrics(draws_m, des_multi$names, dom, summ_m)
+          row_dom <- tibble(
+            ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag, sub("_factor","",dom)),
+            Q1=qd$Q1, Q2=qd$Q2, Q3=qd$Q3, Q4=qd$Q4, Q5=qd$Q5,
+            Q2_p=md$Q2_p, Q3_p=md$Q3_p, Q4_p=md$Q4_p, Q5_p=md$Q5_p,
+            Q2_rhat=md$Q2_rhat, Q3_rhat=md$Q3_rhat, Q4_rhat=md$Q4_rhat, Q5_rhat=md$Q5_rhat,
+            Q2_ess_bulk=md$Q2_ess_bulk, Q3_ess_bulk=md$Q3_ess_bulk, Q4_ess_bulk=md$Q4_ess_bulk, Q5_ess_bulk=md$Q5_ess_bulk,
+            Q2_ess_tail=md$Q2_ess_tail, Q3_ess_tail=md$Q3_ess_tail, Q4_ess_tail=md$Q4_ess_tail, Q5_ess_tail=md$Q5_ess_tail
+          )
+          append_rows(outfile,row_dom)
+        }
         message("[OK] ", scen_key, " ", lay, " Multi-domain")
       }
     }
