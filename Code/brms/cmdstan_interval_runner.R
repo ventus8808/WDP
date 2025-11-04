@@ -82,8 +82,16 @@ append_rows <- function(path, df){ if(!file.exists(path)) write_csv(df,path) els
 #   p = 2 * min(Pr(beta > 0), Pr(beta < 0)) estimated by the proportion of draws above/below zero.
 # R-hat, ESS (bulk and tail) are computed from split-chain draws using posterior::summarize_draws.
 compute_p <- function(draws){
-  if(length(draws)==0) return(NA_real_)
-  2*min(mean(draws > 0), mean(draws < 0))
+  if(length(draws)==0) return(NA_character_)
+  pos <- sum(draws > 0, na.rm = TRUE)
+  neg <- sum(draws < 0, na.rm = TRUE)
+  n <- pos + neg
+  if(n == 0) return(NA_character_)
+  # Jeffreys correction (Beta(0.5, 0.5)) to avoid zero probabilities
+  p_pos <- (pos + 0.5) / (n + 1)
+  p_neg <- (neg + 0.5) / (n + 1)
+  p <- 2 * min(p_pos, p_neg)
+  sprintf("%.4f", p)
 }
 
 # Extract per-quintile diagnostics (p, R-hat, ESS) for columns constructed via treatment contrasts.
@@ -195,9 +203,9 @@ for(cancer in selected){
           ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag,"EQI"),
           Q1=q_over$Q1, Q2=q_over$Q2, Q3=q_over$Q3, Q4=q_over$Q4, Q5=q_over$Q5,
           Q2_p=met_over$Q2_p, Q3_p=met_over$Q3_p, Q4_p=met_over$Q4_p, Q5_p=met_over$Q5_p,
-          Q2_rhat=met_over$Q2_rhat, Q3_rhat=met_over$Q3_rhat, Q4_rhat=met_over$Q4_rhat, Q5_rhat=met_over$Q5_rhat,
-          Q2_ess_bulk=met_over$Q2_ess_bulk, Q3_ess_bulk=met_over$Q3_ess_bulk, Q4_ess_bulk=met_over$Q4_ess_bulk, Q5_ess_bulk=met_over$Q5_ess_bulk,
-          Q2_ess_tail=met_over$Q2_ess_tail, Q3_ess_tail=met_over$Q3_ess_tail, Q4_ess_tail=met_over$Q4_ess_tail, Q5_ess_tail=met_over$Q5_ess_tail
+          Q2_rhat=sprintf("%.4f", met_over$Q2_rhat), Q3_rhat=sprintf("%.4f", met_over$Q3_rhat), Q4_rhat=sprintf("%.4f", met_over$Q4_rhat), Q5_rhat=sprintf("%.4f", met_over$Q5_rhat),
+          Q2_ess_bulk=as.integer(round(met_over$Q2_ess_bulk)), Q3_ess_bulk=as.integer(round(met_over$Q3_ess_bulk)), Q4_ess_bulk=as.integer(round(met_over$Q4_ess_bulk)), Q5_ess_bulk=as.integer(round(met_over$Q5_ess_bulk)),
+          Q2_ess_tail=as.integer(round(met_over$Q2_ess_tail)), Q3_ess_tail=as.integer(round(met_over$Q3_ess_tail)), Q4_ess_tail=as.integer(round(met_over$Q4_ess_tail)), Q5_ess_tail=as.integer(round(met_over$Q5_ess_tail))
         )
         append_rows(outfile,row_over); message("[OK] ", scen_key, " ", lay, " Overall")
       }
@@ -221,9 +229,9 @@ for(cancer in selected){
             ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag, sub("_factor","",dom)),
             Q1=qd$Q1, Q2=qd$Q2, Q3=qd$Q3, Q4=qd$Q4, Q5=qd$Q5,
             Q2_p=md$Q2_p, Q3_p=md$Q3_p, Q4_p=md$Q4_p, Q5_p=md$Q5_p,
-            Q2_rhat=md$Q2_rhat, Q3_rhat=md$Q3_rhat, Q4_rhat=md$Q4_rhat, Q5_rhat=md$Q5_rhat,
-            Q2_ess_bulk=md$Q2_ess_bulk, Q3_ess_bulk=md$Q3_ess_bulk, Q4_ess_bulk=md$Q4_ess_bulk, Q5_ess_bulk=md$Q5_ess_bulk,
-            Q2_ess_tail=md$Q2_ess_tail, Q3_ess_tail=md$Q3_ess_tail, Q4_ess_tail=md$Q4_ess_tail, Q5_ess_tail=md$Q5_ess_tail
+            Q2_rhat=sprintf("%.4f", md$Q2_rhat), Q3_rhat=sprintf("%.4f", md$Q3_rhat), Q4_rhat=sprintf("%.4f", md$Q4_rhat), Q5_rhat=sprintf("%.4f", md$Q5_rhat),
+            Q2_ess_bulk=as.integer(round(md$Q2_ess_bulk)), Q3_ess_bulk=as.integer(round(md$Q3_ess_bulk)), Q4_ess_bulk=as.integer(round(md$Q4_ess_bulk)), Q5_ess_bulk=as.integer(round(md$Q5_ess_bulk)),
+            Q2_ess_tail=as.integer(round(md$Q2_ess_tail)), Q3_ess_tail=as.integer(round(md$Q3_ess_tail)), Q4_ess_tail=as.integer(round(md$Q4_ess_tail)), Q5_ess_tail=as.integer(round(md$Q5_ess_tail))
           )
           append_rows(outfile,row_dom)
         }
