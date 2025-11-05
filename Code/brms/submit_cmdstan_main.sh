@@ -1,8 +1,8 @@
 #!/bin/bash
 # Slurm array launcher for the cmdstan main interval-censored mixed model pipeline
-# One task per stratification combination; each task runs all scenarios and layers inside the R runner.
+# One task per cancer type; each task runs all scenarios and RUCC layers inside the R runner.
 # Usage:
-#   bash Code/brms/submit_cmdstan_main.sh         # auto-discovers stratifications and submits an array
+#   bash Code/brms/submit_cmdstan_main.sh         # auto-discovers cancer types and submits an array
 #   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_main.sh
 
 #SBATCH --partition=kshctest
@@ -53,6 +53,12 @@ if [ -z "${CONDA_DEFAULT_ENV-}" ] || [ "${CONDA_DEFAULT_ENV}" != "$ENV_NAME" ]; 
 fi
 set -u
 
+# Load devtoolset for newer g++ on CentOS
+module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
+
+# Set environment variables for CmdStan
+export TBB_CXX_TYPE=gcc
+
 RUNNER="Code/brms/cmdstan_main.R"
 
 if [ ! -f "$RUNNER" ]; then
@@ -60,117 +66,57 @@ if [ ! -f "$RUNNER" ]; then
 fi
 
 # Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
-# discover stratifications and submit an array, then exit.
-if [ -z "${SLURM_TASK_ID-}" ]; then
-  STRATA_LIST_FILE="stratifications.list"
-  log INFO "发现所有分层组合并生成任务列表: $STRATA_LIST_FILE (位于项目根目录)"
+# discover cancer types and submit an array, then exit.
+if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
+  CANCER_LIST_FILE="cancers_main.list"
+  log INFO "发现所有癌症类型并生成任务列表: $CANCER_LIST_FILE (位于项目根目录)"
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
-  # Load sex data
-  sex_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_C00_C97_Sex.csv"
-  if (file.exists(sex_path)) {
-    dt_sex <- fread(sex_path, select = c("Sex", "Sex Code"))
-    u_sex <- unique(dt_sex[, .(Sex, Code = `Sex Code`)])
-    u_sex[, Stratum := "sex"]
-    setnames(u_sex, "Sex", "Value")
+  # Load main data
+  main_path <- "Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv"
+  if (file.exists(main_path)) {
+    dt <- fread(main_path, select = "Cancer_Type")
+    u <- unique(dt[, .(Cancer_Type)])
+    u <- u[order(Cancer_Type)]
   } else {
-    u_sex <- data.table()
+    stop("Main data not found")
   }
-  # Load race data
-  race_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_C00_C97_Race.csv"
-  if (file.exists(race_path)) {
-    dt_race <- fread(race_path, select = c("Race", "Race Code"))
-    u_race <- unique(dt_race[, .(Race, Code = `Race Code`)])
-    u_race[, Stratum := "race"]
-    setnames(u_race, "Race", "Value")
-  } else {
-    u_race <- data.table()
-  }
-  # Combine
-  u <- rbind(u_sex, u_race)
-  if (nrow(u) == 0) stop("No stratifications found")
-  # Write as stratum,value
-  lines <- paste(u$Stratum, u$Value, sep=",")
-  writeLines(lines, "stratifications.list")
+  if (nrow(u) == 0) stop("No cancers found")
+  # Write cancer types
+  writeLines(u$Cancer_Type, "cancers_main.list")
   cat(nrow(u))
 RS
-  N=$(wc -l < "$STRATA_LIST_FILE" | tr -d ' ')
-  if [ "$N" -le 0 ]; then log ERROR "未找到任何分层"; exit 1; fi
-  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个分层)"
+  N=$(wc -l < "$CANCER_LIST_FILE" | tr -d ' ')
+  if [ "$N" -le 0 ]; then log ERROR "未找到任何癌症类型"; exit 1; fi
+  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型，每个任务运行Overall + RUCC1-4)"
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
-    --export=ALL,STRATA_FILE="$PROJECT_ROOT/$STRATA_LIST_FILE",ENV_NAME="$ENV_NAME" \
+    --export=ALL,CANCER_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
          "$0"
   log INFO "提交完成。使用 squeue 查看进度。"
   exit 0
 fi
 
-# Worker mode (inside Slurm allocation)
-if [ -z "${SLURM_TASK_ID-}" ]; then
-  log ERROR "SLURM_TASK_ID 未设置；请用 bash 直接运行脚本让其自提交，或使用 --array 提交"
-  exit 1
-fi
-task_id=${SLURM_TASK_ID}
-STRATA_FILE=${STRATA_FILE:-"$PROJECT_ROOT/stratifications.list"}
-if [ ! -f "$STRATA_FILE" ]; then
-  log WARN "未发现 STRATA_FILE=$STRATA_FILE，回退到在线生成列表 (写入项目根目录)"
-  Rscript - <<'RS'
-  suppressPackageStartupMessages({library(data.table)})
-  # Load sex data
-  sex_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_C00_C97_Sex.csv"
-  if (file.exists(sex_path)) {
-    dt_sex <- fread(sex_path, select = c("Sex", "Sex Code"))
-    u_sex <- unique(dt_sex[, .(Sex, Code = `Sex Code`)])
-    u_sex[, Stratum := "sex"]
-    setnames(u_sex, "Sex", "Value")
-  } else {
-    u_sex <- data.table()
-  }
-  # Load race data
-  race_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_C00_C97_Race.csv"
-  if (file.exists(race_path)) {
-    dt_race <- fread(race_path, select = c("Race", "Race Code"))
-    u_race <- unique(dt_race[, .(Race, Code = `Race Code`)])
-    u_race[, Stratum := "race"]
-    setnames(u_race, "Race", "Value")
-  } else {
-    u_race <- data.table()
-  }
-  # Combine
-  u <- rbind(u_sex, u_race)
-  if (nrow(u) == 0) stop("No stratifications found")
-  # Write as stratum,value
-  lines <- paste(u$Stratum, u$Value, sep=",")
-  writeLines(lines, "stratifications.list")
-RS
-  STRATA_FILE="$PROJECT_ROOT/stratifications.list"
-fi
-
-if ! LINE=$(sed -n "$((task_id+1))p" "$STRATA_FILE"); then
-  log ERROR "读取分层列表失败 (index=$task_id)"; exit 1
-fi
-if [ -z "$LINE" ]; then
-  log WARN "索引 $task_id 超出分层列表范围，跳过。"; exit 0
-fi
-
-STRATUM=$(echo "$LINE" | cut -d',' -f1)
-VALUE=$(echo "$LINE" | cut -d',' -f2)
-
-log INFO "任务ID=$task_id  分层=$STRATUM  值=$VALUE  CPU=${SLURM_CPUS_PER_TASK:-NA}"
+# Worker mode: run the actual job
+log INFO "开始处理任务 $SLURM_ARRAY_TASK_ID"
+# Read the cancer type for this task
+CANCER_TYPE=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$CANCER_FILE")
+if [ -z "$CANCER_TYPE" ]; then log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的癌症类型"; exit 1; fi
+log INFO "处理癌症类型: $CANCER_TYPE"
 
 # Limit threading to allocation to be polite on shared nodes
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
 # Use a different seed per task for better chain jitter
-SEED=$((1234 + task_id))
+SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
-# Run the main interval-censored pipeline for this stratification
+# Run the main interval-censored pipeline for this cancer type
+# This runs Overall + RUCC1-4 stratifications internally
 Rscript "$RUNNER" \
-  --stratify-by "$STRATUM" \
-  --strata "$VALUE" \
+  --cancer-types "$CANCER_TYPE" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \
   --seed "$SEED"
 
-log INFO "✅ 完成: $STRATUM=$VALUE"
+log INFO "✅ 完成: Cancer=$CANCER_TYPE"
