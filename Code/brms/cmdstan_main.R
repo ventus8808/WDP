@@ -17,7 +17,7 @@ suppressPackageStartupMessages({
 utils::globalVariables(c('EQI','EQI_Air','EQI_Water','EQI_Land','EQI_Built','EQI_Social','Smoking_Rate','State_FIPS'))
 
 option_list <- list(
-  make_option(c("--data"), type="character", default="Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval.csv", help="Input interval data"),
+  make_option(c("--data"), type="character", default="Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv", help="Input interval data"),
   make_option(c("--output-dir"), type="character", default="Result/brms", help="Output directory"),
   make_option(c("--cancer-types"), type="character", default=NA, help="Comma separated ICD codes"),
   make_option(c("--chains"), type="integer", default=4),
@@ -47,14 +47,14 @@ project_root <- normalizePath(".")
 path <- file.path(project_root,opt$data); if(!file.exists(path)) stop("Data not found: ", path)
 dt <- fread(path)
 
-req <- c("COUNTY_FIPS","EQI_Period","Time_Period","Lag_Years","Cancer_Type","AAMR_lower","AAMR_upper","Smoking_Rate","RUCC","EQI","EQI_Air","EQI_Water","EQI_Land","EQI_Built","EQI_Social")
+req <- c("COUNTY_FIPS","EQI_Period","Time_Period","Lag_Years","Cancer_Type","AAMR_Lower","AAMR_Upper","Smoking_Rate","RUCC","EQI","EQI_Air","EQI_Water","EQI_Land","EQI_Built","EQI_Social")
 miss <- setdiff(req, names(dt)); if(length(miss)) stop("Missing cols: ", paste(miss,collapse=","))
 
 if(!"State_FIPS" %in% names(dt)) dt[, State_FIPS := substr(sprintf("%05s", COUNTY_FIPS),1,2)]
 
 # interval censoring code
-dt <- dt[!is.na(AAMR_lower) & !is.na(AAMR_upper)]
-dt[, cens := ifelse(AAMR_lower == AAMR_upper, 0, 2)]
+dt <- dt[!is.na(AAMR_Lower) & !is.na(AAMR_Upper)]
+dt[, cens := ifelse(AAMR_Lower == AAMR_Upper, 0, 2)]
 
 # RUCC restriction
 dt <- dt[RUCC %in% 1:4 | is.na(RUCC)]
@@ -123,7 +123,7 @@ extract_quintile_metrics <- function(draw_df, names_vec, prefix, summ_df){
 
 build_design_overall <- function(d){ # Intercept + Smoking + EQI Q2..Q5
   d <- d %>% mutate(EQI_factor = factor(EQI, levels=1:5))
-  d <- d[complete.cases(d[,c("Smoking_Rate","EQI_factor","AAMR_lower","AAMR_upper","cens","State_FIPS")]),]
+  d <- d[complete.cases(d[,c("Smoking_Rate","EQI_factor","AAMR_Lower","AAMR_Upper","cens","State_FIPS")]),]
   mm <- model.matrix(~ Smoking_Rate + EQI_factor, d, contrasts.arg = list(EQI_factor=contr.treatment(5)))
   colnames(mm) <- make.names(colnames(mm))
   list(X = mm, names = colnames(mm), df = d)
@@ -137,7 +137,7 @@ build_design_multi <- function(d){
     EQI_Built_factor = factor(EQI_Built, levels=1:5),
     EQI_Social_factor = factor(EQI_Social, levels=1:5)
   )
-  d <- d[complete.cases(d[,c("Smoking_Rate","EQI_Air_factor","EQI_Water_factor","EQI_Land_factor","EQI_Built_factor","EQI_Social_factor","AAMR_lower","AAMR_upper","cens","State_FIPS")]),]
+  d <- d[complete.cases(d[,c("Smoking_Rate","EQI_Air_factor","EQI_Water_factor","EQI_Land_factor","EQI_Built_factor","EQI_Social_factor","AAMR_Lower","AAMR_Upper","cens","State_FIPS")]),]
   form <- as.formula("~ Smoking_Rate + EQI_Air_factor + EQI_Water_factor + EQI_Land_factor + EQI_Built_factor + EQI_Social_factor")
   mm <- model.matrix(form, d,
                      contrasts.arg = list(
@@ -184,7 +184,7 @@ for(cancer in selected){
       states_o <- sort(unique(des_overall$df$State_FIPS)); state_index_o <- match(des_overall$df$State_FIPS, states_o)
       data_list <- list(
         N = nrow(des_overall$df), S = length(states_o), state = state_index_o,
-        y_lower = des_overall$df$AAMR_lower, y_upper = des_overall$df$AAMR_upper, cens = des_overall$df$cens,
+        y_lower = des_overall$df$AAMR_Lower, y_upper = des_overall$df$AAMR_Upper, cens = des_overall$df$cens,
         K = ncol(des_overall$X), X = des_overall$X
       )
   # Custom initial values to avoid pathological starting points
@@ -213,7 +213,7 @@ for(cancer in selected){
       # Multi-domain design
   des_multi <- build_design_multi(layer_dt)
   states_m <- sort(unique(des_multi$df$State_FIPS)); state_index_m <- match(des_multi$df$State_FIPS, states_m)
-  data_list2 <- list(N=nrow(des_multi$df), S=length(states_m), state=state_index_m, y_lower=des_multi$df$AAMR_lower, y_upper=des_multi$df$AAMR_upper, cens=des_multi$df$cens, K=ncol(des_multi$X), X=des_multi$X)
+  data_list2 <- list(N=nrow(des_multi$df), S=length(states_m), state=state_index_m, y_lower=des_multi$df$AAMR_Lower, y_upper=des_multi$df$AAMR_Upper, cens=des_multi$df$cens, K=ncol(des_multi$X), X=des_multi$X)
   init_fun2 <- function() list(beta=rep(0, data_list2$K), z_u=rep(0, data_list2$S), sigma=50, sigma_u=10)
   fit_multi <- try(mod$sample(data=data_list2, chains=opt$chains, iter_sampling=opt$iter-opt$warmup, iter_warmup=opt$warmup,
               adapt_delta=opt$`adapt-delta`, max_treedepth=opt$`max-treedepth`, parallel_chains=min(opt$chains, cores_used), refresh=0, seed=opt$seed,

@@ -1,19 +1,19 @@
 #!/bin/bash
-# Slurm array launcher for the cmdstan cluster interval-censored mixed model pipeline
-# One task per cancer type; each task runs all clusters inside the R runner.
+# Slurm array launcher for the cmdstan climate stratification interval-censored mixed model pipeline
+# One task per cancer type and stratification variable combination; each task runs all values inside the R runner.
 # Usage:
-#   bash Code/brms/submit_cmdstan_cluster_array.sh         # auto-discovers cancer types and submits an array
-#   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_cluster_array.sh
+#   bash Code/brms/submit_cmdstan_climate_array.sh         # auto-discovers combinations and submits an array
+#   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_climate_array.sh
 
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WDP_cmdstan_cluster
+#SBATCH --job-name=WDP_cmdstan_climate
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=1-00:00:00
-#SBATCH --output=cmdstan_cluster_%A_%a.out
-#SBATCH --error=cmdstan_cluster_%A_%a.err
+#SBATCH --output=cmdstan_climate_%A_%a.out
+#SBATCH --error=cmdstan_climate_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -59,36 +59,35 @@ module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, u
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/cmdstan_cluster.R"
+RUNNER="Code/brms/cmdstan_climate.R"
 
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
 fi
 
 # Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
-# discover cancers and submit an array, then exit.
+# discover cancers and submit an array (one task per cancer, each task runs all stratification vars), then exit.
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   CANCER_LIST_FILE="cancers.list"
   log INFO "发现所有癌症类型并生成任务列表: $CANCER_LIST_FILE (位于项目根目录)"
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
-  # Load clustered data
-  cluster_path <- "Data/Processed/df_EQI_AAMR/EQI_AAMR_Interval_Clustered.csv"
-  if (file.exists(cluster_path)) {
-    dt <- fread(cluster_path, select = "Cancer_Type")
-    u <- unique(dt[, .(Cancer_Type)])
-    u <- u[order(Cancer_Type)]
+  # Load climate data
+  climate_path <- "Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv"
+  if (file.exists(climate_path)) {
+    dt <- fread(climate_path, select = "Cancer_Type")
+    cancers <- sort(unique(dt$Cancer_Type))
   } else {
-    stop("Clustered data not found")
+    stop("Climate data not found")
   }
-  if (nrow(u) == 0) stop("No cancers found")
+  if (length(cancers) == 0) stop("No cancers found")
   # Write cancer types
-  writeLines(u$Cancer_Type, "cancers.list")
-  cat(nrow(u))
+  writeLines(cancers, "cancers.list")
+  cat(length(cancers))
 RS
   N=$(wc -l < "$CANCER_LIST_FILE" | tr -d ' ')
   if [ "$N" -le 0 ]; then log ERROR "未找到任何癌症类型"; exit 1; fi
-  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型，每个任务运行k=3,4,5,6)"
+  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型，每个任务运行所有分层变量)"
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
     --export=ALL,CANCER_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
@@ -102,7 +101,7 @@ log INFO "开始处理任务 $SLURM_ARRAY_TASK_ID"
 # Read the cancer type for this task
 CANCER_TYPE=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$CANCER_FILE")
 if [ -z "$CANCER_TYPE" ]; then log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的癌症类型"; exit 1; fi
-log INFO "处理癌症类型: $CANCER_TYPE"
+log INFO "处理癌症类型: $CANCER_TYPE (将运行所有分层变量)"
 
 # Limit threading to allocation to be polite on shared nodes
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
@@ -111,11 +110,19 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 # Use a different seed per task for better chain jitter
 SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
-# Run the cluster interval-censored pipeline for this cancer type
-Rscript "$RUNNER" \
-  --cancer-types "$CANCER_TYPE" \
-  --chains 4 --iter 2000 --warmup 1000 \
-  --adapt-delta 0.95 --max-treedepth 12 \
-  --seed "$SEED"
+# Stratification variables
+STRAT_VARS=("census_region" "koppen_major" "doe_major")
+
+# Run for each stratification variable
+for STRAT_VAR in "${STRAT_VARS[@]}"; do
+  log INFO "运行分层变量: $STRAT_VAR"
+  Rscript "$RUNNER" \
+    --cancer-types "$CANCER_TYPE" \
+    --stratification-var "$STRAT_VAR" \
+    --chains 4 --iter 2000 --warmup 1000 \
+    --adapt-delta 0.95 --max-treedepth 12 \
+    --seed "$SEED"
+  log INFO "完成分层变量: $STRAT_VAR"
+done
 
 log INFO "✅ 完成: Cancer=$CANCER_TYPE"

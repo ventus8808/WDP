@@ -53,7 +53,7 @@ if [ -z "${CONDA_DEFAULT_ENV-}" ] || [ "${CONDA_DEFAULT_ENV}" != "$ENV_NAME" ]; 
 fi
 set -u
 
-RUNNER="Code/brms/cmdstan_stratified.R"
+RUNNER="Code/brms/cmdstan_main.R"
 
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
