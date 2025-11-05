@@ -2,8 +2,8 @@
 # Slurm array launcher for the cmdstan cluster interval-censored mixed model pipeline
 # One task per cancer type; each task runs all clusters inside the R runner.
 # Usage:
-#   bash Code/brms/submit_cmdstan_cluster_array.sh         # auto-discovers cancer types and submits an array
-#   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_cluster_array.sh
+#   bash Code/brms/submit_cmdstan_cluster.sh         # auto-discovers cancer types and submits an array
+#   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_cluster.sh
 
 #SBATCH --partition=kshctest
 #SBATCH --job-name=WDP_cmdstan_cluster

@@ -1,19 +1,19 @@
 #!/bin/bash
-# Slurm array launcher for the cmdstan stratified interval-censored mixed model pipeline
+# Slurm array launcher for the cmdstan main interval-censored mixed model pipeline
 # One task per stratification combination; each task runs all scenarios and layers inside the R runner.
 # Usage:
-#   bash Code/brms/submit_cmdstan_stratified_array.sh         # auto-discovers stratifications and submits an array
-#   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_stratified_array.sh
+#   bash Code/brms/submit_cmdstan_main.sh         # auto-discovers stratifications and submits an array
+#   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_main.sh
 
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WDP_cmdstan_stratified
+#SBATCH --job-name=WDP_cmdstan_main
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=1-00:00:00
-#SBATCH --output=cmdstan_stratified_%A_%a.out
-#SBATCH --error=cmdstan_stratified_%A_%a.err
+#SBATCH --output=cmdstan_main_%A_%a.out
+#SBATCH --error=cmdstan_main_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -61,7 +61,7 @@ fi
 
 # Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
 # discover stratifications and submit an array, then exit.
-if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
+if [ -z "${SLURM_TASK_ID-}" ]; then
   STRATA_LIST_FILE="stratifications.list"
   log INFO "发现所有分层组合并生成任务列表: $STRATA_LIST_FILE (位于项目根目录)"
   Rscript - <<'RS'
@@ -106,11 +106,11 @@ RS
 fi
 
 # Worker mode (inside Slurm allocation)
-if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  log ERROR "SLURM_ARRAY_TASK_ID 未设置；请用 bash 直接运行脚本让其自提交，或使用 --array 提交"
+if [ -z "${SLURM_TASK_ID-}" ]; then
+  log ERROR "SLURM_TASK_ID 未设置；请用 bash 直接运行脚本让其自提交，或使用 --array 提交"
   exit 1
 fi
-task_id=${SLURM_ARRAY_TASK_ID}
+task_id=${SLURM_TASK_ID}
 STRATA_FILE=${STRATA_FILE:-"$PROJECT_ROOT/stratifications.list"}
 if [ ! -f "$STRATA_FILE" ]; then
   log WARN "未发现 STRATA_FILE=$STRATA_FILE，回退到在线生成列表 (写入项目根目录)"
@@ -165,7 +165,7 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 # Use a different seed per task for better chain jitter
 SEED=$((1234 + task_id))
 
-# Run the stratified interval-censored pipeline for this stratification
+# Run the main interval-censored pipeline for this stratification
 Rscript "$RUNNER" \
   --stratify-by "$STRATUM" \
   --strata "$VALUE" \

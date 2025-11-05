@@ -2,8 +2,8 @@
 # Slurm array launcher for the cmdstan climate stratification interval-censored mixed model pipeline
 # One task per cancer type and stratification variable combination; each task runs all values inside the R runner.
 # Usage:
-#   bash Code/brms/submit_cmdstan_climate_array.sh         # auto-discovers combinations and submits an array
-#   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_climate_array.sh
+#   bash Code/brms/submit_cmdstan_climate.sh         # auto-discovers combinations and submits an array
+#   # or, advanced: sbatch --array=0-<N-1> Code/brms/submit_cmdstan_climate.sh
 
 #SBATCH --partition=kshctest
 #SBATCH --job-name=WDP_cmdstan_climate

@@ -165,7 +165,7 @@ extract_quintiles <- function(draw_df, names_vec, prefix){
 
 for(cancer in selected){
   message("===== Disease: ", cancer, " =====")
-  outfile <- file.path(out_dir, paste0(cancer, "_brms.csv"))
+  outfile <- file.path(out_dir, paste0(cancer, "_main.csv"))
   for(sc in scenario_list){
     scen_key <- sc$key; eqi_p <- sc$eqi; aamr_p <- sc$aamr; lagv <- sc$lag
     scen_dt <- dt[EQI_Period==eqi_p & Time_Period==aamr_p & Cancer_Type==cancer]
