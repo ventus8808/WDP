@@ -9,9 +9,10 @@ Input: Data/Original/CDC Triangulation/AAMR/*.csv
 Output: Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv
 """
 
+import re
 import sys
 from pathlib import Path
-import re
+
 import pandas as pd
 import yaml
 
@@ -444,6 +445,23 @@ def main():
     for c in numeric_climate_cols:
         if c in final.columns:
             final[c] = pd.to_numeric(final[c], errors="coerce").astype("Int64")
+
+    # Ensure integer types for Deaths and Population
+    if "Deaths" in final.columns:
+        final["Deaths"] = (
+            pd.to_numeric(final["Deaths"], errors="coerce").round(0).astype("Int64")
+        )
+    if "Population" in final.columns:
+        final["Population"] = (
+            pd.to_numeric(final["Population"], errors="coerce").round(0).astype("Int64")
+        )
+
+    # Impute Smoking_Rate missing values with mean
+    if "Smoking_Rate" in final.columns:
+        final["Smoking_Rate"] = pd.to_numeric(final["Smoking_Rate"], errors="coerce")
+        sr_mean = final["Smoking_Rate"].mean(skipna=True)
+        if pd.notna(sr_mean):
+            final["Smoking_Rate"] = final["Smoking_Rate"].fillna(sr_mean)
 
     # Sort by key columns
     final = final.sort_values(
