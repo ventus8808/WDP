@@ -1,22 +1,23 @@
 import os
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.image import imread
-from matplotlib import gridspec
 from math import pi
-import seaborn as sns
+
 import geopandas as gpd
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from matplotlib import gridspec
+from matplotlib.image import imread
 
 plt.rcParams["font.family"] = "Georgia"
-plt.rcParams["font.size"] = 12
+plt.rcParams["font.size"] = 16
 plt.rcParams["font.weight"] = "normal"
-plt.rcParams["axes.titlesize"] = 16
-plt.rcParams["axes.labelsize"] = 12
-plt.rcParams["xtick.labelsize"] = 12
-plt.rcParams["ytick.labelsize"] = 12
-plt.rcParams["legend.fontsize"] = 12
+plt.rcParams["axes.titlesize"] = 14
+plt.rcParams["axes.labelsize"] = 16
+plt.rcParams["xtick.labelsize"] = 16
+plt.rcParams["ytick.labelsize"] = 16
+plt.rcParams["legend.fontsize"] = 16
 
 # Unified cluster colors
 CLUSTER_COLORS = ["#44a05c", "#5a88c8", "#f49c4a"]
@@ -60,8 +61,8 @@ def create_radar_chart(profiles_df, eqi_columns, output_dir, method_name, k):
     ax.set_xticklabels(categories)
     ax.set_ylim(-2, 1)
 
-    ax.set_title(f"(A) Radar Chart of {method_name} (k={k})", pad=20)
-    ax.legend(loc="lower left", bbox_to_anchor=(-0.1, -0.1))
+    ax.set_title(f"(A) Radar Chart of {method_name} (k={k})", pad=20, fontsize=24)
+    ax.legend(loc="lower left", bbox_to_anchor=(-0.1, -0.1), fontsize=20)
     ax.grid(True)
 
     radar_path = os.path.join(output_dir, f"{method_name}_{k}_Radar_Chart.png")
@@ -93,11 +94,12 @@ def create_box_plot(df, eqi_columns, output_dir, method_name, k):
         hue="Cluster_Label",
         hue_order=["Cluster 0", "Cluster 1", "Cluster 2"],
         palette=CLUSTER_COLORS,
+        showfliers=False,
     )
-    plt.title(f"(B) Box Plot of {method_name} (k={k})", pad=20)
+    plt.title(f"(B) Box Plot of {method_name} (k={k})", pad=20, fontsize=24)
     plt.xlabel("EQI Domain")
     plt.ylabel("EQI Value (Standardized)")
-    plt.legend(loc="lower left")
+    plt.legend(loc="lower left", fontsize=20)
     plt.grid(True, alpha=0.3)
 
     box_path = os.path.join(output_dir, f"{method_name}_{k}_Box_Plot.png")
@@ -231,6 +233,7 @@ def create_map_for_k(df_clusters, k, shapefile_path, output_dir, method_name):
 
 
 import os
+
 import matplotlib.pyplot as plt
 from matplotlib.image import imread
 

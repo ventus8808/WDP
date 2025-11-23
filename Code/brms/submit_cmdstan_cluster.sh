@@ -38,6 +38,7 @@ log INFO "项目根目录: $PROJECT_ROOT"
 
 # --- Activate conda environment (default: brms; override via ENV_NAME) ---
 ENV_NAME="${ENV_NAME:-brms}"
+K_VALUES="${K_VALUES:-3,4,5}"
 set +u
 if [ -z "${CONDA_DEFAULT_ENV-}" ] || [ "${CONDA_DEFAULT_ENV}" != "$ENV_NAME" ]; then
   if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
@@ -91,7 +92,7 @@ RS
   log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个癌症类型，每个任务运行k=3,4,5)"
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
-    --export=ALL,CANCER_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME" \
+    --export=ALL,CANCER_FILE="$PROJECT_ROOT/$CANCER_LIST_FILE",ENV_NAME="$ENV_NAME",K_VALUES="$K_VALUES" \
          "$0"
   log INFO "提交完成。使用 squeue 查看进度。"
   exit 0
@@ -114,6 +115,7 @@ SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 # Run the cluster interval-censored pipeline for this cancer type
 Rscript "$RUNNER" \
   --cancer-types "$CANCER_TYPE" \
+  --k "$K_VALUES" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \
   --seed "$SEED"

@@ -185,6 +185,96 @@ def prepare_panel_data(
     return pd.DataFrame(rows) if rows else pd.DataFrame()
 
 
+def prepare_panel_data_single_lag(
+    df: pd.DataFrame, panel_type: str, lag: int, cluster_id: Optional[int] = None
+) -> pd.DataFrame:
+    """
+    Extract data for one panel (National or specific Cluster) for a SINGLE lag period.
+
+    Parameters:
+    -----------
+    df : DataFrame with all models for one cancer/lag/cluster
+    panel_type : 'National' or 'Cluster'
+    lag : 5 or 10 (year lag period)
+    cluster_id : Cluster ID (0,1,2,... ) if panel_type='Cluster'
+
+    Returns:
+    --------
+    DataFrame with columns: [Domain, Model, Lag, MRD_Improved, CI_Lower_Imp, CI_Upper_Imp,
+                             Sig_Imp, MRD_Worsened, CI_Lower_Wor, CI_Upper_Wor, Sig_Wor]
+
+    Order: EQI + domains (Air, Water, Land, Built, Social)
+    """
+    # Filter df based on Model column
+    if panel_type == "National":
+        df = df[~df["Model"].str.startswith("Cluster_")]
+    else:
+        df = df[df["Model"].str.startswith(f"Cluster{cluster_id}_")]
+
+    rows = []
+
+    if panel_type == "National":
+        base_models = ["EQI", "Air", "Water", "Land", "Built", "Social"]
+        prefix = ""
+    else:
+        base_models = [
+            f"Cluster{cluster_id}_EQI",
+            f"Cluster{cluster_id}_Air",
+            f"Cluster{cluster_id}_Water",
+            f"Cluster{cluster_id}_Land",
+            f"Cluster{cluster_id}_Built",
+            f"Cluster{cluster_id}_Social",
+        ]
+        prefix = f"Cluster{cluster_id}_"
+
+    for model_name in base_models:
+        model_row = df[(df["Model"] == model_name) & (df["Lag"] == lag)]
+        if model_row.empty:
+            continue
+
+        # Determine domain label
+        domain = model_name.replace(prefix, "")
+
+        # Parse Improved and Worsened effects
+        improved_str = model_row["MRD_Q_Improved"].iloc[0]
+        worsened_str = model_row["MRD_Q_Worsened"].iloc[0]
+
+        improved = parse_effect_cell(improved_str)
+        worsened = parse_effect_cell(worsened_str)
+
+        # Only include if at least one effect is non-null
+        if improved is None and worsened is None:
+            continue
+
+        row_data = {"Domain": domain, "Model": model_name, "Lag": lag}
+
+        if improved:
+            row_data["MRD_Improved"] = improved[0]
+            row_data["CI_Lower_Imp"] = improved[1]
+            row_data["CI_Upper_Imp"] = improved[2]
+            row_data["Sig_Imp"] = improved[3]
+        else:
+            row_data["MRD_Improved"] = np.nan
+            row_data["CI_Lower_Imp"] = np.nan
+            row_data["CI_Upper_Imp"] = np.nan
+            row_data["Sig_Imp"] = False
+
+        if worsened:
+            row_data["MRD_Worsened"] = worsened[0]
+            row_data["CI_Lower_Wor"] = worsened[1]
+            row_data["CI_Upper_Wor"] = worsened[2]
+            row_data["Sig_Wor"] = worsened[3]
+        else:
+            row_data["MRD_Worsened"] = np.nan
+            row_data["CI_Lower_Wor"] = np.nan
+            row_data["CI_Upper_Wor"] = np.nan
+            row_data["Sig_Wor"] = False
+
+        rows.append(row_data)
+
+    return pd.DataFrame(rows) if rows else pd.DataFrame()
+
+
 def plot_bidirectional_forest(
     df: pd.DataFrame,
     icd_code: str,
@@ -217,8 +307,8 @@ def plot_bidirectional_forest(
     )
 
     # Color scheme: by environmental quality change direction
-    color_improved = "#1976D2"  # Blue for quality improved
-    color_worsened = "#F57C00"  # Orange for quality worsened
+    color_improved = "#2EAA6F"  # Green for quality improved
+    color_worsened = "#FF6F48"  # Orange for quality worsened
 
     # Calculate global x_limit based on all panels
     global_all_values = []
@@ -381,8 +471,11 @@ def plot_bidirectional_forest(
 
                 # Alpha and size by significance
                 alpha = 1.0 if is_sig else 0.4
-                marker_size = 8 if is_sig else 6
+                marker_size = 7 if is_sig else 5
                 line_width = 2.0 if is_sig else 1.2
+                # Hollow marker for non-significant
+                markerfacecolor = color if is_sig else "none"
+                markeredgewidth = 1.5 if is_sig else 2.0
 
                 # Error bar - circle marker
                 ax.errorbar(
@@ -391,6 +484,9 @@ def plot_bidirectional_forest(
                     xerr=[[mrd - lower], [upper - mrd]],
                     fmt="o",
                     color=color,
+                    markerfacecolor=markerfacecolor,
+                    markeredgecolor=color,
+                    markeredgewidth=markeredgewidth,
                     markersize=marker_size,
                     alpha=alpha,
                     capsize=3,
@@ -411,8 +507,11 @@ def plot_bidirectional_forest(
 
                 # Alpha and size by significance
                 alpha = 1.0 if is_sig else 0.4
-                marker_size = 8 if is_sig else 6
+                marker_size = 7 if is_sig else 5
                 line_width = 2.0 if is_sig else 1.2
+                # Hollow marker for non-significant
+                markerfacecolor = color if is_sig else "none"
+                markeredgewidth = 1.5 if is_sig else 2.0
 
                 # Error bar - square marker
                 ax.errorbar(
@@ -421,6 +520,9 @@ def plot_bidirectional_forest(
                     xerr=[[mrd - lower], [upper - mrd]],
                     fmt="s",
                     color=color,
+                    markerfacecolor=markerfacecolor,
+                    markeredgecolor=color,
+                    markeredgewidth=markeredgewidth,
                     markersize=marker_size,
                     alpha=alpha,
                     capsize=3,
@@ -620,6 +722,437 @@ def plot_bidirectional_forest(
     return output_file
 
 
+def plot_bidirectional_forest_separate_years(
+    df: pd.DataFrame,
+    icd_code: str,
+    k: int,
+    output_dir: Path,
+):
+    """
+    Create bidirectional forest plot with SEPARATE columns for 5-year and 10-year lags.
+    Layout: (k+1) rows × 2 columns
+    - Left column: 5-year lag
+    - Right column: 10-year lag
+    """
+    # Set global font
+    plt.rcParams["font.serif"] = ["Garamond", "Times New Roman"]
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.size"] = 12
+
+    # Define panel configurations: National + clusters 0 to k-1
+    panels = [("National", None, "National")] + [
+        ("Cluster", i, f"Cluster {i}") for i in range(k)
+    ]
+
+    # Color scheme
+    color_improved = "#2EAA6F"  # Green
+    color_worsened = "#FF6F48"  # Orange
+
+    # Calculate global x_limit based on all panels and both lags
+    global_all_values = []
+    for panel_type, cluster_id, _ in panels:
+        for lag in [5, 10]:
+            panel_df = prepare_panel_data_single_lag(df, panel_type, lag, cluster_id)
+            if not panel_df.empty:
+                for col in [
+                    "MRD_Improved",
+                    "CI_Lower_Imp",
+                    "CI_Upper_Imp",
+                    "MRD_Worsened",
+                    "CI_Lower_Wor",
+                    "CI_Upper_Wor",
+                ]:
+                    global_all_values.extend(panel_df[col].dropna().values)
+
+    if global_all_values:
+        global_max_abs = max(abs(min(global_all_values)), abs(max(global_all_values)))
+        global_x_limit = global_max_abs * 1.2
+    else:
+        global_x_limit = 10
+
+    # Create figure with (k+1) rows × 2 columns
+    fig, axes = plt.subplots(
+        k + 1, 2, figsize=(14.0, 2.5 * (k + 1)), constrained_layout=False
+    )
+    # Adjust spacing between subplots
+    # To manually adjust horizontal spacing between 5y and 10y plots, change wspace value:
+    # wspace=0.05 means 5% of subplot width. Decrease for tighter spacing, increase for wider.
+    plt.subplots_adjust(wspace=0.15, hspace=0.3)
+
+    # Y-axis label horizontal offset for 10-year lag plot (negative=left, positive=right)
+    # Adjust this value to move y-axis labels left or right
+    y_label_pad = -0.055  # Default: -0.02 (slightly to the left)
+
+    # Fixed x-axis limit
+    x_limit = 8
+
+    # Helper function for nice ticks
+    def get_nice_ticks(limit):
+        # For fixed limit of 8, show only -6 to 6 with step 2 (hide -8 and 8)
+        return [-6, -4, -2, 0, 2, 4, 6]
+
+    # Plot each panel
+    for row_idx, (panel_type, cluster_id, panel_label) in enumerate(panels):
+        for col_idx, lag in enumerate([5, 10]):
+            ax = axes[row_idx, col_idx]
+
+            # Prepare data for this panel and lag
+            panel_df = prepare_panel_data_single_lag(df, panel_type, lag, cluster_id)
+
+            if panel_df.empty:
+                ax.text(
+                    0.5,
+                    0.5,
+                    "No data available",
+                    ha="center",
+                    va="center",
+                    transform=ax.transAxes,
+                    fontsize=12,
+                    color="gray",
+                )
+                ax.set_title(
+                    f"{panel_label} ({lag}y)",
+                    fontsize=12,
+                    loc="left",
+                )
+                ax.axis("off")
+                continue
+
+            n_models = len(panel_df)
+            y_positions = np.arange(n_models)[::-1]
+
+            # Set y-axis
+            ax.set_ylim(-0.5, n_models - 0.5)
+            labels = panel_df["Domain"].tolist()
+
+            # For 5-year lag (left column), move y-axis to right and hide labels
+            # For 10-year lag (right column), show on left as normal
+            if col_idx == 0:  # 5-year lag
+                ax.yaxis.tick_right()
+                ax.yaxis.set_label_position("right")
+                ax.set_yticks(y_positions)
+                ax.set_yticklabels([""] * n_models)  # Hide labels
+            else:  # 10-year lag
+                ax.set_yticks(y_positions)
+                # Use tick_params to adjust label position (pad parameter)
+                # Positive pad moves labels away from axis, negative moves closer
+                ax.set_yticklabels(labels, fontsize=12, ha="center")
+                # Apply horizontal offset to y-axis labels
+                for tick in ax.get_yticklabels():
+                    tick.set_horizontalalignment("center")
+                    # Get current position and shift horizontally
+                    pos = tick.get_position()
+                    tick.set_position((pos[0] + y_label_pad, pos[1]))
+
+            # Set x-axis with fixed limit
+            ax.set_xlim(-x_limit, x_limit)
+            x_ticks = get_nice_ticks(x_limit)
+            ax.set_xticks(x_ticks)
+            ax.set_xticklabels([f"{int(x)}" for x in x_ticks], fontsize=12)
+
+            # Zero line
+            ax.axvline(0, color="black", linestyle="-", linewidth=1.0, zorder=1)
+
+            # Add direction labels at top (moved down)
+            if row_idx == 0:
+                ax.text(
+                    -x_limit * 0.75,
+                    n_models - 0.3,
+                    "<< Improved",
+                    fontsize=15,
+                    fontweight="bold",
+                    color=color_improved,
+                    ha="center",
+                )
+                ax.text(
+                    x_limit * 0.75,
+                    n_models - 0.3,
+                    "Worsened >>",
+                    fontsize=15,
+                    fontweight="bold",
+                    color=color_worsened,
+                    ha="center",
+                )
+
+            ax.grid(True, axis="x", alpha=0.3, linestyle=":", linewidth=0.5)
+
+            # Plot data points
+            for idx, row in panel_df.iterrows():
+                y_pos = y_positions[idx]
+
+                # Plot Improved (left side) - BLUE
+                if not pd.isna(row["MRD_Improved"]):
+                    mrd = row["MRD_Improved"]
+                    lower = row["CI_Lower_Imp"]
+                    upper = row["CI_Upper_Imp"]
+                    is_sig = row["Sig_Imp"]
+
+                    alpha = 1.0 if is_sig else 0.3
+                    marker_size = 5 if is_sig else 3
+                    line_width = 1.5 if is_sig else 1.2
+                    # Hollow marker for non-significant
+                    markerfacecolor = color_improved if is_sig else "none"
+                    markeredgewidth = 1.5 if is_sig else 2.0
+
+                    # Clip to axis limits
+                    mrd_clipped = np.clip(mrd, -x_limit, x_limit)
+                    lower_clipped = np.clip(lower, -x_limit, x_limit)
+                    upper_clipped = np.clip(upper, -x_limit, x_limit)
+
+                    # Check if out of range
+                    out_of_range = (
+                        (mrd < -x_limit) or (upper < -x_limit) or (lower > x_limit)
+                    )
+
+                    if out_of_range:
+                        # Draw arrow pointing to out-of-range direction
+                        if mrd < -x_limit or upper < -x_limit:
+                            # Point exceeds left boundary
+                            ax.plot(
+                                -x_limit,
+                                y_pos,
+                                marker="<",
+                                color=color_improved,
+                                markerfacecolor=markerfacecolor,
+                                markeredgecolor=color_improved,
+                                markeredgewidth=markeredgewidth,
+                                markersize=10,
+                                alpha=alpha,
+                                zorder=4,
+                            )
+                        elif lower > x_limit:
+                            # Point exceeds right boundary (unlikely for improved but handle it)
+                            ax.plot(
+                                x_limit,
+                                y_pos,
+                                marker=">",
+                                color=color_improved,
+                                markerfacecolor=markerfacecolor,
+                                markeredgecolor=color_improved,
+                                markeredgewidth=markeredgewidth,
+                                markersize=10,
+                                alpha=alpha,
+                                zorder=4,
+                            )
+                    else:
+                        # Normal error bar
+                        ax.errorbar(
+                            mrd_clipped,
+                            y_pos,
+                            xerr=[
+                                [mrd_clipped - lower_clipped],
+                                [upper_clipped - mrd_clipped],
+                            ],
+                            fmt="o",
+                            color=color_improved,
+                            markerfacecolor=markerfacecolor,
+                            markeredgecolor=color_improved,
+                            markeredgewidth=markeredgewidth,
+                            markersize=marker_size,
+                            alpha=1.0 if is_sig else 0.3,
+                            capsize=3,
+                            capthick=line_width,
+                            linewidth=line_width,
+                            zorder=3,
+                        )
+
+                # Plot Worsened (right side) - ORANGE
+                if not pd.isna(row["MRD_Worsened"]):
+                    mrd = row["MRD_Worsened"]
+                    lower = row["CI_Lower_Wor"]
+                    upper = row["CI_Upper_Wor"]
+                    is_sig = row["Sig_Wor"]
+
+                    alpha = 1.0 if is_sig else 0.3
+                    marker_size = 5 if is_sig else 3
+                    line_width = 1.5 if is_sig else 1.2
+                    # Hollow marker for non-significant
+                    markerfacecolor = color_worsened if is_sig else "none"
+                    markeredgewidth = 1.5 if is_sig else 2.0
+
+                    # Clip to axis limits
+                    mrd_clipped = np.clip(mrd, -x_limit, x_limit)
+                    lower_clipped = np.clip(lower, -x_limit, x_limit)
+                    upper_clipped = np.clip(upper, -x_limit, x_limit)
+
+                    # Check if out of range
+                    out_of_range = (
+                        (mrd > x_limit) or (lower > x_limit) or (upper < -x_limit)
+                    )
+
+                    if out_of_range:
+                        # Draw arrow pointing to out-of-range direction
+                        if mrd > x_limit or lower > x_limit:
+                            # Point exceeds right boundary
+                            ax.plot(
+                                x_limit,
+                                y_pos,
+                                marker=">",
+                                color=color_worsened,
+                                markerfacecolor=markerfacecolor,
+                                markeredgecolor=color_worsened,
+                                markeredgewidth=markeredgewidth,
+                                markersize=10,
+                                alpha=alpha,
+                                zorder=4,
+                            )
+                        elif upper < -x_limit:
+                            # Point exceeds left boundary (unlikely for worsened but handle it)
+                            ax.plot(
+                                -x_limit,
+                                y_pos,
+                                marker="<",
+                                color=color_worsened,
+                                markerfacecolor=markerfacecolor,
+                                markeredgecolor=color_worsened,
+                                markeredgewidth=markeredgewidth,
+                                markersize=10,
+                                alpha=alpha,
+                                zorder=4,
+                            )
+                    else:
+                        # Normal error bar
+                        ax.errorbar(
+                            mrd_clipped,
+                            y_pos,
+                            xerr=[
+                                [mrd_clipped - lower_clipped],
+                                [upper_clipped - mrd_clipped],
+                            ],
+                            fmt="s",
+                            color=color_worsened,
+                            markerfacecolor=markerfacecolor,
+                            markeredgecolor=color_worsened,
+                            markeredgewidth=markeredgewidth,
+                            markersize=marker_size,
+                            alpha=1.0 if is_sig else 0.3,
+                            capsize=3,
+                            capthick=line_width,
+                            linewidth=line_width,
+                            zorder=3,
+                        )
+
+            # X-axis label (only on bottom row)
+            if row_idx == len(panels) - 1:
+                ax.set_xlabel(
+                    "Mortality Rate Difference and 95% Credible Interval",
+                    fontsize=15,
+                )
+
+            # Column title (only on top row)
+            if row_idx == 0:
+                lag_label = "(A) Five-Year Lag" if lag == 5 else "(B) Ten-Year Lag"
+                ax.set_title(
+                    lag_label,
+                    fontsize=15,
+                    pad=5,
+                )
+
+            # Row label (only on left column)
+            if col_idx == 0:
+                ax.text(
+                    -0.02,
+                    0.5,
+                    panel_label,
+                    fontsize=15,
+                    rotation=90,
+                    verticalalignment="center",
+                    horizontalalignment="center",
+                    transform=ax.transAxes,
+                )
+
+            # Spines - show all four borders
+            ax.spines["top"].set_visible(True)
+            ax.spines["right"].set_visible(True)
+            ax.spines["left"].set_visible(True)
+            ax.spines["bottom"].set_visible(True)
+            ax.spines["top"].set_linewidth(0.5)
+            ax.spines["right"].set_linewidth(0.5)
+            ax.spines["left"].set_linewidth(0.5)
+            ax.spines["bottom"].set_linewidth(0.5)
+
+    # Add legend
+    from matplotlib.lines import Line2D
+
+    legend_elements = [
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color=color_improved,
+            markerfacecolor=color_improved,
+            markersize=10,
+            label="Improved\n(CrI excluding 0)",
+            markeredgewidth=1.5,
+            markeredgecolor="black",
+            linewidth=2,
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="s",
+            color=color_worsened,
+            markerfacecolor=color_worsened,
+            markersize=10,
+            label="Worsened\n(CrI excluding 0)",
+            markeredgewidth=1.5,
+            markeredgecolor="black",
+            linewidth=2,
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color=color_improved,
+            markerfacecolor="none",
+            markersize=10,
+            label="Improved\n(CrI including 0)",
+            markeredgewidth=2.0,
+            markeredgecolor=color_improved,
+            linewidth=2,
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="s",
+            color=color_worsened,
+            markerfacecolor="none",
+            markersize=10,
+            label="Worsened\n(CrI including 0)",
+            markeredgewidth=2.0,
+            markeredgecolor=color_worsened,
+            linewidth=2,
+        ),
+    ]
+
+    fig.legend(
+        handles=legend_elements,
+        loc="center right",
+        bbox_to_anchor=(1.06, 0.5),
+        frameon=True,
+        fancybox=True,
+        shadow=False,
+        ncol=1,
+        fontsize=12,
+        title="Legend",
+        title_fontsize=12,
+        framealpha=1.0,
+        edgecolor="gray",
+        facecolor="white",
+        borderpad=1.2,
+        labelspacing=0.7,
+        handletextpad=0.7,
+    )
+
+    # Save figure
+    output_file = output_dir / f"{icd_code}_Delta_Cluster_k{k}_SeparateYear.png"
+    plt.savefig(output_file, dpi=300, bbox_inches="tight", facecolor="white")
+    plt.close()
+
+    print(f"✓ Generated: {output_file.name}")
+    return output_file
+
+
 def list_available_icds(result_dir: Path) -> List[str]:
     """List available ICD codes from delta cluster result files."""
     icds = []
@@ -700,6 +1233,18 @@ def main(argv: Optional[List[str]] = None) -> int:
                 generated += 1
             except Exception as e:
                 print(f"  ✗ Error generating plot for {icd} k={k}: {e}")
+                import traceback
+
+                traceback.print_exc()
+
+            # Also generate separate-year version
+            try:
+                plot_bidirectional_forest_separate_years(
+                    combined_df, icd, k, paths["vis"]
+                )
+                generated += 1
+            except Exception as e:
+                print(f"  ✗ Error generating separate-year plot for {icd} k={k}: {e}")
                 import traceback
 
                 traceback.print_exc()
