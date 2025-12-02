@@ -1,20 +1,22 @@
 """
-Stratified AAMR Calculator for RUCC, Climate, and Cluster
+Stratified AAMR Calculator for RUCC, Climate, Cluster, Typology, and LandUse
 
 This script calculates national and stratum-level Age-Adjusted Mortality Rates (AAMRs)
 with confidence intervals using triangulated death data, stratified by RUCC, climate zones,
-and EQI clusters.
+EQI clusters, county economic typology, and land use clusters.
 
 Stratifications:
 - RUCC: Rural-Urban Continuum Codes from EQI data
 - Climate: census_region, koppen_major, doe_major
 - Cluster: cluster_3, cluster_4, cluster_5
+- Typology: econdep (USDA ERS County Economic Typology 2004)
+- LandUse: cluster_4 (Land Use Cluster from NLCD/JRC analysis)
 
 Input: Data/Original/CDC Triangulation/Subtracted/*.csv
 Output:
-    - Result/Tables/Stratified_AAMR_{RUCC,Climate,Cluster}.csv
-    - Result/Tables/Top5_Cancer_AAMR_{RUCC,Climate,Cluster}.csv (summary tables)
-    - Result/Tables/Top5_NDD_AAMR_{RUCC,Climate,Cluster}.csv (summary tables)
+    - Result/Tables/Stratified_AAMR_{RUCC,Climate,Cluster,Typology,LandUse}.csv
+    - Result/Tables/Top5_Cancer_AAMR_{RUCC,Climate,Cluster,Typology,LandUse}.csv (summary tables)
+    - Result/Tables/Top5_NDD_AAMR_{RUCC,Climate,Cluster,Typology,LandUse}.csv (summary tables)
 """
 
 from __future__ import annotations
@@ -47,6 +49,10 @@ CLUSTER_COLS = ["cluster_3", "cluster_4", "cluster_5"]
 
 CLIMATE_COLS = ["census_region", "koppen_major", "doe_major"]
 
+TYPOLOGY_COLS = ["econdep"]
+
+LANDUSE_COLS = ["cluster_4"]
+
 
 def load_config() -> Tuple[Path, Dict]:
     """Load configuration from config.yaml"""
@@ -55,6 +61,55 @@ def load_config() -> Tuple[Path, Dict]:
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     return project_root, config
+
+
+def apply_stratification_labels(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
+    """Apply human-readable labels to stratification values based on config mappings."""
+    if df.empty:
+        return df
+
+    df = df.copy()
+    label_mappings = config.get("stratification_labels", {})
+
+    # Apply mappings based on Stratum_Type
+    for idx, row in df.iterrows():
+        stratum_type = row.get("Stratum_Type", "")
+        stratum_value = str(row.get("Stratum_Value", ""))
+
+        # Skip National
+        if stratum_value == "National":
+            continue
+
+        # Apply appropriate mapping
+        if stratum_type == "Typology":
+            mapping = label_mappings.get("typology", {})
+            if stratum_value in mapping:
+                df.at[idx, "Stratum_Label"] = mapping[stratum_value]
+            else:
+                df.at[idx, "Stratum_Label"] = stratum_value
+
+        elif stratum_type == "LandUse":
+            mapping = label_mappings.get("landuse", {})
+            if stratum_value in mapping:
+                df.at[idx, "Stratum_Label"] = mapping[stratum_value]
+            else:
+                df.at[idx, "Stratum_Label"] = stratum_value
+
+        elif stratum_type.startswith("Cluster_k"):
+            k = stratum_type.replace("Cluster_k", "")
+            mapping = label_mappings.get(f"cluster_k{k}", {})
+            if stratum_value in mapping:
+                df.at[idx, "Stratum_Label"] = mapping[stratum_value]
+            else:
+                df.at[idx, "Stratum_Label"] = stratum_value
+        else:
+            # For RUCC and others, keep original value
+            df.at[idx, "Stratum_Label"] = stratum_value
+
+    # For National rows, set label to National
+    df.loc[df["Stratum_Value"] == "National", "Stratum_Label"] = "National"
+
+    return df
 
 
 def parse_filename(filename: str) -> Optional[Tuple[str, str]]:
@@ -184,7 +239,46 @@ def load_stratification_data(
     else:
         print(f"Warning: Cluster file not found at {cluster_path}")
 
-    return {"RUCC": rucc_df, "Climate": climate_df, "Cluster": cluster_df}
+    # Typology, only specified columns
+    typology_path = (
+        get_path(["data_directories", "processed"], "Data/Processed")
+        / "Socioeconomic"
+        / "County_Typology_2004.csv"
+    )
+    typology_df = pd.DataFrame()
+    if typology_path.exists():
+        temp_df = pd.read_csv(typology_path, dtype={"COUNTY_FIPS": str})
+        temp_df["COUNTY_FIPS"] = temp_df["COUNTY_FIPS"].str.zfill(5)
+        avail_cols = [col for col in TYPOLOGY_COLS if col in temp_df.columns]
+        if avail_cols:
+            typology_df = temp_df[["COUNTY_FIPS"] + avail_cols].copy()
+    else:
+        print(f"Warning: Typology file not found at {typology_path}")
+
+    # LandUse, only specified columns
+    landuse_path = (
+        project_root
+        / "Result"
+        / "Cluster_Visualization_LandUse"
+        / "LandUse_Clusters_All_K.csv"
+    )
+    landuse_df = pd.DataFrame()
+    if landuse_path.exists():
+        temp_df = pd.read_csv(landuse_path, dtype={"COUNTY_FIPS": str})
+        temp_df["COUNTY_FIPS"] = temp_df["COUNTY_FIPS"].str.zfill(5)
+        avail_cols = [col for col in LANDUSE_COLS if col in temp_df.columns]
+        if avail_cols:
+            landuse_df = temp_df[["COUNTY_FIPS"] + avail_cols].copy()
+    else:
+        print(f"Warning: LandUse file not found at {landuse_path}")
+
+    return {
+        "RUCC": rucc_df,
+        "Climate": climate_df,
+        "Cluster": cluster_df,
+        "Typology": typology_df,
+        "LandUse": landuse_df,
+    }
 
 
 def process_file(
@@ -205,7 +299,7 @@ def process_file(
     )
     df["COUNTY_FIPS"] = df["COUNTY_FIPS"].str.zfill(5)
 
-    results = {"RUCC": [], "Climate": [], "Cluster": []}
+    results = {"RUCC": [], "Climate": [], "Cluster": [], "Typology": [], "LandUse": []}
 
     # Helper to add result
     def add_result(
@@ -253,6 +347,8 @@ def process_file(
         ("RUCC", ["RUCC"]),
         ("Climate", CLIMATE_COLS),
         ("Cluster", CLUSTER_COLS),
+        ("Typology", TYPOLOGY_COLS),
+        ("LandUse", LANDUSE_COLS),
     ]:
         if strat_data[strat_key].empty:
             continue
@@ -271,9 +367,13 @@ def process_file(
                 s_type = "RUCC"
             elif strat_key == "Climate":
                 s_type = col  # e.g., 'census_region'
-            else:  # Cluster
+            elif strat_key == "Cluster":
                 k = col.split("_")[1]
                 s_type = f"Cluster_k{k}"
+            elif strat_key == "Typology":
+                s_type = "Typology"
+            else:  # LandUse
+                s_type = "LandUse"
 
             # Add national for this sub-type
             add_result(
@@ -704,7 +804,13 @@ def main():
     strat_data = load_stratification_data(project_root, config)
 
     subtracted_files = list(input_dir.glob("*.csv"))
-    all_results = {"RUCC": [], "Climate": [], "Cluster": []}
+    all_results = {
+        "RUCC": [],
+        "Climate": [],
+        "Cluster": [],
+        "Typology": [],
+        "LandUse": [],
+    }
 
     for file_path in sorted(subtracted_files):
         file_results = process_file(file_path, strat_data, config)
@@ -719,6 +825,18 @@ def main():
             df = df.sort_values(
                 ["Time_Period", "ICD-10 Code", "Stratum_Type", "Stratum_Value"]
             )
+
+            # Apply stratification labels
+            df = apply_stratification_labels(df, config)
+
+            # Reorder columns to put Stratum_Label after Stratum_Value
+            cols = df.columns.tolist()
+            if "Stratum_Label" in cols:
+                cols.remove("Stratum_Label")
+                value_idx = cols.index("Stratum_Value")
+                cols.insert(value_idx + 1, "Stratum_Label")
+                df = df[cols]
+
             output_path = output_dir / f"Stratified_AAMR_{strat_type}.csv"
             df.to_csv(output_path, index=False)
             print(f"Saved {strat_type} stratified AAMR to {output_path}")

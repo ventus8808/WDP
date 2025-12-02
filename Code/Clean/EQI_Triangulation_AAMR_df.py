@@ -27,7 +27,7 @@ TRIANGULATION_AAMR_DIR = PROJECT_ROOT / "Data/Original/CDC Triangulation/AAMR"
 
 # Output: merged long table
 OUTPUT_DIR = PROJECT_ROOT / "Data/Processed/df_EQI_AAMR_Triangulation"
-OUTPUT_FILE = OUTPUT_DIR / "EQI_AAMR_Cluster_Climate.csv"
+OUTPUT_FILE = OUTPUT_DIR / "EQI_AAMR_Cluster_Climate_Typology_LandUse.csv"
 
 # EQI data
 EQI_DIR = PROJECT_ROOT / CFG["data_sources"]["epa_eqi"]["processed"]
@@ -47,6 +47,19 @@ CLUSTER_K_VALUES = [3, 4, 5]
 # Climate zone data
 CLIMATE_PATH = (
     PROJECT_ROOT / CFG["eqi_aamr_outputs"]["base_dir"] / "Climate_Zone_Processed.csv"
+)
+
+# Typology data (USDA ERS County Economic Typology 2004)
+TYPOLOGY_PATH = (
+    PROJECT_ROOT
+    / CFG["data_directories"]["processed"]
+    / "Socioeconomic"
+    / "County_Typology_2004.csv"
+)
+
+# LandUse cluster data (NLCD/JRC clusters)
+LANDUSE_PATH = (
+    PROJECT_ROOT / "Result/Cluster_Visualization_LandUse/LandUse_Clusters_All_K.csv"
 )
 
 # EQI columns to merge
@@ -71,6 +84,12 @@ CLUSTER_COLS = [f"cluster_{k}" for k in CLUSTER_K_VALUES]
 
 # Climate columns to merge
 CLIMATE_COLS = ["census_region", "koppen_major", "doe_major"]
+
+# Typology columns to merge
+TYPOLOGY_COLS = ["econdep"]
+
+# LandUse columns to merge (k=4 from NLCD/JRC analysis)
+LANDUSE_COLS = ["cluster_4"]
 
 
 # ---------------- Helpers ----------------
@@ -185,6 +204,43 @@ def _load_climate() -> pd.DataFrame | None:
     return None
 
 
+def _load_typology() -> pd.DataFrame | None:
+    """Load county economic typology data"""
+    if TYPOLOGY_PATH.exists():
+        df = pd.read_csv(TYPOLOGY_PATH, dtype={"COUNTY_FIPS": str})
+        if "COUNTY_FIPS" in df.columns:
+            # Select only COUNTY_FIPS and typology columns
+            cols = ["COUNTY_FIPS"] + [c for c in TYPOLOGY_COLS if c in df.columns]
+            df = df[cols].copy()
+            df["COUNTY_FIPS"] = df["COUNTY_FIPS"].astype(str).str.zfill(5)
+            return df
+        else:
+            print(f"  ⚠️ Typology data missing COUNTY_FIPS column")
+    else:
+        print(f"  ⚠️ Typology data not found at {TYPOLOGY_PATH}")
+    return None
+
+
+def _load_landuse() -> pd.DataFrame | None:
+    """Load land use cluster data"""
+    if LANDUSE_PATH.exists():
+        df = pd.read_csv(LANDUSE_PATH, dtype={"COUNTY_FIPS": str})
+        if "COUNTY_FIPS" in df.columns:
+            # Select only COUNTY_FIPS and landuse columns
+            cols = ["COUNTY_FIPS"] + [c for c in LANDUSE_COLS if c in df.columns]
+            df = df[cols].copy()
+            df["COUNTY_FIPS"] = df["COUNTY_FIPS"].astype(str).str.zfill(5)
+            # Rename cluster_4 to landuse_cluster to avoid confusion with EQI cluster_4
+            if "cluster_4" in df.columns:
+                df = df.rename(columns={"cluster_4": "landuse_cluster"})
+            return df
+        else:
+            print(f"  ⚠️ LandUse data missing COUNTY_FIPS column")
+    else:
+        print(f"  ⚠️ LandUse data not found at {LANDUSE_PATH}")
+    return None
+
+
 def _get_valid_lag_combinations(time_period: str) -> list[tuple[int, str, str]]:
     """
     Get valid (lag_years, eqi_code, eqi_period) combinations for a given AAMR time period.
@@ -223,6 +279,8 @@ def _process_aamr_file(
     smoking_df: pd.DataFrame | None,
     cluster_df: pd.DataFrame | None,
     climate_df: pd.DataFrame | None,
+    typology_df: pd.DataFrame | None,
+    landuse_df: pd.DataFrame | None,
 ) -> list[pd.DataFrame]:
     """
     Process one AAMR file and create rows for all valid lag combinations.
@@ -296,6 +354,19 @@ def _process_aamr_file(
             for c in CLIMATE_COLS:
                 out[c] = pd.NA
 
+        # Merge Typology data
+        if typology_df is not None:
+            out = out.merge(typology_df, on="COUNTY_FIPS", how="left")
+        else:
+            for c in TYPOLOGY_COLS:
+                out[c] = pd.NA
+
+        # Merge LandUse data
+        if landuse_df is not None:
+            out = out.merge(landuse_df, on="COUNTY_FIPS", how="left")
+        else:
+            out["landuse_cluster"] = pd.NA
+
         result_dfs.append(out)
 
     print(
@@ -329,12 +400,14 @@ def main():
 
     print(f"\nFound {len(aamr_files)} AAMR files")
 
-    # Load EQI, Smoking, Cluster, and Climate data
-    print("\n📊 Loading EQI, Smoking, Cluster, and Climate data...")
+    # Load EQI, Smoking, Cluster, Climate, Typology, and LandUse data
+    print("\n📊 Loading EQI, Smoking, Cluster, Climate, Typology, and LandUse data...")
     eqi_dict = _load_eqi_by_period()
     smoking_df = _load_smoking()
     cluster_df = _load_clusters()
     climate_df = _load_climate()
+    typology_df = _load_typology()
+    landuse_df = _load_landuse()
 
     if not eqi_dict:
         print("⚠️ No EQI data loaded. Continuing without EQI covariates.")
@@ -347,6 +420,12 @@ def main():
 
     if climate_df is None:
         print("⚠️ No climate data loaded. Continuing without climate zones.")
+
+    if typology_df is None:
+        print("⚠️ No typology data loaded. Continuing without county typology.")
+
+    if landuse_df is None:
+        print("⚠️ No land use data loaded. Continuing without land use clusters.")
 
     # Process all AAMR files
     print("\n" + "=" * 70)
@@ -371,6 +450,8 @@ def main():
             smoking_df,
             cluster_df,
             climate_df,
+            typology_df,
+            landuse_df,
         )
 
         all_rows.extend(result_dfs)
@@ -398,6 +479,8 @@ def main():
             + EQI_COLS
             + CLUSTER_COLS
             + CLIMATE_COLS
+            + TYPOLOGY_COLS
+            + ["landuse_cluster"]
         )
         empty_df.to_csv(OUTPUT_FILE, index=False)
         print(f"💾 Wrote empty skeleton to {OUTPUT_FILE}")
@@ -426,6 +509,8 @@ def main():
         + [c for c in EQI_COLS if c in final.columns]
         + [c for c in CLUSTER_COLS if c in final.columns]
         + [c for c in CLIMATE_COLS if c in final.columns]
+        + [c for c in TYPOLOGY_COLS if c in final.columns]
+        + ["landuse_cluster"]
     )
     final = final[ordered]
 
@@ -445,6 +530,17 @@ def main():
     for c in numeric_climate_cols:
         if c in final.columns:
             final[c] = pd.to_numeric(final[c], errors="coerce").astype("Int64")
+
+    # Cast typology columns to nullable int
+    for c in TYPOLOGY_COLS:
+        if c in final.columns:
+            final[c] = pd.to_numeric(final[c], errors="coerce").astype("Int64")
+
+    # Cast landuse_cluster to nullable int
+    if "landuse_cluster" in final.columns:
+        final["landuse_cluster"] = pd.to_numeric(
+            final["landuse_cluster"], errors="coerce"
+        ).astype("Int64")
 
     # Ensure integer types for Deaths and Population
     if "Deaths" in final.columns:

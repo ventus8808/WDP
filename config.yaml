@@ -182,6 +182,43 @@ eqi_aamr_outputs:
   eqi_aamr_point: "EQI_AAMR_Point.csv"
   eqi_aamr_interval: "EQI_AAMR_Interval.csv"
 
+# Stratification label mappings
+stratification_labels:
+  # County Economic Typology (USDA ERS 2004)
+  typology:
+    "1": "Farming"
+    "2": "Mining"
+    "3": "Manufacturing"
+    "4": "Government"
+    "5": "Services"
+    "6": "Nonspecialized"
+
+  # Land Use Cluster (NLCD/JRC k=4)
+  landuse:
+    "0": "Natural"
+    "1": "Water-Sensitive"
+    "2": "Agricultural"
+    "3": "Urban"
+
+  # EQI Cluster mappings (k=3, k=4, k=5)
+  cluster_k3:
+    "0": "Low EQI"
+    "1": "Medium EQI"
+    "2": "High EQI"
+
+  cluster_k4:
+    "0": "Very Low EQI"
+    "1": "Low EQI"
+    "2": "Medium EQI"
+    "3": "High EQI"
+
+  cluster_k5:
+    "0": "Very Low EQI"
+    "1": "Low EQI"
+    "2": "Medium EQI"
+    "3": "High EQI"
+    "4": "Very High EQI"
+
 # PyMC分析配置
 pymc_analysis:
   # 核心数据文件路径
