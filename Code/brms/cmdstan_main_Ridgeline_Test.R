@@ -15,7 +15,7 @@ utils::globalVariables(c('EQI','Smoking_Rate','State_FIPS','RUCC'))
 # ============================================================================
 # Configuration (hardcoded for test)
 # ============================================================================
-CANCER_TYPE <- "C00-C97"
+CANCER_TYPE <- "C00_C97"
 EQI_PERIOD <- "2000-2005"
 AAMR_PERIOD <- "2006-2010"
 LAG <- 5
@@ -364,7 +364,7 @@ if (!dir.exists(out_dir)) {
   message("Created output directory: ", out_dir)
 }
 
-out_file <- file.path(out_dir, "C00-C97_Ridge_Test.rds")
+out_file <- file.path(out_dir, "C00_C97_Ridge_Test.rds")
 saveRDS(ridge_data, out_file)
 
 message("========================================")

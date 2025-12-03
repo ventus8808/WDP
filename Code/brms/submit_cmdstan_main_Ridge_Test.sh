@@ -4,14 +4,14 @@
 # Extracts full MCMC posterior draws for ridgeline visualization
 
 #SBATCH --partition=kshctest
-#SBATCH --job-name=Ridge_Test_C00-C97
+#SBATCH --job-name=Ridge_Test_C00_C97
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
-#SBATCH --output=Result/log/Ridge_Test_C00-C97_%j.out
-#SBATCH --error=Result/log/Ridge_Test_C00-C97_%j.err
+#SBATCH --output=Ridge_Test_C00-C97_%j.out
+#SBATCH --error=Ridge_Test_C00-C97_%j.err</parameter>
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -34,11 +34,18 @@ fi
 cd "$PROJECT_ROOT"
 log INFO "项目根目录: $PROJECT_ROOT"
 
-# Ensure log directory exists
+# Ensure output directories exist
 LOG_DIR="$PROJECT_ROOT/Result/log"
+RIDGE_DIR="$PROJECT_ROOT/Result/Ridgeline"
+
 if [ ! -d "$LOG_DIR" ]; then
   mkdir -p "$LOG_DIR"
   log INFO "创建日志目录: $LOG_DIR"
+fi
+
+if [ ! -d "$RIDGE_DIR" ]; then
+  mkdir -p "$RIDGE_DIR"
+  log INFO "创建输出目录: $RIDGE_DIR"
 fi
 
 # --- Activate conda environment (default: brms; override via ENV_NAME) ---
@@ -73,7 +80,7 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 log INFO "========================================="
 log INFO "Ridgeline Test: Posterior Extraction"
 log INFO "========================================="
-log INFO "Cancer:     C00-C97"
+log INFO "Cancer:     C00_C97"
 log INFO "Lag:        5 (2000-2005 EQI → 2006-2010 AAMR)"
 log INFO "Model:      Overall EQI only"
 log INFO "Iterations: 800 (warmup: 400)"
@@ -98,10 +105,10 @@ if [ $EXIT_CODE -eq 0 ]; then
   log INFO "========================================="
   log INFO "✅ Ridgeline Test 完成"
   log INFO "========================================="
-  log INFO "输出文件: Result/Ridgeline/C00-C97_Ridge_Test.rds"
+  log INFO "输出文件: Result/Ridgeline/C00_C97_Ridge_Test.rds"
   log INFO ""
   log INFO "后续步骤:"
-  log INFO "  1. 加载数据: data <- readRDS('Result/Ridgeline/C00-C97_Ridge_Test.rds')"
+  log INFO "  1. 加载数据: data <- readRDS('Result/Ridgeline/C00_C97_Ridge_Test.rds')"
   log INFO "  2. 查看摘要: print(data\$summary)"
   log INFO "  3. 绘制山脊图:"
   log INFO "     library(ggridges)"
