@@ -10,8 +10,9 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
-#SBATCH --output=Ridge_Test_C00-C97_%j.out
-#SBATCH --error=Ridge_Test_C00-C97_%j.err</parameter>
+#SBATCH --output=Ridge_Test_C00_C97_%j.out
+#SBATCH --error=Ridge_Test_C00_C97_%j.err
+</parameter>
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -94,6 +95,43 @@ RUNNER="Code/brms/cmdstan_main_Ridgeline_Test.R"
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
 fi
+
+# Pre-flight checks
+log INFO "执行前置检查..."
+
+# Check data file
+DATA_FILE="Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv"
+if [ ! -f "$DATA_FILE" ]; then
+  log ERROR "数据文件不存在: $DATA_FILE"; exit 1
+fi
+log INFO "✓ 数据文件存在: $DATA_FILE"
+
+# Check R packages
+log INFO "检查R包..."
+Rscript -e "library(data.table); library(dplyr); library(cmdstanr); library(posterior)" 2>&1 | head -20
+PKG_CHECK=$?
+if [ $PKG_CHECK -ne 0 ]; then
+  log ERROR "R包加载失败，请检查brms环境"; exit 1
+fi
+log INFO "✓ R包检查通过"
+
+# Quick data check
+log INFO "快速数据检查..."
+Rscript -e "
+  suppressPackageStartupMessages(library(data.table))
+  dt <- fread('$DATA_FILE')
+  test_dt <- dt[Cancer_Type == 'C00_C97' & EQI_Period == '2000-2005' & Time_Period == '2006-2010']
+  cat('C00_C97 数据行数:', nrow(test_dt), '\n')
+  if(nrow(test_dt) < 50) stop('数据不足')
+  cat('✓ 数据检查通过\n')
+"
+DATA_CHECK=$?
+if [ $DATA_CHECK -ne 0 ]; then
+  log ERROR "数据检查失败"; exit 1
+fi
+
+log INFO "前置检查完成，开始执行主脚本..."
+log INFO "========================================="
 
 # Run the ridgeline test script
 log INFO "开始执行 Ridgeline Test..."

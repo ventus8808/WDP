@@ -50,10 +50,10 @@ cancers <- sort(unique(dt$Cancer_Type))
 print(cancers)
 cat("\n")
 
-if ("C00-C97" %in% cancers) {
-  cat("✓ C00-C97 found in data\n\n")
+if ("C00_C97" %in% cancers) {
+  cat("✓ C00_C97 found in data\n\n")
 } else {
-  cat("⚠️  C00-C97 NOT found in data\n\n")
+  cat("⚠️  C00_C97 NOT found in data\n\n")
 }
 
 # Check EQI periods
@@ -69,8 +69,8 @@ print(aamr_periods)
 cat("\n")
 
 # Check specific scenario
-cat("Checking scenario: C00-C97, 2000-2005 EQI, 2006-2010 AAMR\n")
-test_dt <- dt[Cancer_Type == "C00-C97" &
+cat("Checking scenario: C00_C97, 2000-2005 EQI, 2006-2010 AAMR\n")
+test_dt <- dt[Cancer_Type == "C00_C97" &
               EQI_Period == "2000-2005" &
               Time_Period == "2006-2010"]
 
