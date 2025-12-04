@@ -1,0 +1,144 @@
+=========================================
+Ridgeline Test - Simple Submit
+Job ID: 102949775
+Node: a13r3n07
+Start time: Wed Dec  3 22:22:31 CST 2025
+=========================================
+Project root: /public/home/acf4pijnzl/WDP
+Created output directories
+Activating conda environment: brms
+Conda environment: brms
+
+Environment variables:
+  OMP_NUM_THREADS=16
+  MKL_NUM_THREADS=16
+
+Script: Code/brms/cmdstan_main_Ridgeline_Test.R
+Data: Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv
+
+=========================================
+Starting Ridgeline extraction...
+=========================================
+
+[1] "EQI"          "Smoking_Rate" "State_FIPS"   "RUCC"        
+========================================
+Ridgeline Test: Posterior Extraction
+========================================
+Cancer Type: C00_C97
+EQI Period:  2000-2005
+AAMR Period: 2006-2010
+Lag:         5
+Iterations:  800 (warmup: 400)
+Chains:      4
+Cores used:  25 / 32
+========================================
+Compiling Stan model...
+✓ Model compiled
+Loading data: EQI_AAMR_Cluster_Climate.csv
+Filtered data:
+  Total rows: 3107
+  Counties:   3107
+  States:     51
+Building design matrix...
+Design matrix:
+  Rows:    3106
+  Columns: 6
+  Names:   X.Intercept., Smoking_Rate, EQI_factor2, EQI_factor3, EQI_factor4, EQI_factor5
+Starting MCMC sampling...
+  This may take several minutes...
+Running MCMC with 4 parallel chains...
+
+Chain 1 Iteration:   1 / 800 [  0%]  (Warmup) 
+Chain 2 Iteration:   1 / 800 [  0%]  (Warmup) 
+Chain 3 Iteration:   1 / 800 [  0%]  (Warmup) 
+Chain 4 Iteration:   1 / 800 [  0%]  (Warmup) 
+Chain 1 Iteration: 100 / 800 [ 12%]  (Warmup) 
+Chain 3 Iteration: 100 / 800 [ 12%]  (Warmup) 
+Chain 1 Iteration: 200 / 800 [ 25%]  (Warmup) 
+Chain 3 Iteration: 200 / 800 [ 25%]  (Warmup) 
+Chain 1 Iteration: 300 / 800 [ 37%]  (Warmup) 
+Chain 3 Iteration: 300 / 800 [ 37%]  (Warmup) 
+Chain 1 Iteration: 400 / 800 [ 50%]  (Warmup) 
+Chain 1 Iteration: 401 / 800 [ 50%]  (Sampling) 
+Chain 3 Iteration: 400 / 800 [ 50%]  (Warmup) 
+Chain 3 Iteration: 401 / 800 [ 50%]  (Sampling) 
+Chain 1 Iteration: 500 / 800 [ 62%]  (Sampling) 
+Chain 4 Iteration: 100 / 800 [ 12%]  (Warmup) 
+Chain 2 Iteration: 100 / 800 [ 12%]  (Warmup) 
+Chain 3 Iteration: 500 / 800 [ 62%]  (Sampling) 
+Chain 1 Iteration: 600 / 800 [ 75%]  (Sampling) 
+Chain 4 Iteration: 200 / 800 [ 25%]  (Warmup) 
+Chain 3 Iteration: 600 / 800 [ 75%]  (Sampling) 
+Chain 1 Iteration: 700 / 800 [ 87%]  (Sampling) 
+Chain 4 Iteration: 300 / 800 [ 37%]  (Warmup) 
+Chain 2 Iteration: 200 / 800 [ 25%]  (Warmup) 
+Chain 3 Iteration: 700 / 800 [ 87%]  (Sampling) 
+Chain 1 Iteration: 800 / 800 [100%]  (Sampling) 
+Chain 1 finished in 151.4 seconds.
+Chain 4 Iteration: 400 / 800 [ 50%]  (Warmup) 
+Chain 4 Iteration: 401 / 800 [ 50%]  (Sampling) 
+Chain 2 Iteration: 300 / 800 [ 37%]  (Warmup) 
+Chain 3 Iteration: 800 / 800 [100%]  (Sampling) 
+Chain 3 finished in 161.8 seconds.
+Chain 4 Iteration: 500 / 800 [ 62%]  (Sampling) 
+Chain 2 Iteration: 400 / 800 [ 50%]  (Warmup) 
+Chain 2 Iteration: 401 / 800 [ 50%]  (Sampling) 
+Chain 4 Iteration: 600 / 800 [ 75%]  (Sampling) 
+Chain 2 Iteration: 500 / 800 [ 62%]  (Sampling) 
+Chain 4 Iteration: 700 / 800 [ 87%]  (Sampling) 
+Chain 2 Iteration: 600 / 800 [ 75%]  (Sampling) 
+Chain 4 Iteration: 800 / 800 [100%]  (Sampling) 
+Chain 4 finished in 200.3 seconds.
+Chain 2 Iteration: 700 / 800 [ 87%]  (Sampling) 
+Chain 2 Iteration: 800 / 800 [100%]  (Sampling) 
+Chain 2 finished in 214.5 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 182.0 seconds.
+Total execution time: 214.7 seconds.
+
+✓ Sampling complete
+Extracting posterior draws...
+Beta parameter mapping:
+  beta_col   param_name
+1  beta[1] X.Intercept.
+2  beta[2] Smoking_Rate
+3  beta[3]  EQI_factor2
+4  beta[4]  EQI_factor3
+5  beta[5]  EQI_factor4
+6  beta[6]  EQI_factor5
+Extracted 1600 draws per quintile
+Computing summary statistics...
+Summary statistics:
+  quintile      mean       sd     q025      q975     rhat  ess_bulk ess_tail
+1       Q2  4.859262 1.193883 2.857312  6.729541 1.007414 1124.8763 1227.810
+2       Q3  5.316966 1.204984 3.387175  7.285830 1.003492 1070.6862 1069.233
+3       Q4  6.554478 1.199008 4.645220  8.435361 1.005279  889.0844 1116.769
+4       Q5 11.220906 1.238369 9.224179 13.178194 1.006388  676.3973 1260.202
+Preparing output data structure...
+========================================
+✓ SUCCESS
+========================================
+Output saved to: /public/home/acf4pijnzl/WDP/Result/Ridgeline/C00_C97_Ridge_Test.rds
+File size: 0.10 MB
+
+To load and plot:
+  data <- readRDS('/public/home/acf4pijnzl/WDP/Result/Ridgeline/C00_C97_Ridge_Test.rds')
+  library(ggridges)
+  ggplot(data$draws_long, aes(x=effect, y=quintile, fill=quintile)) +
+    geom_density_ridges(alpha=0.7)
+========================================
+
+=========================================
+SUCCESS!
+=========================================
+Output: Result/Ridgeline/C00_C97_Ridge_Test.rds
+File size: 0
+
+Next steps:
+  data <- readRDS('Result/Ridgeline/C00_C97_Ridge_Test.rds')
+  library(ggridges)
+  ggplot(data$draws_long, aes(x=effect, y=quintile, fill=quintile)) +
+    geom_density_ridges(alpha=0.7)
+=========================================
+End time: Wed Dec  3 22:28:05 CST 2025
