@@ -6,8 +6,8 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
-#SBATCH --output=Ridge_Test_C00_C97_%j.out
-#SBATCH --error=Ridge_Test_C00_C97_%j.err
+#SBATCH --output=ridge_test_%j.out
+#SBATCH --error=ridge_test_%j.err
 
 set -e
 
@@ -26,10 +26,9 @@ fi
 PROJECT_ROOT=$(pwd)
 echo "Project root: $PROJECT_ROOT"
 
-# Create output directories
-mkdir -p Result/log
+# Create output directory
 mkdir -p Result/Ridgeline
-echo "Created output directories"
+echo "Created output directory: Result/Ridgeline"
 
 # Activate conda
 ENV_NAME="brms"
@@ -88,9 +87,9 @@ echo "========================================="
 echo ""
 
 # Run the script
-Rscript "$SCRIPT" 2>&1 | tee "Result/log/Ridge_Test_${SLURM_JOB_ID}.log"
+Rscript "$SCRIPT"
 
-EXIT_CODE=${PIPESTATUS[0]}
+EXIT_CODE=$?
 
 echo ""
 echo "========================================="
@@ -112,7 +111,7 @@ if [ $EXIT_CODE -eq 0 ]; then
   echo "    geom_density_ridges(alpha=0.7)"
 else
   echo "FAILED (exit code: $EXIT_CODE)"
-  echo "Check log: Result/log/Ridge_Test_${SLURM_JOB_ID}.log"
+  echo "Check log: ridge_test_${SLURM_JOB_ID}.err"
 fi
 echo "========================================="
 echo "End time: $(date)"

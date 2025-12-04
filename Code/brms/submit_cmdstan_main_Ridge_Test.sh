@@ -10,8 +10,8 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
-#SBATCH --output=Ridge_Test_C00_C97_%j.out
-#SBATCH --error=Ridge_Test_C00_C97_%j.err
+#SBATCH --output=ridge_test_%j.out
+#SBATCH --error=ridge_test_%j.err
 </parameter>
 
 set -eo pipefail
@@ -35,14 +35,8 @@ fi
 cd "$PROJECT_ROOT"
 log INFO "项目根目录: $PROJECT_ROOT"
 
-# Ensure output directories exist
-LOG_DIR="$PROJECT_ROOT/Result/log"
+# Ensure output directory exists
 RIDGE_DIR="$PROJECT_ROOT/Result/Ridgeline"
-
-if [ ! -d "$LOG_DIR" ]; then
-  mkdir -p "$LOG_DIR"
-  log INFO "创建日志目录: $LOG_DIR"
-fi
 
 if [ ! -d "$RIDGE_DIR" ]; then
   mkdir -p "$RIDGE_DIR"
