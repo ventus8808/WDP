@@ -1,0 +1,103 @@
+========================================
+Ridgeline Production Run
+========================================
+Cancer Type:  C00_C97
+EQI Period:   2000-2005
+AAMR Period:  2006-2010
+Lag:          5
+Model:        OVERALL
+Iterations:   2000 (warmup: 1000)
+Chains:       4
+Cores used:   25 / 32
+Seed:         1235
+========================================
+Compiling Stan model...
+✓ Model compiled
+Loading data: EQI_AAMR_Cluster_Climate.csv
+Filtered data:
+  Total rows: 3107
+  Counties:   3107
+  States:     51
+Building design matrix for OVERALL model...
+Design matrix (Overall):
+  Rows:    3106
+  Columns: 6
+  Names:   X.Intercept., Smoking_Rate, EQI_factor2, EQI_factor3, EQI_factor4, EQI_factor5
+Starting MCMC sampling...
+  This may take 10-30 minutes depending on data size...
+✓ Sampling complete
+Extracting posterior draws...
+Beta parameter mapping:
+Computing summary statistics...
+Extracted 4000 draws per quintile (Overall EQI)
+Summary statistics (Overall EQI):
+Preparing output...
+========================================
+✓ SUCCESS
+========================================
+Output saved to: /public/home/acf4pijnzl/WDP/Result/Ridgeline/C00_C97_2000_2005_2006_2010_Lag5_Overall.rds
+File size: 0.23 MB
+
+Convergence diagnostics:
+  Max R-hat:       1.0006
+  Min ESS (bulk):  1526
+
+To load and plot:
+  data <- readRDS('C00_C97_2000_2005_2006_2010_Lag5_Overall.rds')
+  # For Overall model:
+  library(ggridges)
+  ggplot(data$draws_long, aes(x=effect, y=quintile, fill=quintile)) +
+    geom_density_ridges(alpha=0.7)
+========================================
+========================================
+Ridgeline Production Run
+========================================
+Cancer Type:  C00_C97
+EQI Period:   2000-2005
+AAMR Period:  2006-2010
+Lag:          5
+Model:        MULTI
+Iterations:   2000 (warmup: 1000)
+Chains:       4
+Cores used:   25 / 32
+Seed:         1235
+========================================
+Compiling Stan model...
+✓ Model compiled
+Loading data: EQI_AAMR_Cluster_Climate.csv
+Filtered data:
+  Total rows: 3107
+  Counties:   3107
+  States:     51
+Building design matrix for MULTI model...
+Design matrix (Multi-domain):
+  Rows:    3106
+  Columns: 22
+  Domains: Air, Water, Land, Built, Social (Q2-Q5 each)
+Starting MCMC sampling...
+  This may take 10-30 minutes depending on data size...
+✓ Sampling complete
+Extracting posterior draws...
+Beta parameter mapping:
+Computing summary statistics...
+Extracted 4000 draws per quintile per domain (5 domains)
+Summary statistics (Multi-domain):
+Preparing output...
+========================================
+✓ SUCCESS
+========================================
+Output saved to: /public/home/acf4pijnzl/WDP/Result/Ridgeline/C00_C97_2000_2005_2006_2010_Lag5_MultiDomain.rds
+File size: 1.35 MB
+
+Convergence diagnostics:
+  Max R-hat:       1.0014
+  Min ESS (bulk):  1631
+
+To load and plot:
+  data <- readRDS('C00_C97_2000_2005_2006_2010_Lag5_MultiDomain.rds')
+  # For Multi-domain model:
+  library(ggridges)
+  ggplot(data$draws_long, aes(x=effect, y=quintile, fill=domain)) +
+    geom_density_ridges(alpha=0.7) +
+    facet_wrap(~domain)
+========================================
