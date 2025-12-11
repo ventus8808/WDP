@@ -1,0 +1,84 @@
+name: wdp
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Python (base)
+  - python=3.11
+
+  # Core data science packages (Python)
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+
+  # Geospatial packages (Python)
+  - geopandas
+  - shapely
+  - fiona
+  - pyproj
+  - rasterio
+
+  # Visualization (Python)
+  - matplotlib
+  - seaborn
+  - plotly
+
+  # Configuration & utilities (Python)
+  - pyyaml
+  - requests
+  - tqdm
+
+  # Statistical & ML packages (Python)
+  - statsmodels
+  - xarray
+
+  # Jupyter environment
+  - jupyter
+  - jupyterlab
+  - ipykernel
+
+  # R base and essentials
+  - r-base>=4.3
+  - r-essentials
+
+  # R data manipulation & tidyverse
+  - r-dplyr
+  - r-tidyr
+  - r-readr
+  - r-tibble
+  - r-stringr
+  - r-purrr
+  - r-data.table
+
+  # R visualization
+  - r-ggplot2
+  - r-ggridges
+  - r-scales
+  - r-viridis
+  - r-viridislite
+  - r-gridextra
+
+  # R Bayesian & statistical modeling
+  - r-cmdstanr
+  - r-posterior
+  - r-bayesplot
+  - r-loo
+  - r-brms
+
+  # CmdStan (for cmdstanr backend)
+  - cmdstan
+
+  # R utilities
+  - r-yaml
+  - r-here
+  - r-glue
+
+  # Development tools
+  - git
+  - make
+
+  # Optional: INLA (if available via conda)
+  # Note: INLA may need to be installed separately via R
+  # install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
