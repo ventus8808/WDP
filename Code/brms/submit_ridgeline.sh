@@ -1,69 +1,88 @@
 #!/bin/bash
+# Slurm array launcher for ridgeline posterior extraction (C00_C97 only)
+# Each task runs one lag scenario (5, 10, or 15 years) with both Overall and Multi-domain models
+# Usage:
+#   sbatch --array=1-3 Code/brms/submit_ridgeline.sh
+
 #SBATCH --partition=kshctest
-#SBATCH --job-name=main_ridgeline
+#SBATCH --job-name=WDP_ridgeline
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=1-00:00:00
-#SBATCH --output=main_ridgeline_%A_%a.out
-#SBATCH --error=main_ridgeline_%A_%a.err
+#SBATCH --output=ridgeline_%A_%a.out
+#SBATCH --error=ridgeline_%A_%a.err
 
-# SLURM array job for ridgeline posterior extraction
-# Array tasks: 3 jobs (one per lag year, each runs 2 models)
-#
-# Task mapping:
-#   1 → Lag5  (runs Overall + MultiDomain)
-#   2 → Lag10 (runs Overall + MultiDomain)
-#   3 → Lag15 (runs Overall + MultiDomain)
-#
-# Usage: sbatch submit_ridgeline.sh
+set -eo pipefail
+log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
-set -e
+# --- Locate project root (expects config.yaml there) ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_ROOT=""
+if [ -f "${SCRIPT_DIR}/../../config.yaml" ]; then
+  PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd -P)"
+elif [ -n "${SLURM_SUBMIT_DIR-}" ] && [ -f "${SLURM_SUBMIT_DIR}/config.yaml" ]; then
+  PROJECT_ROOT="$SLURM_SUBMIT_DIR"
+else
+  # Fallback to cwd if it contains config.yaml
+  if [ -f "config.yaml" ]; then PROJECT_ROOT="$(pwd -P)"; fi
+fi
 
-PROJECT_ROOT="${PROJECT_ROOT:-/home/$USER/WDP}"
+if [ -z "$PROJECT_ROOT" ] || [ ! -f "$PROJECT_ROOT/config.yaml" ]; then
+  log ERROR "无法确定项目根目录 (找不到 config.yaml)"; exit 1
+fi
 cd "$PROJECT_ROOT"
+log INFO "项目根目录: $PROJECT_ROOT"
 
-mkdir -p logs
+# --- Activate conda environment (default: brms; override via ENV_NAME) ---
+ENV_NAME="${ENV_NAME:-brms}"
+set +u
+if [ -z "${CONDA_DEFAULT_ENV-}" ] || [ "${CONDA_DEFAULT_ENV}" != "$ENV_NAME" ]; then
+  if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+    # shellcheck disable=SC1091
+    source "$HOME/miniconda3/etc/profile.d/conda.sh"
+  elif [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]; then
+    # shellcheck disable=SC1091
+    source "/opt/anaconda3/etc/profile.d/conda.sh"
+  else
+    log ERROR "找不到conda初始化脚本"; exit 1
+  fi
+  conda activate "$ENV_NAME" || { log ERROR "激活conda环境失败: $ENV_NAME"; exit 1; }
+fi
+set -u
 
-RSCRIPT="Code/brms/cmdstan_main_ridgeline.R"
+# Load devtoolset for newer g++ on CentOS
+module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
 
-if [ ! -f "$RSCRIPT" ]; then
-    echo "ERROR: R script not found: $RSCRIPT"
-    exit 1
+# Set environment variables for CmdStan
+export TBB_CXX_TYPE=gcc
+
+RUNNER="Code/brms/cmdstan_main_ridgeline.R"
+
+if [ ! -f "$RUNNER" ]; then
+  log ERROR "找不到R脚本: $RUNNER"; exit 1
 fi
 
-# Load R environment
-if [ -f "$HOME/miniforge3/etc/profile.d/conda.sh" ]; then
-    source "$HOME/miniforge3/etc/profile.d/conda.sh"
-    conda activate wdp
-elif [ -f "$HOME/mambaforge/etc/profile.d/mamba.sh" ]; then
-    source "$HOME/mambaforge/etc/profile.d/mamba.sh"
-    mamba activate wdp
-fi
-
+# --- Map array task ID to scenario ---
 TASK_ID=${SLURM_ARRAY_TASK_ID}
-SCENARIO=$TASK_ID
-
 case $TASK_ID in
-    1) DESC="Lag5" ;;
-    2) DESC="Lag10" ;;
-    3) DESC="Lag15" ;;
-    *)
-        echo "ERROR: Invalid SLURM_ARRAY_TASK_ID: $TASK_ID"
-        exit 1
-        ;;
+  1) SCENARIO=1; DESC="Lag5" ;;
+  2) SCENARIO=2; DESC="Lag10" ;;
+  3) SCENARIO=3; DESC="Lag15" ;;
+  *)
+    log ERROR "无效的 SLURM_ARRAY_TASK_ID: $TASK_ID (应为 1-3)"; exit 1
+    ;;
 esac
 
-echo "========================================"
-echo "Ridgeline Production - $DESC"
-echo "========================================"
-echo "Job ID:    $SLURM_JOB_ID"
-echo "Task:      $TASK_ID / 3"
-echo "Scenario:  $SCENARIO"
-echo "Node:      $SLURMD_NODENAME"
-echo "Started:   $(date)"
-echo "========================================"
+log INFO "开始处理任务 $TASK_ID: $DESC"
+
+# Limit threading to allocation to be polite on shared nodes
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
+export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
+
+# Use a different seed per task for better chain jitter
+SEED=$((1234 + TASK_ID))
 
 CANCER="C00_C97"
 CHAINS=4
@@ -71,56 +90,41 @@ ITER=2000
 WARMUP=1000
 ADAPT_DELTA=0.95
 MAX_TREEDEPTH=12
-SEED=1234
 
-# Run Overall model
-echo ""
-echo "Running Overall EQI model..."
-Rscript "$RSCRIPT" \
-    --scenario "$SCENARIO" \
-    --model "overall" \
-    --cancer "$CANCER" \
-    --chains "$CHAINS" \
-    --iter "$ITER" \
-    --warmup "$WARMUP" \
-    --adapt-delta "$ADAPT_DELTA" \
-    --max-treedepth "$MAX_TREEDEPTH" \
-    --seed "$SEED"
+# --- Run Overall model ---
+log INFO "运行 Overall EQI 模型 (Scenario=$SCENARIO)"
+Rscript "$RUNNER" \
+  --scenario "$SCENARIO" \
+  --model "overall" \
+  --cancer "$CANCER" \
+  --chains "$CHAINS" \
+  --iter "$ITER" \
+  --warmup "$WARMUP" \
+  --adapt-delta "$ADAPT_DELTA" \
+  --max-treedepth "$MAX_TREEDEPTH" \
+  --seed "$SEED"
 
-EXIT1=$?
-
-if [ $EXIT1 -ne 0 ]; then
-    echo "ERROR: Overall model failed"
-    exit $EXIT1
+if [ $? -ne 0 ]; then
+  log ERROR "Overall 模型失败 (Scenario=$SCENARIO)"; exit 1
 fi
+log INFO "✓ Overall 模型完成"
 
-# Run Multi-domain model
-echo ""
-echo "Running Multi-domain model..."
-Rscript "$RSCRIPT" \
-    --scenario "$SCENARIO" \
-    --model "multi" \
-    --cancer "$CANCER" \
-    --chains "$CHAINS" \
-    --iter "$ITER" \
-    --warmup "$WARMUP" \
-    --adapt-delta "$ADAPT_DELTA" \
-    --max-treedepth "$MAX_TREEDEPTH" \
-    --seed "$SEED"
+# --- Run Multi-domain model ---
+log INFO "运行 Multi-domain 模型 (Scenario=$SCENARIO)"
+Rscript "$RUNNER" \
+  --scenario "$SCENARIO" \
+  --model "multi" \
+  --cancer "$CANCER" \
+  --chains "$CHAINS" \
+  --iter "$ITER" \
+  --warmup "$WARMUP" \
+  --adapt-delta "$ADAPT_DELTA" \
+  --max-treedepth "$MAX_TREEDEPTH" \
+  --seed "$SEED"
 
-EXIT2=$?
-
-if [ $EXIT2 -ne 0 ]; then
-    echo "ERROR: Multi-domain model failed"
-    exit $EXIT2
+if [ $? -ne 0 ]; then
+  log ERROR "Multi-domain 模型失败 (Scenario=$SCENARIO)"; exit 1
 fi
+log INFO "✓ Multi-domain 模型完成"
 
-echo ""
-echo "========================================"
-echo "✓ Task $TASK_ID completed successfully"
-echo "  Lag: $DESC"
-echo "  Models: Overall + MultiDomain"
-echo "Finished: $(date)"
-echo "========================================"
-
-exit 0
+log INFO "✅ 完成任务 $TASK_ID: $DESC (Overall + MultiDomain)"
