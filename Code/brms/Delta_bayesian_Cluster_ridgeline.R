@@ -85,28 +85,33 @@ extract_quintile_draws <- function(draw_df, names_vec, prefix){
   out
 }
 
-build_design_overall <- function(d){ # Smoking + EQI change category Q2..Q5 vs Q1 baseline
-  d <- d %>% mutate(EQI_change = factor(EQI_Change_Category, levels=1:5))
-  d <- d[complete.cases(d[,c("delta_Smoking_Rate","EQI_change","delta_AAMR_lower","delta_AAMR_upper","cens","State_FIPS")]),]
-  mm <- model.matrix(~ delta_Smoking_Rate + EQI_change, d, contrasts.arg=list(EQI_change=contr.treatment(5)))
+build_design_overall <- function(d){ # Smoking + EQI change category (Stable as reference)
+  d$EQI_Change_Category <- factor(d$EQI_Change_Category, levels=c("Stable","Improved","Worsened"))
+  d <- d[complete.cases(d[,c("delta_Smoking_Rate","EQI_Change_Category","delta_AAMR_lower","delta_AAMR_upper","cens","State")]),]
+  mm <- model.matrix(~ delta_Smoking_Rate + EQI_Change_Category, d)
   colnames(mm) <- make.names(colnames(mm))
   list(X=mm, names=colnames(mm), df=d)
 }
 
-build_design_single_domain <- function(d, domain){ # Smoking + domain change category Q2..Q5
+build_design_single_domain <- function(d, domain){ # Smoking + domain change category (Stable as reference)
   dom_col <- paste0(domain, "_Change_Category")
-  fac <- factor(d[[dom_col]], levels=1:5)
+  if (!dom_col %in% names(d)) stop("Column not found: ", dom_col)
+  d[[dom_col]] <- factor(d[[dom_col]], levels=c("Stable","Improved","Worsened"))
   d2 <- d
-  d2[[paste0(domain, "_change")]] <- fac
-  d2 <- d2[complete.cases(d2[,c("delta_Smoking_Rate", paste0(domain,"_change"), "delta_AAMR_lower","delta_AAMR_upper","cens","State_FIPS")]),]
-  form <- as.formula(paste0("~ delta_Smoking_Rate + ", domain, "_change"))
-  mm <- model.matrix(form, d2, contrasts.arg=setNames(list(contr.treatment(5)), paste0(domain,"_change")))
+  d2 <- d2[complete.cases(d2[,c("delta_Smoking_Rate", dom_col, "delta_AAMR_lower","delta_AAMR_upper","cens","State")]),]
+  form <- as.formula(paste0("~ delta_Smoking_Rate + ", dom_col))
+  mm <- model.matrix(form, d2)
   colnames(mm) <- make.names(colnames(mm))
-  list(X=mm, names=colnames(mm), df=d2, prefix=paste0(domain, "_change"))
+  list(X=mm, names=colnames(mm), df=d2, prefix=dom_col)
 }
 
 fit_and_extract <- function(design_info, chains, iter, warmup, adapt_delta, max_treedepth, seed){
-  states <- sort(unique(design_info$df$State_FIPS)); state_index <- match(design_info$df$State_FIPS, states)
+  # Skip fitting if no usable rows
+  if (nrow(design_info$df) == 0 || ncol(design_info$X) == 0) {
+    return(list(fit=NULL, draws=NULL, summary=NULL))
+  }
+  # Encode state from State (consistent with Delta_bayesian_Cluster)
+  states <- sort(unique(design_info$df$State)); state_index <- as.integer(factor(design_info$df$State, levels=states))
   stan_data <- list(
     N = nrow(design_info$df), S = length(states), state = state_index,
     y_lower = design_info$df$delta_AAMR_lower, y_upper = design_info$df$delta_AAMR_upper, cens = design_info$df$cens,
@@ -209,18 +214,38 @@ for (lag_run in lags_to_run) {
   # Overall EQI change
   message("Running Overall EQI change model...")
   design_overall <- build_design_overall(dt_lag)
-  res_overall <- fit_and_extract(design_overall, opt$chains, opt$iter, opt$warmup, opt$`adapt-delta`, opt$`max-treedepth`, opt$seed)
-  meta_overall <- list(model="EQI", domain="Overall", icd=opt$cancer, lag=lag_run, cluster=cluster_sel)
-  ridge_overall <- make_ridge_rds(res_overall$draws, design_overall$names, "EQI_change", meta_overall)
+  if (nrow(design_overall$df) == 0) {
+    message("No data for Overall EQI change at Lag=", lag_run, "; skipping")
+    ridge_overall <- NULL
+  } else {
+    res_overall <- fit_and_extract(design_overall, opt$chains, opt$iter, opt$warmup, opt$`adapt-delta`, opt$`max-treedepth`, opt$seed)
+    if (is.null(res_overall$draws)) {
+      message("Fit failed or no draws for Overall EQI change at Lag=", lag_run, "; skipping")
+      ridge_overall <- NULL
+    } else {
+      meta_overall <- list(model="EQI", domain="Overall", icd=opt$cancer, lag=lag_run, cluster=cluster_sel)
+      ridge_overall <- make_ridge_rds(res_overall$draws, design_overall$names, "EQI_change", meta_overall)
+    }
+  }
 
   # Single-domain change models
   ridge_domains <- list()
   for (dom in domains) {
     message("Running domain change model: ", dom)
     design_dom <- build_design_single_domain(dt_lag, dom)
-    res_dom <- fit_and_extract(design_dom, opt$chains, opt$iter, opt$warmup, opt$`adapt-delta`, opt$`max-treedepth`, opt$seed)
-    meta_dom <- list(model=dom, domain=dom, icd=opt$cancer, lag=lag_run, cluster=cluster_sel)
-    ridge_domains[[dom]] <- make_ridge_rds(res_dom$draws, design_dom$names, paste0(dom, "_change"), meta_dom)
+    if (nrow(design_dom$df) == 0) {
+      message("No data for ", dom, " change at Lag=", lag_run, "; skipping")
+      ridge_domains[[dom]] <- NULL
+    } else {
+      res_dom <- fit_and_extract(design_dom, opt$chains, opt$iter, opt$warmup, opt$`adapt-delta`, opt$`max-treedepth`, opt$seed)
+      if (is.null(res_dom$draws)) {
+        message("Fit failed or no draws for ", dom, " change at Lag=", lag_run, "; skipping")
+        ridge_domains[[dom]] <- NULL
+      } else {
+        meta_dom <- list(model=dom, domain=dom, icd=opt$cancer, lag=lag_run, cluster=cluster_sel)
+        ridge_domains[[dom]] <- make_ridge_rds(res_dom$draws, design_dom$names, paste0(dom, "_change"), meta_dom)
+      }
+    }
   }
 
   # Combine into a single RDS with 6 entries (EQI + 5 domains)
