@@ -95,7 +95,7 @@ ADAPT_DELTA="${ADAPT_DELTA:-0.95}"
 MAX_TREEDEPTH="${MAX_TREEDEPTH:-12}"
 OUTPUT_DIR="${OUTPUT_DIR:-Result/Delta_Ridgeline}"
 
-log INFO "开始任务 $TASK_ID: $DESC | Cancer=$CANCER Lag=$LAG k=$K Cluster=$CLUSTER"
+log INFO "开始任务 $TASK_ID: $DESC | Cancer=$CANCER k=$K Cluster=$CLUSTER"
 
 # Limit threading to allocation to be polite on shared nodes
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
