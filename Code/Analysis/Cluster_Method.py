@@ -1,21 +1,24 @@
-import pandas as pd
-import numpy as np
 import os
 import sys
-import yaml
-from sklearn.cluster import KMeans, AgglomerativeClustering, SpectralClustering, Birch
-from sklearn.mixture import GaussianMixture
-from sklearn.metrics import silhouette_score
-from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import yaml
+from sklearn.cluster import AgglomerativeClustering, Birch, KMeans, SpectralClustering
+from sklearn.metrics import silhouette_score
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
 
 sys.path.append(os.path.dirname(__file__))
 from Cluster_Plot_Function import (
-    create_combined_visualization,
-    create_radar_chart,
     create_box_plot,
+    create_combined_with_labels,
     create_map_for_k,
+    create_radar_chart,
+    set_default_dpi,
+    set_font_sizes,
 )
 
 
@@ -195,12 +198,46 @@ def main():
         "Birch": perform_birch_clustering,
     }
 
-    k = 3  # Fixed number of clusters for detailed analysis
-    k_range = range(3, 11)
+    # CLI arguments to select method and k; default method runs all, default k=3
+    import argparse
+
+    parser = argparse.ArgumentParser(description="EQI Clustering Method Comparison")
+    parser.add_argument(
+        "--method",
+        choices=list(methods.keys()),
+        help="Run only this clustering method (e.g., 'K-means')",
+    )
+    parser.add_argument(
+        "--k", type=int, help="Run detailed analysis only for this k (e.g., 3)"
+    )
+    parser.add_argument(
+        "--dpi", type=int, help="Set output DPI for all figures (overrides default)"
+    )
+    parser.add_argument(
+        "--font-scale",
+        type=float,
+        help="Scale all plot fonts uniformly (e.g., 1.2 enlarges all text by 20%)",
+    )
+    args, _ = parser.parse_known_args()
+
+    # Apply global DPI override if provided
+    if args.dpi is not None:
+        set_default_dpi(args.dpi)
+    # Apply global font scale if provided
+    if args.font_scale is not None:
+        set_font_sizes(scale=args.font_scale)
+
+    # Select methods
+    selected_methods = {args.method: methods[args.method]} if args.method else methods
+
+    # Select k (use only specified k if provided)
+    k = args.k if args.k is not None else 3  # default detailed analysis k=3
+    k_range = [k] if args.k is not None else range(3, 11)
+
     diagnostics = []
     silhouettes_dict = {}
 
-    for method_name, cluster_func in methods.items():
+    for method_name, cluster_func in selected_methods.items():
         print(f"\nProcessing {method_name}...")
         silhouettes = []
 
@@ -248,6 +285,7 @@ def main():
                 radar_path = create_radar_chart(
                     profiles_df, eqi_columns, output_dir, method_name, k
                 )
+
                 box_path = create_box_plot(
                     df_clustered, eqi_columns, output_dir, method_name, k
                 )
@@ -262,28 +300,46 @@ def main():
                     df_clusters, k, shapefile_path, output_dir, method_name
                 )
 
-                # Create combined visualization
-                create_combined_visualization(
-                    radar_path, box_path, map_path, output_dir, method_name, k
+                # Auto-combine the three subplots into a labeled composite
+                create_combined_with_labels(
+                    box_path=box_path,
+                    radar_path=radar_path,
+                    map_path=map_path,
+                    output_dir=output_dir,
+                    method_name=method_name,
+                    k=k,
                 )
 
         silhouettes_dict[method_name] = silhouettes
         print(f"Silhouette Scores for {method_name}: {silhouettes}")
 
-    # Create silhouette comparison plot
-    plt.figure(figsize=(10, 6))
-    for method_name, silhouettes in silhouettes_dict.items():
-        plt.plot(list(k_range), silhouettes, marker="o", label=method_name)
+    # Create silhouette comparison plot only if multiple methods or multiple k values were processed
+    if (
+        len(silhouettes_dict) > 1
+        or (isinstance(k_range, range) and len(list(k_range)) > 1)
+        or (isinstance(k_range, list) and len(k_range) > 1)
+    ):
+        # Optionally create silhouette comparison plot only when multiple methods or multiple k values are processed
+        single_method = len(silhouettes_dict) == 1
+        single_k = (isinstance(k_range, range) and len(list(k_range)) == 1) or (
+            isinstance(k_range, list) and len(k_range) == 1
+        )
+        if not (single_method and single_k):
+            plt.figure(figsize=(10, 6))
+            for method_name, silhouettes in silhouettes_dict.items():
+                plt.plot(list(k_range), silhouettes, marker="o", label=method_name)
 
-    plt.xlabel("Number of Clusters (k)")
-    plt.ylabel("Silhouette Score")
-    plt.title("Silhouette Scores Comparison Across Clustering Methods (k=3 to 10)")
-    plt.legend()
-    plt.grid(True)
-    silhouette_plot_path = os.path.join(output_dir, "Silhouette_Scores_Comparison.png")
-    plt.savefig(silhouette_plot_path, dpi=300, bbox_inches="tight")
-    plt.close()
-    print(f"Silhouette comparison plot saved to: {silhouette_plot_path}")
+            plt.xlabel("Number of Clusters (k)")
+            plt.ylabel("Silhouette Score")
+            plt.title("Silhouette Scores Comparison")
+            plt.legend()
+            plt.grid(True)
+            silhouette_plot_path = os.path.join(
+                output_dir, "Silhouette_Scores_Comparison.png"
+            )
+            plt.savefig(silhouette_plot_path, dpi=300, bbox_inches="tight")
+            plt.close()
+            print(f"Silhouette comparison plot saved to: {silhouette_plot_path}")
 
     # Save diagnostics
     diagnostics_df = pd.DataFrame(diagnostics)

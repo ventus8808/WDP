@@ -9,6 +9,20 @@ import numpy as np
 import pandas as pd
 import yaml
 
+# Define font families to generate multiple versions
+FONT_FAMILIES = [
+    {
+        "name": "Georgia",
+        "family": "serif",
+        "fonts": ["Georgia", "DejaVu Serif", "Times New Roman"],
+    },
+    {
+        "name": "Helvetica",
+        "family": "sans-serif",
+        "fonts": ["Helvetica", "Arial", "DejaVu Sans"],
+    },
+]
+
 
 def load_config(project_root: Path) -> dict:
     """Load config.yaml from project root."""
@@ -280,6 +294,7 @@ def plot_bidirectional_forest(
     icd_code: str,
     k: int,
     output_dir: Path,
+    font_config: dict = None,
 ):
     """
     Create bidirectional forest plot with panels for National and each cluster (0 to k-1).
@@ -293,7 +308,10 @@ def plot_bidirectional_forest(
     - Alpha: Solid (1.0) for significant, Semi-transparent (0.4) for non-significant
     """
     # Set global font
-    plt.rcParams["font.family"] = "Georgia"
+    if font_config is None:
+        font_config = FONT_FAMILIES[0]
+    plt.rcParams["font.family"] = font_config["family"]
+    plt.rcParams[f"font.{font_config['family']}"] = font_config["fonts"]
     plt.rcParams["font.size"] = 12
 
     # Define panel configurations: National + clusters 0 to k-1
@@ -469,10 +487,10 @@ def plot_bidirectional_forest(
                 # Color = BLUE (environment improved)
                 color = color_improved
 
-                # Alpha and size by significance
+                # Consistent line width and marker size, alpha and marker style by significance
                 alpha = 1.0 if is_sig else 0.4
-                marker_size = 7 if is_sig else 5
-                line_width = 2.0 if is_sig else 1.2
+                marker_size = 7  # Consistent marker size
+                line_width = 2.0  # Consistent line width
                 # Hollow marker for non-significant
                 markerfacecolor = color if is_sig else "none"
                 markeredgewidth = 1.5 if is_sig else 2.0
@@ -505,10 +523,10 @@ def plot_bidirectional_forest(
                 # Color = ORANGE (environment worsened)
                 color = color_worsened
 
-                # Alpha and size by significance
+                # Consistent line width and marker size, alpha and marker style by significance
                 alpha = 1.0 if is_sig else 0.4
-                marker_size = 7 if is_sig else 5
-                line_width = 2.0 if is_sig else 1.2
+                marker_size = 7  # Consistent marker size
+                line_width = 2.0  # Consistent line width
                 # Hollow marker for non-significant
                 markerfacecolor = color if is_sig else "none"
                 markeredgewidth = 1.5 if is_sig else 2.0
@@ -534,7 +552,7 @@ def plot_bidirectional_forest(
         # Labels and title
         if ax_idx == len(panels) - 1:  # Bottom panel
             ax.set_xlabel(
-                "Mortality Rate Difference (MRD) and 95% Confidence Interval",
+                "MRD and 95% CrI",
                 fontsize=12,
                 fontweight="bold",
             )
@@ -602,11 +620,10 @@ def plot_bidirectional_forest(
         ax.spines["left"].set_linewidth(1.5)
         ax.spines["bottom"].set_linewidth(1.5)
 
-    # Add legend with clearer design
+    # Add legend at bottom with 4 items in one row
     from matplotlib.lines import Line2D
 
-    # Section 1: Environmental Quality Change Direction (color and marker with error bars)
-    legend_quality = [
+    legend_elements = [
         Line2D(
             [0],
             [0],
@@ -633,31 +650,14 @@ def plot_bidirectional_forest(
             alpha=1.0,
             linewidth=2,
         ),
-    ]
-
-    # Section 2: Statistical Significance (filled vs hollow markers with error bars)
-    legend_significance = [
         Line2D(
             [0],
             [0],
             marker="o",
             color="#666666",
             markerfacecolor="#666666",
-            markersize=12,
-            label="Significant",
-            markeredgewidth=1.5,
-            markeredgecolor="black",
-            alpha=1.0,
-            linewidth=2,
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="s",
-            color="#666666",
-            markerfacecolor="#666666",
-            markersize=12,
-            label="Significant",
+            markersize=10,
+            label="CrI Excluding 0",
             markeredgewidth=1.5,
             markeredgecolor="black",
             alpha=1.0,
@@ -669,52 +669,37 @@ def plot_bidirectional_forest(
             marker="o",
             color="#666666",
             markerfacecolor="none",
-            markersize=12,
-            label="Non-significant",
+            markersize=10,
+            label="CrI Including 0",
             markeredgewidth=2.0,
             markeredgecolor="#666666",
-            alpha=1.0,
-            linewidth=2,
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="s",
-            color="#666666",
-            markerfacecolor="none",
-            markersize=12,
-            label="Non-significant",
-            markeredgewidth=2.0,
-            markeredgecolor="#666666",
-            alpha=1.0,
+            alpha=0.4,
             linewidth=2,
         ),
     ]
 
-    # Combine legend elements
-    all_legend = legend_quality + legend_significance
-
+    # Place legend at the bottom, 4 items in one row, no title
     fig.legend(
-        handles=all_legend,
-        loc="center right",
-        bbox_to_anchor=(0.98, 0.52),
+        handles=legend_elements,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.0),
         frameon=True,
-        fancybox=True,
+        fancybox=False,
         shadow=False,
-        ncol=1,
+        ncol=4,
         fontsize=12,
-        title="Legend",
-        title_fontsize=12,
         framealpha=1.0,
         edgecolor="gray",
         facecolor="white",
-        borderpad=1.5,
-        labelspacing=0.8,
-        handletextpad=0.8,
+        borderpad=1.0,
+        labelspacing=0.5,
+        handletextpad=0.5,
+        columnspacing=1.5,
     )
 
-    # Save figure
-    output_file = output_dir / f"{icd_code}_Delta_Cluster_k{k}.png"
+    # Save figure with suffix for font name
+    font_suffix = f"_{font_config['name']}" if font_config else ""
+    output_file = output_dir / f"{icd_code}_Delta_Cluster_k{k}{font_suffix}.png"
     plt.savefig(output_file, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close()
 
@@ -727,6 +712,7 @@ def plot_bidirectional_forest_separate_years(
     icd_code: str,
     k: int,
     output_dir: Path,
+    font_config: dict = None,
 ):
     """
     Create bidirectional forest plot with SEPARATE columns for 5-year and 10-year lags.
@@ -735,8 +721,10 @@ def plot_bidirectional_forest_separate_years(
     - Right column: 10-year lag
     """
     # Set global font
-    plt.rcParams["font.serif"] = ["Garamond", "Times New Roman"]
-    plt.rcParams["font.family"] = "serif"
+    if font_config is None:
+        font_config = FONT_FAMILIES[0]
+    plt.rcParams["font.family"] = font_config["family"]
+    plt.rcParams[f"font.{font_config['family']}"] = font_config["fonts"]
     plt.rcParams["font.size"] = 12
 
     # Define panel configurations: National + clusters 0 to k-1
@@ -887,9 +875,10 @@ def plot_bidirectional_forest_separate_years(
                     upper = row["CI_Upper_Imp"]
                     is_sig = row["Sig_Imp"]
 
-                    alpha = 1.0 if is_sig else 0.3
-                    marker_size = 5 if is_sig else 3
-                    line_width = 1.5 if is_sig else 1.2
+                    # Consistent line width and marker size, alpha and marker style by significance
+                    alpha = 1.0 if is_sig else 0.4
+                    marker_size = 7  # Consistent marker size
+                    line_width = 2.0  # Consistent line width
                     # Hollow marker for non-significant
                     markerfacecolor = color_improved if is_sig else "none"
                     markeredgewidth = 1.5 if is_sig else 2.0
@@ -963,9 +952,10 @@ def plot_bidirectional_forest_separate_years(
                     upper = row["CI_Upper_Wor"]
                     is_sig = row["Sig_Wor"]
 
-                    alpha = 1.0 if is_sig else 0.3
-                    marker_size = 5 if is_sig else 3
-                    line_width = 1.5 if is_sig else 1.2
+                    # Consistent line width and marker size, alpha and marker style by significance
+                    alpha = 1.0 if is_sig else 0.4
+                    marker_size = 7  # Consistent marker size
+                    line_width = 2.0  # Consistent line width
                     # Hollow marker for non-significant
                     markerfacecolor = color_worsened if is_sig else "none"
                     markeredgewidth = 1.5 if is_sig else 2.0
@@ -1035,7 +1025,7 @@ def plot_bidirectional_forest_separate_years(
             # X-axis label (only on bottom row)
             if row_idx == len(panels) - 1:
                 ax.set_xlabel(
-                    "Mortality Rate Difference and 95% Credible Interval",
+                    "MRD and 95% CrI",
                     fontsize=15,
                 )
 
@@ -1071,7 +1061,7 @@ def plot_bidirectional_forest_separate_years(
             ax.spines["left"].set_linewidth(0.5)
             ax.spines["bottom"].set_linewidth(0.5)
 
-    # Add legend
+    # Add legend at bottom with 4 items in one row
     from matplotlib.lines import Line2D
 
     legend_elements = [
@@ -1082,9 +1072,10 @@ def plot_bidirectional_forest_separate_years(
             color=color_improved,
             markerfacecolor=color_improved,
             markersize=10,
-            label="Improved\n(CrI excluding 0)",
+            label="Improved Environment",
             markeredgewidth=1.5,
             markeredgecolor="black",
+            alpha=1.0,
             linewidth=2,
         ),
         Line2D(
@@ -1094,58 +1085,64 @@ def plot_bidirectional_forest_separate_years(
             color=color_worsened,
             markerfacecolor=color_worsened,
             markersize=10,
-            label="Worsened\n(CrI excluding 0)",
+            label="Worsen Environment",
             markeredgewidth=1.5,
             markeredgecolor="black",
+            alpha=1.0,
             linewidth=2,
         ),
         Line2D(
             [0],
             [0],
             marker="o",
-            color=color_improved,
-            markerfacecolor="none",
+            color="#666666",
+            markerfacecolor="#666666",
             markersize=10,
-            label="Improved\n(CrI including 0)",
-            markeredgewidth=2.0,
-            markeredgecolor=color_improved,
+            label="CrI Excluding 0",
+            markeredgewidth=1.5,
+            markeredgecolor="black",
+            alpha=1.0,
             linewidth=2,
         ),
         Line2D(
             [0],
             [0],
-            marker="s",
-            color=color_worsened,
+            marker="o",
+            color="#666666",
             markerfacecolor="none",
             markersize=10,
-            label="Worsened\n(CrI including 0)",
+            label="CrI Including 0",
             markeredgewidth=2.0,
-            markeredgecolor=color_worsened,
+            markeredgecolor="#666666",
+            alpha=0.4,
             linewidth=2,
         ),
     ]
 
+    # Place legend at the bottom, 4 items in one row, no title
     fig.legend(
         handles=legend_elements,
-        loc="center right",
-        bbox_to_anchor=(1.06, 0.5),
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.0),
         frameon=True,
-        fancybox=True,
+        fancybox=False,
         shadow=False,
-        ncol=1,
+        ncol=4,
         fontsize=12,
-        title="Legend",
-        title_fontsize=12,
         framealpha=1.0,
         edgecolor="gray",
         facecolor="white",
-        borderpad=1.2,
-        labelspacing=0.7,
-        handletextpad=0.7,
+        borderpad=1.0,
+        labelspacing=0.5,
+        handletextpad=0.5,
+        columnspacing=1.5,
     )
 
-    # Save figure
-    output_file = output_dir / f"{icd_code}_Delta_Cluster_k{k}_SeparateYear.png"
+    # Save figure with suffix for font name
+    font_suffix = f"_{font_config['name']}" if font_config else ""
+    output_file = (
+        output_dir / f"{icd_code}_Delta_Cluster_k{k}_SeparateYear{font_suffix}.png"
+    )
     plt.savefig(output_file, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close()
 
@@ -1228,26 +1225,35 @@ def main(argv: Optional[List[str]] = None) -> int:
 
             print(f"\n📊 Processing {icd} k={k}...")
 
-            try:
-                plot_bidirectional_forest(combined_df, icd, k, paths["vis"])
-                generated += 1
-            except Exception as e:
-                print(f"  ✗ Error generating plot for {icd} k={k}: {e}")
-                import traceback
+            # Generate plots for each font family
+            for font_config in FONT_FAMILIES:
+                print(f"  Font: {font_config['name']}")
+                try:
+                    plot_bidirectional_forest(
+                        combined_df, icd, k, paths["vis"], font_config
+                    )
+                    generated += 1
+                except Exception as e:
+                    print(
+                        f"  ✗ Error generating plot for {icd} k={k} with {font_config['name']}: {e}"
+                    )
+                    import traceback
 
-                traceback.print_exc()
+                    traceback.print_exc()
 
-            # Also generate separate-year version
-            try:
-                plot_bidirectional_forest_separate_years(
-                    combined_df, icd, k, paths["vis"]
-                )
-                generated += 1
-            except Exception as e:
-                print(f"  ✗ Error generating separate-year plot for {icd} k={k}: {e}")
-                import traceback
+                # Also generate separate-year version
+                try:
+                    plot_bidirectional_forest_separate_years(
+                        combined_df, icd, k, paths["vis"], font_config
+                    )
+                    generated += 1
+                except Exception as e:
+                    print(
+                        f"  ✗ Error generating separate-year plot for {icd} k={k} with {font_config['name']}: {e}"
+                    )
+                    import traceback
 
-                traceback.print_exc()
+                    traceback.print_exc()
 
     print(f"\n{'=' * 60}")
     print(f"✓ Successfully generated {generated} plots")

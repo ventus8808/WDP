@@ -508,8 +508,13 @@ def main():
     # Step 2: Standardize data
     df_standardized, scaler = standardize_data(df, eqi_columns)
 
-    # Step 3: Perform clustering for k=3 to 10 and create results
-    k_range = range(3, 11)
+    # Step 3: Perform clustering; allow specifying a single k via CLI
+    import argparse
+
+    parser = argparse.ArgumentParser(description="EQI Clustering Analysis")
+    parser.add_argument("--k", type=int, help="Run and plot only this k (e.g., 3)")
+    args, _ = parser.parse_known_args()
+    k_range = [args.k] if args.k is not None else list(range(3, 11))
     cluster_results = {}
     profiles_list = []
 

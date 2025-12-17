@@ -9,8 +9,8 @@ from matplotlib.colors import ListedColormap
 # Configure matplotlib
 plt.rcParams.update(
     {
-        "font.family": "serif",
-        "font.serif": ["Garamond", "Times New Roman"],
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Helvetica", "Arial"],
         "font.size": 12,
     }
 )
@@ -147,7 +147,7 @@ plt.subplots_adjust(
     left=0.15, right=0.9, top=0.9, bottom=0.2, wspace=0.25, hspace=-0.45
 )
 
-output_path = output_dir / "Top5_Cancer_ColorBlock.png"
+output_path = output_dir / "Top5_Cancer_Helvetica.png"
 plt.savefig(output_path, dpi=300, bbox_inches="tight")
 print(f"Color block map saved to {output_path}")
 plt.close(fig)
