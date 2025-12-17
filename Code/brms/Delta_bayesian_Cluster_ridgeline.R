@@ -159,7 +159,13 @@ req <- c("COUNTY_FIPS","State_FIPS","Cancer_Type","Lag",
          "delta_AAMR_lower","delta_AAMR_upper","delta_Smoking_Rate",
          "EQI_Change_Category","Air_Change_Category","Water_Change_Category",
          "Land_Change_Category","Built_Change_Category","Social_Change_Category")
-miss <- setdiff(req, names(dt)); if(length(miss)) stop("Missing columns: ", paste(miss,collapse=","))
+miss <- setdiff(req, names(dt))
+if ("State_FIPS" %in% miss) {
+  # Derive State_FIPS from COUNTY_FIPS (first two digits of zero-padded 5-digit FIPS)
+  dt[, State_FIPS := substr(sprintf("%05s", COUNTY_FIPS), 1, 2)]
+  miss <- setdiff(req, names(dt))
+}
+if (length(miss)) stop("Missing columns: ", paste(miss, collapse=","))
 
 # Interval codes
 dt <- dt[!is.na(delta_AAMR_lower) & !is.na(delta_AAMR_upper)]
