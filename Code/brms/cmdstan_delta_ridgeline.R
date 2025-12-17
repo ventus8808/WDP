@@ -219,11 +219,12 @@ if (!cluster_col %in% names(cluster_dt)) {
 cluster_dt <- cluster_dt[, .(COUNTY_FIPS, Cluster_ID = get(cluster_col))]
 dt <- merge(dt, cluster_dt, by = "COUNTY_FIPS", all.x = TRUE)
 
-# Check required columns
+# Check required columns (use lowercase with underscores to match Delta_bayesian_Cluster.R)
 required_cols <- c(
-  "COUNTY_FIPS", "Cancer_Type", "Lag_Years", "Delta_AAMR_Lower", "Delta_AAMR_Upper",
-  "Delta_Smoking_Rate", "RUCC", "Delta_EQI", "Delta_EQI_Air", "Delta_EQI_Water",
-  "Delta_EQI_Land", "Delta_EQI_Built", "Delta_EQI_Social", "EQI_Change_Category", "Cluster_ID"
+  "COUNTY_FIPS", "Cancer_Type", "Lag", "delta_AAMR_lower", "delta_AAMR_upper",
+  "delta_Smoking_Rate", "RUCC", "EQI_Change_Category", "Cluster_ID",
+  "Air_Change_Category", "Water_Change_Category", "Land_Change_Category",
+  "Built_Change_Category", "Social_Change_Category"
 )
 missing_cols <- setdiff(required_cols, names(dt))
 if (length(missing_cols)) {
@@ -237,7 +238,7 @@ if (!"State_FIPS" %in% names(dt)) {
 
 # Filter data
 message("Filtering: Cancer=", CANCER_TYPE, ", Lag=", LAG)
-dt <- dt[Cancer_Type == CANCER_TYPE & Lag_Years == LAG]
+dt <- dt[Cancer_Type == CANCER_TYPE & Lag == LAG]
 
 if (nrow(dt) == 0) {
   stop("No data after filtering")
@@ -250,38 +251,38 @@ message("✓ Loaded ", nrow(dt), " observations")
 # ============================================================================
 
 build_design_overall <- function(data) {
-  # Overall EQI model: Delta_EQI (improved/worsened) + smoking + RUCC
+  # Overall EQI model: EQI change (improved/worsened) + smoking + RUCC
   data <- data %>%
     mutate(
       Improved = as.integer(EQI_Change_Category == "Improved"),
       Worsened = as.integer(EQI_Change_Category == "Worsened")
     )
 
-  X <- model.matrix(~ Improved + Worsened + Delta_Smoking_Rate + RUCC - 1, data = data)
+  X <- model.matrix(~ Improved + Worsened + delta_Smoking_Rate + RUCC - 1, data = data)
 
   list(X = X, design_names = colnames(X))
 }
 
 build_design_multi <- function(data) {
-  # Multi-domain model: each domain separately
+  # Multi-domain model: each domain separately using change categories
   data <- data %>%
     mutate(
-      Air_Improved = as.integer(Delta_EQI_Air < 0),
-      Air_Worsened = as.integer(Delta_EQI_Air > 0),
-      Water_Improved = as.integer(Delta_EQI_Water < 0),
-      Water_Worsened = as.integer(Delta_EQI_Water > 0),
-      Land_Improved = as.integer(Delta_EQI_Land < 0),
-      Land_Worsened = as.integer(Delta_EQI_Land > 0),
-      Built_Improved = as.integer(Delta_EQI_Built < 0),
-      Built_Worsened = as.integer(Delta_EQI_Built > 0),
-      Social_Improved = as.integer(Delta_EQI_Social < 0),
-      Social_Worsened = as.integer(Delta_EQI_Social > 0)
+      Air_Improved = as.integer(Air_Change_Category == "Improved"),
+      Air_Worsened = as.integer(Air_Change_Category == "Worsened"),
+      Water_Improved = as.integer(Water_Change_Category == "Improved"),
+      Water_Worsened = as.integer(Water_Change_Category == "Worsened"),
+      Land_Improved = as.integer(Land_Change_Category == "Improved"),
+      Land_Worsened = as.integer(Land_Change_Category == "Worsened"),
+      Built_Improved = as.integer(Built_Change_Category == "Improved"),
+      Built_Worsened = as.integer(Built_Change_Category == "Worsened"),
+      Social_Improved = as.integer(Social_Change_Category == "Improved"),
+      Social_Worsened = as.integer(Social_Change_Category == "Worsened")
     )
 
   formula_str <- paste0(
     "~ Air_Improved + Air_Worsened + Water_Improved + Water_Worsened + ",
     "Land_Improved + Land_Worsened + Built_Improved + Built_Worsened + ",
-    "Social_Improved + Social_Worsened + Delta_Smoking_Rate + RUCC - 1"
+    "Social_Improved + Social_Worsened + delta_Smoking_Rate + RUCC - 1"
   )
 
   X <- model.matrix(as.formula(formula_str), data = data)
@@ -312,21 +313,27 @@ fit_and_extract_draws <- function(data, model_type, cluster_id = NULL) {
   message("Design matrix: ", nrow(X), " × ", ncol(X))
   message("Predictors: ", paste(design_names, collapse = ", "))
 
-  # State indexing
-  states <- sort(unique(data$State_FIPS))
-  state_index <- match(data$State_FIPS, states)
+  # State indexing (use State column, not State_FIPS)
+  if (!"State" %in% names(data)) {
+    data$State <- substr(sprintf("%05d", data$COUNTY_FIPS), 1, 2)
+  }
+  states <- sort(unique(data$State))
+  state_index <- match(data$State, states)
   n_states <- length(states)
 
   message("States: ", n_states)
+
+  # Determine censoring indicator (same as Delta_bayesian_Cluster.R)
+  data$cens <- ifelse(data$delta_AAMR_lower == data$delta_AAMR_upper, 0L, 2L)
 
   # Stan data
   stan_data <- list(
     N = nrow(data),
     S = n_states,
     state = state_index,
-    y_lower = data$Delta_AAMR_Lower,
-    y_upper = data$Delta_AAMR_Upper,
-    cens = rep(1L, nrow(data)),  # All interval-censored for delta
+    y_lower = data$delta_AAMR_lower,
+    y_upper = data$delta_AAMR_upper,
+    cens = data$cens,
     K = ncol(X),
     X = X
   )
