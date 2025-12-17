@@ -1,18 +1,29 @@
 #!/bin/bash
-# Slurm array launcher for ridgeline posterior extraction (C00_C97 only)
-# Each task runs one lag scenario (5, 10, or 15 years) with both Overall and Multi-domain models
+# Slurm array launcher for Delta cluster ridgeline RDS generation
+# Runs 4 tasks for C00_C97 with k=3:
+#   1: national
+#   2: cluster 0
+#   3: cluster 1
+#   4: cluster 2
+# Each task fits EQI change and single-domain change models and saves RDS for ridgeline plots.
+#
 # Usage:
-#   sbatch --array=1-3 Code/brms/submit_ridgeline.sh
+#   sbatch --array=1-4 Code/brms/submit_Delta_bayesian_Cluster_ridgeline.sh
+#
+# Optional environment overrides:
+#   ENV_NAME=brms     # conda env name
+#   CHAINS=4 ITER=2000 WARMUP=1000 ADAPT_DELTA=0.95 MAX_TREEDEPTH=12
+#   OUTPUT_DIR="Result/Delta_Ridgeline"
 
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WDP_ridgeline
+#SBATCH --job-name=WDP_delta_ridge
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=1-00:00:00
-#SBATCH --output=ridgeline_%A_%a.out
-#SBATCH --error=ridgeline_%A_%a.err
+#SBATCH --output=delta_ridge_%A_%a.out
+#SBATCH --error=delta_ridge_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -25,7 +36,6 @@ if [ -f "${SCRIPT_DIR}/../../config.yaml" ]; then
 elif [ -n "${SLURM_SUBMIT_DIR-}" ] && [ -f "${SLURM_SUBMIT_DIR}/config.yaml" ]; then
   PROJECT_ROOT="$SLURM_SUBMIT_DIR"
 else
-  # Fallback to cwd if it contains config.yaml
   if [ -f "config.yaml" ]; then PROJECT_ROOT="$(pwd -P)"; fi
 fi
 
@@ -52,30 +62,40 @@ if [ -z "${CONDA_DEFAULT_ENV-}" ] || [ "${CONDA_DEFAULT_ENV}" != "$ENV_NAME" ]; 
 fi
 set -u
 
-# Load devtoolset for newer g++ on CentOS
+# Load devtoolset for newer g++ on CentOS (if available)
 module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
 
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/cmdstan_main_ridgeline.R"
-
+RUNNER="Code/brms/Delta_bayesian_Cluster_ridgeline.R"
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
 fi
 
-# --- Map array task ID to scenario ---
+# --- Map array task ID to cluster selection ---
 TASK_ID=${SLURM_ARRAY_TASK_ID}
 case $TASK_ID in
-  1) SCENARIO=1; DESC="Lag5" ;;
-  2) SCENARIO=2; DESC="Lag10" ;;
-  3) SCENARIO=3; DESC="Lag15" ;;
+  1) CLUSTER="national"; DESC="National" ;;
+  2) CLUSTER="0";        DESC="Cluster 0" ;;
+  3) CLUSTER="1";        DESC="Cluster 1" ;;
+  4) CLUSTER="2";        DESC="Cluster 2" ;;
   *)
-    log ERROR "无效的 SLURM_ARRAY_TASK_ID: $TASK_ID (应为 1-3)"; exit 1
+    log ERROR "无效的 SLURM_ARRAY_TASK_ID: $TASK_ID (应为 1-4)"; exit 1
     ;;
 esac
 
-log INFO "开始处理任务 $TASK_ID: $DESC"
+# Parameters
+CANCER="C00_C97"
+K=3
+CHAINS="${CHAINS:-4}"
+ITER="${ITER:-2000}"
+WARMUP="${WARMUP:-1000}"
+ADAPT_DELTA="${ADAPT_DELTA:-0.95}"
+MAX_TREEDEPTH="${MAX_TREEDEPTH:-12}"
+OUTPUT_DIR="${OUTPUT_DIR:-Result/Delta_Ridgeline}"
+
+log INFO "开始任务 $TASK_ID: $DESC | Cancer=$CANCER Lag=$LAG k=$K Cluster=$CLUSTER"
 
 # Limit threading to allocation to be polite on shared nodes
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
@@ -84,19 +104,12 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 # Use a different seed per task for better chain jitter
 SEED=$((1234 + TASK_ID))
 
-CANCER="C00_C97"
-CHAINS=4
-ITER=2000
-WARMUP=1000
-ADAPT_DELTA=0.95
-MAX_TREEDEPTH=12
-
-# --- Run Overall model ---
-log INFO "运行 Overall EQI 模型 (Scenario=$SCENARIO)"
+# Run
 Rscript "$RUNNER" \
-  --scenario "$SCENARIO" \
-  --model "overall" \
   --cancer "$CANCER" \
+  --k "$K" \
+  --cluster "$CLUSTER" \
+  --output-dir "$OUTPUT_DIR" \
   --chains "$CHAINS" \
   --iter "$ITER" \
   --warmup "$WARMUP" \
@@ -104,27 +117,9 @@ Rscript "$RUNNER" \
   --max-treedepth "$MAX_TREEDEPTH" \
   --seed "$SEED"
 
-if [ $? -ne 0 ]; then
-  log ERROR "Overall 模型失败 (Scenario=$SCENARIO)"; exit 1
+RC=$?
+if [ $RC -ne 0 ]; then
+  log ERROR "任务失败: $DESC (退出码 $RC)"; exit $RC
 fi
-log INFO "✓ Overall 模型完成"
 
-# --- Run Multi-domain model ---
-log INFO "运行 Multi-domain 模型 (Scenario=$SCENARIO)"
-Rscript "$RUNNER" \
-  --scenario "$SCENARIO" \
-  --model "multi" \
-  --cancer "$CANCER" \
-  --chains "$CHAINS" \
-  --iter "$ITER" \
-  --warmup "$WARMUP" \
-  --adapt-delta "$ADAPT_DELTA" \
-  --max-treedepth "$MAX_TREEDEPTH" \
-  --seed "$SEED"
-
-if [ $? -ne 0 ]; then
-  log ERROR "Multi-domain 模型失败 (Scenario=$SCENARIO)"; exit 1
-fi
-log INFO "✓ Multi-domain 模型完成"
-
-log INFO "✅ 完成任务 $TASK_ID: $DESC (Overall + MultiDomain)"
+log INFO "✅ 完成任务: $DESC | 输出目录: $OUTPUT_DIR"
