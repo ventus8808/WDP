@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
 
 option_list <- list(
   make_option(c("--data"), type="character",
-              default="Data/Processed/df_EQI_AAMR_Triangulation/Delta_EQI_AAMR.csv",
+              default="Data/Processed/df_EQI_AAMR/EQI_AAMR_Delta.csv",
               help="Input delta data CSV (must contain delta_AAMR_* and *_Change_Category columns)"),
   make_option(c("--output-dir"), type="character", default="Result/Delta_Ridgeline",
               help="Output directory for RDS files"),
