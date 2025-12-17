@@ -26,8 +26,8 @@ This workflow extracts posterior MCMC draws from delta models (EQI change vs. AA
 1. **Delta data** (default: `Data/Processed/df_EQI_AAMR/EQI_AAMR_Delta.csv`)
    - Required columns: `COUNTY_FIPS`, `Cancer_Type`, `Lag_Years`, `Delta_AAMR_Lower`, `Delta_AAMR_Upper`, `Delta_EQI`, `Delta_EQI_Air`, `Delta_EQI_Water`, `Delta_EQI_Land`, `Delta_EQI_Built`, `Delta_EQI_Social`, `Delta_Smoking_Rate`, `RUCC`, `EQI_Change_Category`
 
-2. **Cluster assignments** (default: `Data/Processed/County_Cluster/county_cluster_assignments.csv`)
-   - Required columns: `County_FIPS`, `Cluster_k3`, `Cluster_k4`
+2. **Cluster assignments** (default: `Result/Cluster_Visualization/EQI_Clusters_All_K.csv`)
+   - Required columns: `COUNTY_FIPS`, `cluster_3`, `cluster_4`
 
 ## Usage
 
@@ -70,7 +70,7 @@ This generates 12 tasks for C00_C97:
 --lag             Lag years: 5, 10, or 15 [default: 5]
 --model           Model type: overall or multi [default: overall]
 --data            Input data path [default: Data/Processed/df_EQI_AAMR/EQI_AAMR_Delta.csv]
---cluster-data    Cluster assignment path [default: Data/Processed/County_Cluster/county_cluster_assignments.csv]
+--cluster-data    Cluster assignment path [default: Result/Cluster_Visualization/EQI_Clusters_All_K.csv]
 --output-dir      Output directory [default: Result/Ridgeline_Delta]
 --chains          Number of MCMC chains [default: 4]
 --iter            Total iterations per chain [default: 2000]
@@ -214,7 +214,7 @@ Warnings are issued if diagnostics fail thresholds.
 This workflow follows the project conventions:
 - Reads paths from `config.yaml` (via relative resolution)
 - Outputs to `Result/Ridgeline_Delta/` directory
-- Uses cluster assignments from `Data/Processed/County_Cluster/`
+- Uses cluster assignments from `Result/Cluster_Visualization/EQI_Clusters_All_K.csv`
 - Compatible with existing delta analysis pipeline (`Delta_bayesian_Cluster.R`)
 
 ## Comparison with Standard Ridgeline Workflow
@@ -232,8 +232,9 @@ This workflow follows the project conventions:
 ### Common Issues
 
 1. **"Cluster column not found"**
-   - Ensure cluster data file contains `Cluster_k3` and `Cluster_k4` columns
+   - Ensure cluster data file contains `cluster_3` and `cluster_4` columns
    - Check that `--k` matches available cluster columns
+   - Default location: `Result/Cluster_Visualization/EQI_Clusters_All_K.csv`
 
 2. **"No data after filtering"**
    - Verify cancer type exists in delta data

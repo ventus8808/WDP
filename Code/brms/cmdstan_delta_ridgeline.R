@@ -46,8 +46,9 @@ option_list <- list(
   ),
   make_option(c("--cluster-data"),
     type = "character",
-    default = "Data/Processed/County_Cluster/county_cluster_assignments.csv",
-    help = "Cluster assignment data [default: %default]"
+    default = "Result/Cluster_Visualization/EQI_Clusters_All_K.csv",
+    help = "Cluster assignment data [default: %default]",
+    dest = "cluster_data"
   ),
   make_option(c("--output-dir"),
     type = "character", default = "Result/Ridgeline_Delta",
@@ -179,14 +180,30 @@ message("✓ Model compiled")
 # ============================================================================
 project_root <- normalizePath(".")
 data_path <- file.path(project_root, opt$data)
-cluster_path <- file.path(project_root, opt$cluster_data)
+
+# Handle cluster_data path (optparse converts hyphens to underscores)
+cluster_data_path <- if (!is.null(opt$cluster_data)) {
+  opt$cluster_data
+} else if (!is.null(opt$`cluster-data`)) {
+  opt$`cluster-data`
+} else {
+  "Result/Cluster_Visualization/EQI_Clusters_All_K.csv"
+}
+cluster_path <- file.path(project_root, cluster_data_path)
+
+message("Data path: ", data_path)
+message("Cluster path: ", cluster_path)
 
 if (!file.exists(data_path)) {
   stop("Data file not found: ", data_path)
 }
+if (is.null(cluster_path) || is.na(cluster_path) || cluster_path == "" || cluster_path == project_root) {
+  stop("Invalid cluster path. Please check --cluster-data argument.")
+}
 if (!file.exists(cluster_path)) {
   stop("Cluster data file not found: ", cluster_path)
 }
+
 
 message("Loading data: ", basename(data_path))
 dt <- fread(data_path)
@@ -194,12 +211,12 @@ dt <- fread(data_path)
 message("Loading cluster assignments: ", basename(cluster_path))
 cluster_dt <- fread(cluster_path)
 
-# Merge cluster assignments
-cluster_col <- paste0("Cluster_k", K_VALUE)
+# Merge cluster assignments (use column name format from Delta_bayesian_Cluster.R)
+cluster_col <- paste0("cluster_", K_VALUE)
 if (!cluster_col %in% names(cluster_dt)) {
-  stop("Cluster column not found: ", cluster_col)
+  stop("Cluster column not found: ", cluster_col, ". Available columns: ", paste(names(cluster_dt), collapse=", "))
 }
-cluster_dt <- cluster_dt[, .(COUNTY_FIPS = County_FIPS, Cluster_ID = get(cluster_col))]
+cluster_dt <- cluster_dt[, .(COUNTY_FIPS, Cluster_ID = get(cluster_col))]
 dt <- merge(dt, cluster_dt, by = "COUNTY_FIPS", all.x = TRUE)
 
 # Check required columns
