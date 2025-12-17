@@ -131,21 +131,35 @@ fit_and_extract <- function(design_info, chains, iter, warmup, adapt_delta, max_
 }
 
 make_ridge_rds <- function(draws_df, names_vec, prefix, meta){
-  # Collect draws
-  q2 <- draws_df[[paste0("beta[", match(paste0(prefix, 2), names_vec), "]")]]
-  q3 <- draws_df[[paste0("beta[", match(paste0(prefix, 3), names_vec), "]")]]
-  q4 <- draws_df[[paste0("beta[", match(paste0(prefix, 4), names_vec), "]")]]
-  q5 <- draws_df[[paste0("beta[", match(paste0(prefix, 5), names_vec), "]")]]
-  n_draws <- max(length(q2), length(q3), length(q4), length(q5))
-  draws_wide <- tibble::tibble(draw=q2) %>%
-    mutate(Q2=q2, Q3=q3, Q4=q4, Q5=q5) %>%
-    select(Q2,Q3,Q4,Q5)
+  # Collect draws for categorical dummies (e.g., EQI_Change_CategoryImproved/Worsened)
+  target_names <- names_vec[grepl(paste0("^", prefix), names_vec)]
+  if (length(target_names) == 0) {
+    return(list(draws_long=NULL, summary=NULL, meta=meta))
+  }
+  # Build wide matrix with columns named by category (after removing prefix)
+  cols <- list()
+  col_labels <- character(0)
+  for (nm in target_names) {
+    idx <- match(nm, names_vec)
+    if (!is.na(idx)) {
+      col <- draws_df[[paste0("beta[", idx, "]")]]
+      label <- sub(paste0("^", prefix), "", nm)
+      if (label == "" || is.na(label)) label <- nm
+      cols[[label]] <- col
+      col_labels <- c(col_labels, label)
+    }
+  }
+  if (length(cols) == 0) {
+    return(list(draws_long=NULL, summary=NULL, meta=meta))
+  }
+  draws_wide <- as.data.frame(cols, check.names = FALSE)
+  # Long format
   draws_long <- draws_wide %>%
-    pivot_longer(cols=everything(), names_to="Quintile", values_to="Effect") %>%
+    pivot_longer(cols=everything(), names_to="Category", values_to="Effect") %>%
     mutate(Model=meta$model, Domain=meta$domain, ICD_Code=meta$icd, Lag=meta$lag, Cluster=meta$cluster)
   # Summaries
   summary_df <- draws_long %>%
-    group_by(Quintile, Model, Domain, ICD_Code, Lag, Cluster) %>%
+    group_by(Category, Model, Domain, ICD_Code, Lag, Cluster) %>%
     summarize(mean=mean(Effect, na.rm=TRUE),
               l95=quantile(Effect, 0.025, na.rm=TRUE),
               u95=quantile(Effect, 0.975, na.rm=TRUE),
