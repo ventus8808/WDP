@@ -7,8 +7,8 @@
 #SBATCH --job-name=WDP_delta_ridge_test
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=24
 #SBATCH --time=01:00:00
 #SBATCH --output=delta_ridge_test_%j.out
 #SBATCH --error=delta_ridge_test_%j.err
