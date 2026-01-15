@@ -1,0 +1,286 @@
+[2026-01-15 10:52:05] [INFO] - 项目根目录: /public/home/acf4pijnzl/WDP
+[2026-01-15 10:52:05] [INFO] - 开始处理任务 3: Lag15 (NDD)
+[2026-01-15 10:52:05] [INFO] - 运行 Overall EQI 模型 (Scenario=3, NDD)
+[1] "EQI"          "EQI_Air"      "EQI_Water"    "EQI_Land"     "EQI_Built"   
+[6] "EQI_Social"   "Smoking_Rate" "State_FIPS"   "RUCC"        
+Running MCMC with 4 parallel chains...
+
+Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
+Chain 2 Iteration:    1 / 2000 [  0%]  (Warmup) 
+Chain 3 Iteration:    1 / 2000 [  0%]  (Warmup) 
+Chain 4 Iteration:    1 / 2000 [  0%]  (Warmup) 
+Chain 1 Iteration:  100 / 2000 [  5%]  (Warmup) 
+Chain 4 Iteration:  100 / 2000 [  5%]  (Warmup) 
+Chain 2 Iteration:  100 / 2000 [  5%]  (Warmup) 
+Chain 1 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+Chain 4 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+Chain 3 Iteration:  100 / 2000 [  5%]  (Warmup) 
+Chain 1 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+Chain 2 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+Chain 4 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+Chain 3 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+Chain 1 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+Chain 2 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+Chain 3 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+Chain 4 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+Chain 2 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+Chain 1 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+Chain 3 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+Chain 4 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+Chain 2 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+Chain 1 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+Chain 3 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+Chain 2 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+Chain 4 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+Chain 1 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+Chain 3 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+Chain 2 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+Chain 4 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+Chain 1 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+Chain 3 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+Chain 2 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+Chain 1 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+Chain 4 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+Chain 2 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+Chain 3 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+Chain 4 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+Chain 2 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+Chain 2 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+Chain 3 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+Chain 1 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+Chain 1 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+Chain 2 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+Chain 4 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+Chain 4 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+Chain 3 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+Chain 3 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+Chain 1 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+Chain 4 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+Chain 2 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+Chain 3 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+Chain 1 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+Chain 4 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+Chain 2 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+Chain 3 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+Chain 1 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+Chain 4 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+Chain 2 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+Chain 3 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+Chain 1 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+Chain 4 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+Chain 2 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+Chain 3 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+Chain 1 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+Chain 4 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+Chain 2 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+Chain 3 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+Chain 1 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+Chain 4 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+Chain 2 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+Chain 3 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+Chain 1 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+Chain 4 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+Chain 2 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+Chain 3 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+Chain 1 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+Chain 4 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+Chain 2 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+Chain 3 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+Chain 1 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+Chain 4 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 2 finished in 229.4 seconds.
+Chain 3 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+Chain 1 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 1 finished in 235.5 seconds.
+Chain 4 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 4 finished in 237.1 seconds.
+Chain 3 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 3 finished in 243.7 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 236.4 seconds.
+Total execution time: 244.0 seconds.
+
+  beta_col   param_name
+1  beta[1] X.Intercept.
+2  beta[2] Smoking_Rate
+3  beta[3]  EQI_factor2
+4  beta[4]  EQI_factor3
+5  beta[5]  EQI_factor4
+6  beta[6]  EQI_factor5
+  quintile      mean       sd      q025     q975     rhat ess_bulk ess_tail
+1       Q2  8.624015 1.053385  6.896149 10.36761 1.002112 3372.251 3372.343
+2       Q3 11.445248 1.027292  9.740093 13.08464 1.001001 2921.417 3039.961
+3       Q4 16.369303 1.100820 14.578510 18.19676 1.000242 2441.763 2810.513
+4       Q5 22.655605 1.183260 20.670658 24.60736 1.001006 2238.778 2678.524
+[2026-01-15 10:57:02] [INFO] - ✓ Overall 模型完成
+[2026-01-15 10:57:02] [INFO] - 运行 Multi-domain 模型 (Scenario=3, NDD)
+[1] "EQI"          "EQI_Air"      "EQI_Water"    "EQI_Land"     "EQI_Built"   
+[6] "EQI_Social"   "Smoking_Rate" "State_FIPS"   "RUCC"        
+Running MCMC with 4 parallel chains...
+
+Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
+Chain 2 Iteration:    1 / 2000 [  0%]  (Warmup) 
+Chain 3 Iteration:    1 / 2000 [  0%]  (Warmup) 
+Chain 4 Iteration:    1 / 2000 [  0%]  (Warmup) 
+Chain 2 Iteration:  100 / 2000 [  5%]  (Warmup) 
+Chain 1 Iteration:  100 / 2000 [  5%]  (Warmup) 
+Chain 4 Iteration:  100 / 2000 [  5%]  (Warmup) 
+Chain 3 Iteration:  100 / 2000 [  5%]  (Warmup) 
+Chain 2 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+Chain 1 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+Chain 2 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+Chain 4 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+Chain 1 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+Chain 3 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+Chain 2 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+Chain 4 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+Chain 1 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+Chain 3 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+Chain 2 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+Chain 1 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+Chain 4 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+Chain 3 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+Chain 2 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+Chain 1 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+Chain 4 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+Chain 3 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+Chain 2 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+Chain 1 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+Chain 4 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+Chain 2 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+Chain 1 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+Chain 3 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+Chain 2 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+Chain 1 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+Chain 4 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+Chain 3 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+Chain 4 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+Chain 1 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+Chain 1 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+Chain 3 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+Chain 2 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+Chain 2 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+Chain 1 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+Chain 4 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+Chain 2 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+Chain 3 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+Chain 1 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+Chain 2 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+Chain 4 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+Chain 4 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+Chain 3 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+Chain 3 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+Chain 1 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+Chain 2 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+Chain 4 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+Chain 3 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+Chain 1 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+Chain 2 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+Chain 4 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+Chain 3 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+Chain 1 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+Chain 2 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+Chain 4 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+Chain 3 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+Chain 1 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+Chain 2 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+Chain 4 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+Chain 3 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+Chain 1 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+Chain 2 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+Chain 4 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+Chain 3 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+Chain 1 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+Chain 2 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+Chain 4 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+Chain 3 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+Chain 2 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+Chain 1 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+Chain 4 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+Chain 3 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+Chain 2 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 2 finished in 322.1 seconds.
+Chain 1 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 1 finished in 322.5 seconds.
+Chain 4 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+Chain 3 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+Chain 4 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+Chain 3 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+Chain 4 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 4 finished in 356.0 seconds.
+Chain 3 Iteration: 2000 / 2000 [100%]  (Sampling) 
+Chain 3 finished in 357.8 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 339.6 seconds.
+Total execution time: 358.0 seconds.
+
+   beta_col         param_name
+1   beta[1]       X.Intercept.
+2   beta[2]       Smoking_Rate
+3   beta[3]    EQI_Air_factor2
+4   beta[4]    EQI_Air_factor3
+5   beta[5]    EQI_Air_factor4
+6   beta[6]    EQI_Air_factor5
+7   beta[7]  EQI_Water_factor2
+8   beta[8]  EQI_Water_factor3
+9   beta[9]  EQI_Water_factor4
+10 beta[10]  EQI_Water_factor5
+11 beta[11]   EQI_Land_factor2
+12 beta[12]   EQI_Land_factor3
+13 beta[13]   EQI_Land_factor4
+14 beta[14]   EQI_Land_factor5
+15 beta[15]  EQI_Built_factor2
+16 beta[16]  EQI_Built_factor3
+17 beta[17]  EQI_Built_factor4
+18 beta[18]  EQI_Built_factor5
+19 beta[19] EQI_Social_factor2
+20 beta[20] EQI_Social_factor3
+21 beta[21] EQI_Social_factor4
+22 beta[22] EQI_Social_factor5
+         quintile       mean       sd       q025      q975      rhat ess_bulk
+Air.1          Q2  7.8413502 1.145468  5.9690178  9.742027 1.0013432 2449.345
+Air.2          Q3 10.8381117 1.205031  8.8707916 12.843542 1.0022783 1994.238
+Air.3          Q4 14.6559559 1.274184 12.5369830 16.719513 1.0023547 1651.679
+Air.4          Q5 14.6626883 1.381034 12.3988428 16.980328 1.0027556 1794.191
+Water.1        Q2 -0.8161498 1.368788 -3.0751553  1.425234 1.0024635 1448.326
+Water.2        Q3  0.4430391 1.406725 -1.8107076  2.859810 1.0026991 1329.768
+Water.3        Q4  2.0968532 1.459580 -0.3171443  4.488187 1.0023671 1061.576
+Water.4        Q5  3.7503270 1.516041  1.2577899  6.225199 1.0035333 1299.456
+Land.1         Q2  1.2811595 1.060089 -0.4306824  3.014534 0.9996193 2888.140
+Land.2         Q3  2.4435935 1.133465  0.5986607  4.300521 1.0004732 2421.141
+Land.3         Q4  3.5638027 1.297744  1.3578965  5.718399 1.0010919 2253.406
+Land.4         Q5  4.8579212 1.396332  2.5950814  7.140066 1.0004365 2252.027
+Built.1        Q2  5.1002209 1.042697  3.3658253  6.801229 1.0002461 2965.102
+Built.2        Q3  5.4728611 1.082105  3.6726266  7.248850 1.0007984 2423.783
+Built.3        Q4  5.8711617 1.106514  4.1238572  7.672473 1.0003522 2368.666
+Built.4        Q5  5.7988526 1.180275  3.8419944  7.720784 1.0002558 2238.164
+Social.1       Q2  2.1135283 1.028076  0.4220504  3.792617 1.0000022 3097.179
+Social.2       Q3  3.2079520 1.113857  1.3691608  5.016498 1.0003545 2386.560
+Social.3       Q4  4.5511791 1.218546  2.5225706  6.539826 1.0011313 2118.726
+Social.4       Q5  8.0045467 1.374575  5.6897768 10.241162 1.0005879 2033.432
+         ess_tail domain
+Air.1    2888.162    Air
+Air.2    2688.978    Air
+Air.3    2307.201    Air
+Air.4    1536.331    Air
+Water.1  2686.473  Water
+Water.2  2778.963  Water
+Water.3  2682.260  Water
+Water.4  2673.441  Water
+Land.1   3179.890   Land
+Land.2   3188.493   Land
+Land.3   2823.640   Land
+Land.4   3065.946   Land
+Built.1  3065.224  Built
+Built.2  2995.263  Built
+Built.3  3064.932  Built
+Built.4  2636.539  Built
+Social.1 3159.920 Social
+Social.2 2908.851 Social
+Social.3 2750.427 Social
+Social.4 2747.369 Social
+[2026-01-15 11:03:23] [INFO] - ✓ Multi-domain 模型完成
+[2026-01-15 11:03:23] [INFO] - ✅ 完成任务 3: Lag15 (NDD - Overall + MultiDomain)
