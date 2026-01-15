@@ -1,3 +1,21 @@
+"""
+Usage:
+  python Code/Analysis/Cluster_Method.py [--method METHOD] [--k K] [--dpi DPI] [--font-scale SCALE]
+
+Arguments:
+  --method      Clustering method to use (K-means, Agglomerative, GMM, Spectral, Birch).
+                If omitted, runs all methods.
+  --k           Number of clusters for detailed analysis. Default is 3.
+                If omitted, runs range(3, 11) for silhouette scores, but detailed analysis for k=3.
+  --dpi         Set output DPI for figures.
+  --font-scale  Scale plot fonts uniformly (e.g., 1.2 for 20% larger).
+
+Examples:
+  python Code/Analysis/Cluster_Method.py
+  python Code/Analysis/Cluster_Method.py --method K-means --k 5
+  python Code/Analysis/Cluster_Method.py --dpi 300 --font-scale 1.5
+"""
+
 import os
 import sys
 from pathlib import Path
