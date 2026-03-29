@@ -76,6 +76,7 @@ log INFO "开始处理: $CANCER_TYPE (Overall + RUCC1-4, 5 scenarios)"
 
 Rscript "$RUNNER" \
   --cancer-types "$CANCER_TYPE" \
+  --data "Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate_Typology_LandUse.csv" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \
   --seed 1234
