@@ -53,6 +53,20 @@ TYPOLOGY_COLS = ["econdep"]
 
 LANDUSE_COLS = ["cluster_4"]
 
+# NDD ICD code to abbreviation mapping
+NDD_ABBR_MAP = {
+    "G20_G30_G12.2_F01_F03": "NDD",
+    "G30": "AD",
+    "G20": "PD",
+    "F01": "VD",
+    "F03": "UD",
+    "G10": "HD",
+    "G12.2": "ALS",
+}
+
+# All NDD ICD codes
+NDD_ALL_CODES = ["G20_G30_G12.2_F01_F03", "G30", "G20", "F01", "F03", "G10", "G12.2"]
+
 
 def load_config() -> Tuple[Path, Dict]:
     """Load configuration from config.yaml"""
@@ -353,6 +367,10 @@ def process_file(
         if strat_data[strat_key].empty:
             continue
         merge_df = df.merge(strat_data[strat_key], on="COUNTY_FIPS", how="left")
+        # Filter sub_cols to only include columns that exist in merged data
+        sub_cols = [c for c in sub_cols if c in merge_df.columns]
+        if not sub_cols:
+            continue
         # Drop rows missing any sub_col
         merge_df = merge_df.dropna(subset=sub_cols)
 
@@ -711,12 +729,17 @@ def create_summary_tables(all_results: Dict[str, List[Dict]], output_dir: Path):
                 strat_type,
                 include_national=(strat_key == "RUCC" and strat_type == "RUCC"),
             )
+            # Skip if empty
+            if cancer_summary.empty:
+                continue
             # Add strata type prefix to non-National rows
             if not (strat_key == "RUCC" and strat_type == "RUCC"):
                 # Add National row with strata type prefix
                 national_summary = extract_summary_table(
                     df, cancer_codes, strat_type, include_national=True
                 )
+                if national_summary.empty or "Strata" not in national_summary.columns:
+                    continue
                 national_only = national_summary[
                     national_summary["Strata"] == "National"
                 ].copy()
@@ -746,12 +769,17 @@ def create_summary_tables(all_results: Dict[str, List[Dict]], output_dir: Path):
                 strat_type,
                 include_national=(strat_key == "RUCC" and strat_type == "RUCC"),
             )
+            # Skip if empty
+            if ndd_summary.empty:
+                continue
             # Add strata type prefix to non-National rows
             if not (strat_key == "RUCC" and strat_type == "RUCC"):
                 # Add National row with strata type prefix
                 national_summary = extract_summary_table(
                     df, ndd_codes, strat_type, include_national=True
                 )
+                if national_summary.empty or "Strata" not in national_summary.columns:
+                    continue
                 national_only = national_summary[
                     national_summary["Strata"] == "National"
                 ].copy()
@@ -793,6 +821,722 @@ def create_summary_tables(all_results: Dict[str, List[Dict]], output_dir: Path):
     wide_ndd.to_csv(ndd_output, index=False)
     print(f"  Saved combined NDD summary to {ndd_output}")
     print(f"  Total shape: {wide_ndd.shape}")
+
+
+def create_ndd_strata_table(all_results: Dict[str, List[Dict]], output_dir: Path):
+    """
+    Create NDD_AAMR_Strata.csv with all NDD outcomes across all stratifications.
+
+    Format:
+    Outcome | 2006-2010 Death,n(‰) | AAMR | 2011-2015 Death,n(‰) | AAMR | 2016-2020 Death,n(‰) | AAMR
+
+    Each stratum appears as a header row, followed by NDD outcomes ordered by deaths.
+    """
+    print("\n" + "=" * 80)
+    print("Creating NDD_AAMR_Strata Table")
+    print("=" * 80)
+
+    time_periods = ["2006-2010", "2011-2015", "2016-2020"]
+
+    # Define all strata types to process with their display name prefixes
+    strata_config = [
+        (
+            "RUCC",
+            "RUCC",
+            {
+                1: "RUCC: Metropolitan urbanized",
+                2: "RUCC: Non-metropolitan urbanized",
+                3: "RUCC: Less urbanized",
+                4: "RUCC: Thinly populated",
+            },
+        ),
+        (
+            "Climate",
+            "census_region",
+            {
+                1: "Census Region: Northeast",
+                2: "Census Region: Midwest",
+                3: "Census Region: South",
+                4: "Census Region: West",
+            },
+        ),
+        (
+            "Climate",
+            "koppen_major",
+            {
+                "B": "Köppen-Geiger Climate Zone: Dry",
+                "C": "Köppen-Geiger Climate Zone: Temperate",
+                "D": "Köppen-Geiger Climate Zone: Continental",
+            },
+        ),
+        (
+            "Climate",
+            "doe_major",
+            {
+                2: "DOE Climate Zone: Hot",
+                3: "DOE Climate Zone: Warm",
+                4: "DOE Climate Zone: Mixed",
+                5: "DOE Climate Zone: Cool",
+                6: "DOE Climate Zone: Cold",
+                7: "DOE Climate Zone: Very Cold",
+            },
+        ),
+        (
+            "Typology",
+            "Typology",
+            {
+                1: "County Economic Typology: Farming",
+                2: "County Economic Typology: Mining",
+                3: "County Economic Typology: Manufacturing",
+                4: "County Economic Typology: Government",
+                5: "County Economic Typology: Services",
+                6: "County Economic Typology: Nonspecialized",
+            },
+        ),
+        ("LandUse", "LandUse", None),
+    ]
+
+    result_rows = []
+
+    # Add National results FIRST
+    if all_results.get("RUCC"):
+        df = pd.DataFrame(all_results["RUCC"])
+        national_data = df[
+            (df["Stratum_Value"] == "National")
+            & (df["ICD-10 Code"].isin(NDD_ALL_CODES))
+        ].copy()
+
+        if not national_data.empty:
+            result_rows.append({"Outcome": "National"})
+
+            # Calculate total deaths for ordering
+            code_deaths = {}
+            for code in NDD_ALL_CODES:
+                code_data = national_data[national_data["ICD-10 Code"] == code]
+                total_deaths = code_data["Total_Deaths"].sum()
+                code_deaths[code] = total_deaths
+
+            sorted_codes = sorted(
+                code_deaths.keys(), key=lambda x: code_deaths[x], reverse=True
+            )
+
+            for code in sorted_codes:
+                code_data = national_data[national_data["ICD-10 Code"] == code]
+                if code_data.empty:
+                    continue
+
+                abbr = NDD_ABBR_MAP.get(code, code)
+                row = {"Outcome": abbr}
+
+                for period in time_periods:
+                    period_data = code_data[code_data["Time_Period"] == period]
+                    if not period_data.empty:
+                        deaths = int(period_data["Total_Deaths"].iloc[0])
+                        population = int(period_data["Total_Population"].iloc[0])
+                        aamr_se = period_data["AAMRSE"].iloc[0]
+                        pct = (deaths / population) * 1000 if population > 0 else 0
+                        row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+                        row[f"{period} AAMR"] = aamr_se
+                    else:
+                        row[f"{period} Death,n(‰)"] = ""
+                        row[f"{period} AAMR"] = ""
+
+                result_rows.append(row)
+
+    # Add Sex and Race section
+    demographic_rows = process_stratified_ndd_files(project_root)
+    if demographic_rows:
+        result_rows.append({"Outcome": "Sex and Race"})
+        # Add total NDD first (from National)
+        if all_results.get("RUCC"):
+            df = pd.DataFrame(all_results["RUCC"])
+            ndd_national = df[
+                (df["Stratum_Value"] == "National")
+                & (df["ICD-10 Code"] == "G20_G30_G12.2_F01_F03")
+            ].copy()
+            if not ndd_national.empty:
+                row = {"Outcome": "NDD"}
+                for period in time_periods:
+                    period_data = ndd_national[ndd_national["Time_Period"] == period]
+                    if not period_data.empty:
+                        deaths = int(period_data["Total_Deaths"].iloc[0])
+                        population = int(period_data["Total_Population"].iloc[0])
+                        aamr_se = period_data["AAMRSE"].iloc[0]
+                        pct = (deaths / population) * 1000 if population > 0 else 0
+                        row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+                        row[f"{period} AAMR"] = aamr_se
+                    else:
+                        row[f"{period} Death,n(‰)"] = ""
+                        row[f"{period} AAMR"] = ""
+                result_rows.append(row)
+        # Add demographic rows (already formatted with NDD(Male), etc.)
+        result_rows.extend(demographic_rows)
+
+    for strat_key, strat_type, name_map in strata_config:
+        if not all_results.get(strat_key):
+            continue
+
+        df = pd.DataFrame(all_results[strat_key])
+
+        # Filter for this stratum type and NDD codes only
+        filtered = df[
+            (df["Stratum_Type"] == strat_type) & (df["ICD-10 Code"].isin(NDD_ALL_CODES))
+        ].copy()
+
+        if filtered.empty:
+            continue
+
+        # Get unique strata values (excluding National)
+        strata_values = [
+            v for v in filtered["Stratum_Value"].unique() if v != "National"
+        ]
+
+        # Sort strata values
+        try:
+            strata_values = sorted(strata_values, key=lambda x: float(x))
+        except (ValueError, TypeError):
+            strata_values = sorted(strata_values)
+
+        for stratum_val in strata_values:
+            # Get stratum display name
+            if name_map:
+                try:
+                    key = (
+                        int(float(stratum_val))
+                        if stratum_val not in ["B", "C", "D"]
+                        else stratum_val
+                    )
+                    stratum_name = name_map.get(key, f"{strat_type}: {stratum_val}")
+                except (ValueError, TypeError):
+                    stratum_name = name_map.get(
+                        stratum_val, f"{strat_type}: {stratum_val}"
+                    )
+            else:
+                # For Cluster, Typology, LandUse without predefined names
+                if strat_type.startswith("Cluster_k"):
+                    stratum_name = f"EQI {strat_type}: {stratum_val}"
+                elif strat_type == "Typology":
+                    stratum_name = f"County Economic Typology: {stratum_val}"
+                elif strat_type == "LandUse":
+                    stratum_name = f"Land Use Cluster: {stratum_val}"
+                else:
+                    stratum_name = f"{strat_type}: {stratum_val}"
+
+            # Add stratum header row
+            result_rows.append({"Outcome": stratum_name})
+
+            # Get data for this stratum
+            stratum_data = filtered[filtered["Stratum_Value"] == stratum_val].copy()
+
+            # Calculate total deaths across all periods for ordering
+            code_deaths = {}
+            for code in NDD_ALL_CODES:
+                code_data = stratum_data[stratum_data["ICD-10 Code"] == code]
+                total_deaths = code_data["Total_Deaths"].sum()
+                code_deaths[code] = total_deaths
+
+            # Sort codes by total deaths (descending)
+            sorted_codes = sorted(
+                code_deaths.keys(), key=lambda x: code_deaths[x], reverse=True
+            )
+
+            # Add rows for each NDD outcome
+            for code in sorted_codes:
+                code_data = stratum_data[stratum_data["ICD-10 Code"] == code]
+                if code_data.empty:
+                    continue
+
+                abbr = NDD_ABBR_MAP.get(code, code)
+                row = {"Outcome": abbr}
+
+                for period in time_periods:
+                    period_data = code_data[code_data["Time_Period"] == period]
+
+                    if not period_data.empty:
+                        deaths = int(period_data["Total_Deaths"].iloc[0])
+                        population = int(period_data["Total_Population"].iloc[0])
+                        aamr_se = period_data["AAMRSE"].iloc[0]
+
+                        # Calculate per mille (deaths / population * 1000)
+                        pct = (deaths / population) * 1000 if population > 0 else 0
+
+                        row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+                        row[f"{period} AAMR"] = aamr_se
+                    else:
+                        row[f"{period} Death,n(‰)"] = ""
+                        row[f"{period} AAMR"] = ""
+
+                result_rows.append(row)
+
+    # Create DataFrame and save
+    output_df = pd.DataFrame(result_rows)
+
+    # Reorder columns
+    col_order = ["Outcome"]
+    for period in time_periods:
+        col_order.append(f"{period} Death,n(‰)")
+        col_order.append(f"{period} AAMR")
+
+    # Only include columns that exist
+    col_order = [c for c in col_order if c in output_df.columns]
+    output_df = output_df[col_order]
+
+    output_path = output_dir / "NDD_AAMR_Strata.csv"
+    output_df.to_csv(output_path, index=False)
+    print(f"\nSaved NDD_AAMR_Strata to {output_path}")
+    print(f"Total rows: {len(output_df)}")
+
+    return result_rows
+
+
+def process_stratified_ndd_files_sex_only(
+    project_root: Path, all_results: Dict[str, List[Dict]] = None
+) -> List[Dict]:
+    """
+    Process sex stratified NDD files from Stratified_Subtracted directory.
+    Male deaths are calculated as Total - Female to ensure consistency.
+
+    Returns list of result rows with _type field for identification.
+    """
+    input_dir = project_root / "Data/Original/CDC Triangulation/Stratified_Subtracted"
+    if not input_dir.exists():
+        return []
+
+    time_periods = ["2006-2010", "2011-2015", "2016-2020"]
+
+    # Get national totals from all_results
+    national_totals = {}
+    if all_results and all_results.get("RUCC"):
+        df = pd.DataFrame(all_results["RUCC"])
+        ndd_national = df[
+            (df["Stratum_Value"] == "National")
+            & (df["ICD-10 Code"] == "G20_G30_G12.2_F01_F03")
+        ].copy()
+        for period in time_periods:
+            period_data = ndd_national[ndd_national["Time_Period"] == period]
+            if not period_data.empty:
+                national_totals[period] = {
+                    "deaths": int(period_data["Total_Deaths"].iloc[0]),
+                    "population": int(period_data["Total_Population"].iloc[0]),
+                }
+
+    # First get Female data
+    female_data = {}
+    for period in time_periods:
+        file_path = input_dir / f"{period}_G20_G30_G12.2_F01_F03_Female.csv"
+        if file_path.exists():
+            df = pd.read_csv(file_path, dtype={"County Code": str})
+            df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
+            df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
+            df["Population"] = pd.to_numeric(df["Population"], errors="coerce").fillna(
+                0
+            )
+            df = df.rename(columns={"Ten-Year Age Groups": "Age_Group"})
+
+            agg_df = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+            aamr, stats = calculate_aamr_point(agg_df)
+            se = calculate_aamr_standard_error(agg_df)
+
+            female_data[period] = {
+                "deaths": stats["total_deaths"],
+                "population": stats["total_population"],
+                "aamr": aamr,
+                "se": se,
+            }
+
+    result_rows = []
+
+    # Calculate Male as Total - Female
+    male_row = {"_type": "male"}
+    for period in time_periods:
+        if period in national_totals and period in female_data:
+            total_deaths = national_totals[period]["deaths"]
+            female_deaths = female_data[period]["deaths"]
+            male_deaths = total_deaths - female_deaths
+
+            # For population and AAMR, use Male file data
+            file_path = input_dir / f"{period}_G20_G30_G12.2_F01_F03_Male.csv"
+            if file_path.exists():
+                df = pd.read_csv(file_path, dtype={"County Code": str})
+                df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
+                df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
+                df["Population"] = pd.to_numeric(
+                    df["Population"], errors="coerce"
+                ).fillna(0)
+                df = df.rename(columns={"Ten-Year Age Groups": "Age_Group"})
+
+                agg_df = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+                aamr, stats = calculate_aamr_point(agg_df)
+                se = calculate_aamr_standard_error(agg_df)
+
+                population = stats["total_population"]
+                pct = (male_deaths / population) * 1000 if population > 0 else 0
+                male_row[f"{period} Death,n(‰)"] = f"{male_deaths:,} ({pct:.2f}‰)"
+                male_row[f"{period} AAMR"] = f"{aamr:.2f} ± {se:.2f}"
+
+    result_rows.append(male_row)
+
+    # Add Female row
+    female_row = {"_type": "female"}
+    for period, data in female_data.items():
+        deaths = data["deaths"]
+        population = data["population"]
+        aamr = data["aamr"]
+        se = data["se"]
+
+        pct = (deaths / population) * 1000 if population > 0 else 0
+        female_row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+        female_row[f"{period} AAMR"] = f"{aamr:.2f} ± {se:.2f}"
+
+    result_rows.append(female_row)
+
+    return result_rows
+
+
+def process_stratified_ndd_files_race_only(project_root: Path) -> List[Dict]:
+    """
+    Process race stratified NDD files from Stratified_Subtracted directory.
+
+    Returns list of result rows for NDD by race strata with format:
+    NDD (White), NDD (Black), NDD (Asian), NDD (Indian)
+    """
+    input_dir = project_root / "Data/Original/CDC Triangulation/Stratified_Subtracted"
+    if not input_dir.exists():
+        return []
+
+    time_periods = ["2006-2010", "2011-2015", "2016-2020"]
+
+    race_strata = [
+        ("White", "NDD (White)"),
+        ("Black", "NDD (Black)"),
+        ("Asian", "NDD (Asian)"),
+        ("Indian", "NDD (Indian)"),
+    ]
+
+    result_rows = []
+
+    for stratum_file, display_name in race_strata:
+        stratum_data = []
+        for period in time_periods:
+            file_path = input_dir / f"{period}_G20_G30_G12.2_F01_F03_{stratum_file}.csv"
+            if file_path.exists():
+                df = pd.read_csv(file_path, dtype={"County Code": str})
+                df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
+                df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
+                df["Population"] = pd.to_numeric(
+                    df["Population"], errors="coerce"
+                ).fillna(0)
+                df = df.rename(columns={"Ten-Year Age Groups": "Age_Group"})
+
+                agg_df = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+                aamr, stats = calculate_aamr_point(agg_df)
+                se = calculate_aamr_standard_error(agg_df)
+
+                stratum_data.append(
+                    {
+                        "period": period,
+                        "deaths": stats["total_deaths"],
+                        "population": stats["total_population"],
+                        "aamr": aamr,
+                        "se": se,
+                    }
+                )
+
+        if stratum_data:
+            row = {"Outcome": display_name}
+            for data in stratum_data:
+                period = data["period"]
+                deaths = data["deaths"]
+                population = data["population"]
+                aamr = data["aamr"]
+                se = data["se"]
+
+                pct = (deaths / population) * 1000 if population > 0 else 0
+                row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+                row[f"{period} AAMR"] = f"{aamr:.2f} ± {se:.2f}"
+
+            result_rows.append(row)
+
+    return result_rows
+
+
+def create_ndd_strata_table_with_demographics(
+    all_results: Dict[str, List[Dict]], project_root: Path, output_dir: Path
+):
+    """
+    Create NDD_AAMR_Strata.csv with all NDD outcomes including race/sex strata.
+    """
+    print("\n" + "=" * 80)
+    print("Creating NDD_AAMR_Strata Table (with Race/Sex)")
+    print("=" * 80)
+
+    time_periods = ["2006-2010", "2011-2015", "2016-2020"]
+
+    # Define all strata types to process with their display name prefixes
+    strata_config = [
+        (
+            "RUCC",
+            "RUCC",
+            {
+                1: "RUCC: Metropolitan urbanized",
+                2: "RUCC: Non-metropolitan urbanized",
+                3: "RUCC: Less urbanized",
+                4: "RUCC: Thinly populated",
+            },
+        ),
+        (
+            "Climate",
+            "census_region",
+            {
+                1: "Census Region: Northeast",
+                2: "Census Region: Midwest",
+                3: "Census Region: South",
+                4: "Census Region: West",
+            },
+        ),
+        (
+            "Climate",
+            "koppen_major",
+            {
+                "B": "Köppen-Geiger Climate Zone: Dry",
+                "C": "Köppen-Geiger Climate Zone: Temperate",
+                "D": "Köppen-Geiger Climate Zone: Continental",
+            },
+        ),
+        (
+            "Climate",
+            "doe_major",
+            {
+                2: "DOE Climate Zone: Hot",
+                3: "DOE Climate Zone: Warm",
+                4: "DOE Climate Zone: Mixed",
+                5: "DOE Climate Zone: Cool",
+                6: "DOE Climate Zone: Cold",
+                7: "DOE Climate Zone: Very Cold",
+            },
+        ),
+        (
+            "Typology",
+            "Typology",
+            {
+                1: "County Economic Typology: Farming",
+                2: "County Economic Typology: Mining",
+                3: "County Economic Typology: Manufacturing",
+                4: "County Economic Typology: Government",
+                5: "County Economic Typology: Services",
+                6: "County Economic Typology: Nonspecialized",
+            },
+        ),
+        ("LandUse", "LandUse", None),
+    ]
+
+    result_rows = []
+
+    # Add National results FIRST with specific order
+    if all_results.get("RUCC"):
+        df = pd.DataFrame(all_results["RUCC"])
+        national_data = df[
+            (df["Stratum_Value"] == "National")
+            & (df["ICD-10 Code"].isin(NDD_ALL_CODES))
+        ].copy()
+
+        if not national_data.empty:
+            result_rows.append({"Outcome": "National"})
+
+            # Get sex stratified data
+            sex_rows = process_stratified_ndd_files_sex_only(project_root, all_results)
+
+            # Define specific order: NDD, NDD (Male), NDD (Female), UD, AD, PD, VD, ALS, HD
+            national_order = [
+                ("G20_G30_G12.2_F01_F03", "NDD"),
+                ("sex_male", "NDD (Male)"),
+                ("sex_female", "NDD (Female)"),
+                ("F03", "UD"),
+                ("G30", "AD"),
+                ("G20", "PD"),
+                ("F01", "VD"),
+                ("G12.2", "ALS"),
+                ("G10", "HD"),
+            ]
+
+            for code, display_name in national_order:
+                if code.startswith("sex_"):
+                    # Get from sex_rows
+                    sex_type = code.replace("sex_", "")
+                    for sex_row in sex_rows:
+                        if sex_row.get("_type") == sex_type:
+                            row = {
+                                k: v
+                                for k, v in sex_row.items()
+                                if not k.startswith("_")
+                            }
+                            row["Outcome"] = display_name
+                            result_rows.append(row)
+                            break
+                else:
+                    code_data = national_data[national_data["ICD-10 Code"] == code]
+                    if code_data.empty:
+                        continue
+
+                    row = {"Outcome": display_name}
+
+                    for period in time_periods:
+                        period_data = code_data[code_data["Time_Period"] == period]
+                        if not period_data.empty:
+                            deaths = int(period_data["Total_Deaths"].iloc[0])
+                            population = int(period_data["Total_Population"].iloc[0])
+                            aamr_se = period_data["AAMRSE"].iloc[0]
+                            pct = (deaths / population) * 1000 if population > 0 else 0
+                            row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+                            row[f"{period} AAMR"] = aamr_se
+                        else:
+                            row[f"{period} Death,n(‰)"] = ""
+                            row[f"{period} AAMR"] = ""
+
+                    result_rows.append(row)
+
+    # Add Race section
+    race_rows = process_stratified_ndd_files_race_only(project_root)
+    if race_rows:
+        result_rows.append({"Outcome": "Race"})
+        # Add total NDD first (from National)
+        if all_results.get("RUCC"):
+            df = pd.DataFrame(all_results["RUCC"])
+            ndd_national = df[
+                (df["Stratum_Value"] == "National")
+                & (df["ICD-10 Code"] == "G20_G30_G12.2_F01_F03")
+            ].copy()
+            if not ndd_national.empty:
+                row = {"Outcome": "NDD"}
+                for period in time_periods:
+                    period_data = ndd_national[ndd_national["Time_Period"] == period]
+                    if not period_data.empty:
+                        deaths = int(period_data["Total_Deaths"].iloc[0])
+                        population = int(period_data["Total_Population"].iloc[0])
+                        aamr_se = period_data["AAMRSE"].iloc[0]
+                        pct = (deaths / population) * 1000 if population > 0 else 0
+                        row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+                        row[f"{period} AAMR"] = aamr_se
+                    else:
+                        row[f"{period} Death,n(‰)"] = ""
+                        row[f"{period} AAMR"] = ""
+                result_rows.append(row)
+        # Add race rows
+        result_rows.extend(race_rows)
+
+    for strat_key, strat_type, name_map in strata_config:
+        if not all_results.get(strat_key):
+            continue
+
+        df = pd.DataFrame(all_results[strat_key])
+
+        # Filter for this stratum type and NDD codes only
+        filtered = df[
+            (df["Stratum_Type"] == strat_type) & (df["ICD-10 Code"].isin(NDD_ALL_CODES))
+        ].copy()
+
+        if filtered.empty:
+            continue
+
+        # Get unique strata values (excluding National)
+        strata_values = [
+            v for v in filtered["Stratum_Value"].unique() if v != "National"
+        ]
+
+        # Sort strata values
+        try:
+            strata_values = sorted(strata_values, key=lambda x: float(x))
+        except (ValueError, TypeError):
+            strata_values = sorted(strata_values)
+
+        for stratum_val in strata_values:
+            # Get stratum display name
+            if name_map:
+                try:
+                    key = (
+                        int(float(stratum_val))
+                        if stratum_val not in ["B", "C", "D"]
+                        else stratum_val
+                    )
+                    stratum_name = name_map.get(key, f"{strat_type}: {stratum_val}")
+                except (ValueError, TypeError):
+                    stratum_name = name_map.get(
+                        stratum_val, f"{strat_type}: {stratum_val}"
+                    )
+            else:
+                # For Cluster, Typology, LandUse without predefined names
+                if strat_type.startswith("Cluster_k"):
+                    stratum_name = f"EQI {strat_type}: {stratum_val}"
+                elif strat_type == "Typology":
+                    stratum_name = f"County Economic Typology: {stratum_val}"
+                elif strat_type == "LandUse":
+                    stratum_name = f"Land Use Cluster: {stratum_val}"
+                else:
+                    stratum_name = f"{strat_type}: {stratum_val}"
+
+            # Add stratum header row
+            result_rows.append({"Outcome": stratum_name})
+
+            # Get data for this stratum
+            stratum_data = filtered[filtered["Stratum_Value"] == stratum_val].copy()
+
+            # Calculate total deaths across all periods for ordering
+            code_deaths = {}
+            for code in NDD_ALL_CODES:
+                code_data = stratum_data[stratum_data["ICD-10 Code"] == code]
+                total_deaths = code_data["Total_Deaths"].sum()
+                code_deaths[code] = total_deaths
+
+            # Sort codes by total deaths (descending)
+            sorted_codes = sorted(
+                code_deaths.keys(), key=lambda x: code_deaths[x], reverse=True
+            )
+
+            # Add rows for each NDD outcome
+            for code in sorted_codes:
+                code_data = stratum_data[stratum_data["ICD-10 Code"] == code]
+                if code_data.empty:
+                    continue
+
+                abbr = NDD_ABBR_MAP.get(code, code)
+                row = {"Outcome": abbr}
+
+                for period in time_periods:
+                    period_data = code_data[code_data["Time_Period"] == period]
+
+                    if not period_data.empty:
+                        deaths = int(period_data["Total_Deaths"].iloc[0])
+                        population = int(period_data["Total_Population"].iloc[0])
+                        aamr_se = period_data["AAMRSE"].iloc[0]
+
+                        # Calculate per mille (deaths / population * 1000)
+                        pct = (deaths / population) * 1000 if population > 0 else 0
+
+                        row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+                        row[f"{period} AAMR"] = aamr_se
+                    else:
+                        row[f"{period} Death,n(‰)"] = ""
+                        row[f"{period} AAMR"] = ""
+
+                result_rows.append(row)
+
+    # Create DataFrame and save
+    output_df = pd.DataFrame(result_rows)
+
+    # Reorder columns
+    col_order = ["Outcome"]
+    for period in time_periods:
+        col_order.append(f"{period} Death,n(‰)")
+        col_order.append(f"{period} AAMR")
+
+    # Only include columns that exist
+    col_order = [c for c in col_order if c in output_df.columns]
+    output_df = output_df[col_order]
+
+    output_path = output_dir / "NDD_AAMR_Strata.csv"
+    output_df.to_csv(output_path, index=False)
+    print(f"\nSaved NDD_AAMR_Strata to {output_path}")
+    print(f"Total rows: {len(output_df)}")
 
 
 def main():
@@ -845,6 +1589,9 @@ def main():
 
     # Create summary tables
     create_summary_tables(all_results, output_dir)
+
+    # Create NDD strata table (with race/sex demographics)
+    create_ndd_strata_table_with_demographics(all_results, project_root, output_dir)
 
     print("\n" + "=" * 80)
     print("All processing completed successfully!")

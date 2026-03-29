@@ -41,9 +41,9 @@ TYPOLOGY_LABELS = {
 def plot_county_typology_map(config):
     """
     Plot USDA ERS County Typology 2004 distribution map
-    for contiguous US using an oblique projection.
+    for contiguous US without projection (plane view).
     """
-    print("Creating County Typology map...")
+    print("Creating County Typology map (Plane view)...")
 
     # Paths from config
     shapefile_path = config["data_sources"]["tiger"]["shapefile"]
@@ -125,22 +125,16 @@ def plot_county_typology_map(config):
         .fillna(TYPOLOGY_COLORS["No Data"])
     )
 
-    # Define oblique projection for better US visualization
-    oblique_crs = "+proj=omerc +lat_0=37 +lonc=-96 +alpha=1 +k=0.9996 +x_0=0 +y_0=0 +gamma=0 +ellps=WGS84 +units=m +no_defs"
-
-    # Transform to projection
-    counties_proj = counties_merged.to_crs(oblique_crs)
-
     # Plot
     fig, ax = plt.subplots(1, 1, figsize=(16, 10))
 
-    # Plot counties with typology colors
-    counties_proj.plot(
-        color=counties_proj["color"], linewidth=0.1, edgecolor="white", ax=ax
+    # Plot counties with typology colors (no projection)
+    counties_merged.plot(
+        color=counties_merged["color"], linewidth=0.1, edgecolor="white", ax=ax
     )
 
     # State boundaries
-    state_boundaries = counties_proj.dissolve(by="STATEFP")
+    state_boundaries = counties_merged.dissolve(by="STATEFP")
     state_boundaries.boundary.plot(ax=ax, color="gray", linewidth=0.8, alpha=0.7)
 
     ax.set_axis_off()
@@ -170,7 +164,7 @@ def plot_county_typology_map(config):
     )
 
     # Save
-    output_filename = os.path.join(output_dir, "County_Typology_2004_Map.png")
+    output_filename = os.path.join(output_dir, "County_Typology_2004_Plane.png")
     plt.savefig(output_filename, dpi=300, bbox_inches="tight")
     print(f"Map saved to: {output_filename}")
     plt.close()

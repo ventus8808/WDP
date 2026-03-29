@@ -203,3 +203,549 @@ create_formatted_output(ndd_df, ndd_output_path)
 
 print(f"Cancer stratified data saved to {cancer_output_path}")
 print(f"NDD stratified data saved to {ndd_output_path}")
+
+# ============================================================================
+# RUCC Stratification (from brms directory)
+# ============================================================================
+
+rucc_dir = os.path.join(base_dir, "Result", "brms")
+
+# RUCC strata mapping
+rucc_strata_mapping = {
+    "RUCC1": "RUCC: Metropolitan urbanized",
+    "RUCC2": "RUCC: Non-metropolitan urbanized",
+    "RUCC3": "RUCC: Less urbanized",
+    "RUCC4": "RUCC: Thinly populated",
+}
+
+# RUCC model order
+rucc_model_order = [
+    "EQI",
+    "Air",
+    "Water",
+    "Land",
+    "Built",
+    "Social",
+]
+
+rucc_strata_order = [
+    "RUCC: Metropolitan urbanized",
+    "RUCC: Non-metropolitan urbanized",
+    "RUCC: Less urbanized",
+    "RUCC: Thinly populated",
+]
+
+
+def rucc_strata_sort_key(strata):
+    return (
+        rucc_strata_order.index(strata)
+        if strata in rucc_strata_order
+        else len(rucc_strata_order)
+    )
+
+
+def rucc_model_sort_key(model):
+    return (
+        rucc_model_order.index(model)
+        if model in rucc_model_order
+        else len(rucc_model_order)
+    )
+
+
+def parse_rucc_model(model_str):
+    """Parse RUCC model string to extract strata and model name"""
+    # Models look like: RUCC1_EQI, RUCC1_EQI_Air, RUCC2_EQI_Water, etc.
+    for rucc_code, strata_name in rucc_strata_mapping.items():
+        if model_str.startswith(rucc_code + "_"):
+            suffix = model_str[len(rucc_code) + 1 :]  # Remove "RUCC1_" prefix
+            # suffix is like "EQI", "EQI_Air", "EQI_Water", etc.
+            if suffix == "EQI":
+                model_name = "EQI"
+            elif suffix.startswith("EQI_"):
+                model_name = suffix[
+                    4:
+                ]  # Remove "EQI_" prefix to get "Air", "Water", etc.
+            else:
+                continue
+            return strata_name, model_name
+    return None, None
+
+
+def filter_rucc_data(df, icd_code):
+    """Filter RUCC data for specific ICD code"""
+    # Filter to keep only 2000_2005 EQI period and specific ICD code
+    df = df[(df["EQI_Period"] == "2000_2005") & (df["ICD_Code"] == icd_code)].copy()
+
+    # Filter for RUCC models only
+    rucc_rows = []
+    for _, row in df.iterrows():
+        model = row["Model"]
+        strata, model_name = parse_rucc_model(model)
+        if strata is not None:
+            new_row = {
+                "Strata": strata,
+                "Model": model_name,
+                "EQI_Period": row["EQI_Period"],
+                "AAMR_Period": row["AAMR_Period"],
+                "Lag": row["Lag"],
+                "Q1": row["Q1"],
+                "Q2": row["Q2"],
+                "Q3": row["Q3"],
+                "Q4": row["Q4"],
+                "Q5": row["Q5"],
+            }
+            rucc_rows.append(new_row)
+
+    return pd.DataFrame(rucc_rows)
+
+
+def create_rucc_formatted_output(df, output_path):
+    """Create grouped output by RUCC strata with custom formatting"""
+    if len(df) == 0:
+        print(f"Warning: No RUCC data to write to {output_path}")
+        return
+
+    # Add sort keys
+    df["strata_order"] = df["Strata"].apply(rucc_strata_sort_key)
+    df["model_order"] = df["Model"].apply(rucc_model_sort_key)
+
+    # Sort by strata first, then model order, then AAMR_Period
+    df = df.sort_values(by=["strata_order", "model_order", "AAMR_Period", "Lag"])
+
+    # Append to file
+    with open(output_path, "a") as f:
+        # Group by strata
+        for strata in rucc_strata_order:
+            strata_df = df[df["Strata"] == strata]
+            if len(strata_df) == 0:
+                continue
+
+            # Write strata header
+            f.write(f"{strata}\n")
+
+            # Write each row
+            for _, row in strata_df.iterrows():
+                line = (
+                    f"{row['Model']}\t"
+                    f"{row['Lag']}\t"
+                    f"{format_result(row['Q1'])}\t"
+                    f"{format_result(row['Q2'])}\t"
+                    f"{format_result(row['Q3'])}\t"
+                    f"{format_result(row['Q4'])}\t"
+                    f"{format_result(row['Q5'])}\n"
+                )
+                f.write(line)
+
+
+# Process RUCC data for Cancer (C00_C97)
+cancer_rucc_file = os.path.join(rucc_dir, "C00_C97_main.csv")
+if os.path.exists(cancer_rucc_file):
+    rucc_df = pd.read_csv(cancer_rucc_file)
+    cancer_rucc_df = filter_rucc_data(rucc_df, "C00_C97")
+    create_rucc_formatted_output(cancer_rucc_df, cancer_output_path)
+    print(f"Cancer RUCC data appended to {cancer_output_path}")
+
+# Process RUCC data for NDD (G20_G30_G12.2_F01_F03)
+ndd_rucc_file = os.path.join(rucc_dir, "G20_G30_G12.2_F01_F03_main.csv")
+if os.path.exists(ndd_rucc_file):
+    rucc_df = pd.read_csv(ndd_rucc_file)
+    ndd_rucc_df = filter_rucc_data(rucc_df, "G20_G30_G12.2_F01_F03")
+    create_rucc_formatted_output(ndd_rucc_df, ndd_output_path)
+    print(f"NDD RUCC data appended to {ndd_output_path}")
+
+# ============================================================================
+# Census Region Stratification (from brms_Climate directory)
+# ============================================================================
+
+climate_dir = os.path.join(base_dir, "Result", "brms_Climate")
+
+# Census Region strata mapping
+census_region_strata_mapping = {
+    "census_region_1": "Census Region: Northeast",
+    "census_region_2": "Census Region: Midwest",
+    "census_region_3": "Census Region: South",
+    "census_region_4": "Census Region: West",
+}
+
+census_region_strata_order = [
+    "Census Region: Northeast",
+    "Census Region: Midwest",
+    "Census Region: South",
+    "Census Region: West",
+]
+
+
+def census_region_strata_sort_key(strata):
+    return (
+        census_region_strata_order.index(strata)
+        if strata in census_region_strata_order
+        else len(census_region_strata_order)
+    )
+
+
+def parse_census_region_model(model_str):
+    """Parse Census Region model string to extract strata and model name"""
+    # Models look like: census_region_1_EQI, census_region_1_EQI_Air, etc.
+    for region_code, strata_name in census_region_strata_mapping.items():
+        if model_str.startswith(region_code + "_"):
+            suffix = model_str[
+                len(region_code) + 1 :
+            ]  # Remove "census_region_1_" prefix
+            # suffix is like "EQI", "EQI_Air", "EQI_Water", etc.
+            if suffix == "EQI":
+                model_name = "EQI"
+            elif suffix.startswith("EQI_"):
+                model_name = suffix[
+                    4:
+                ]  # Remove "EQI_" prefix to get "Air", "Water", etc.
+            else:
+                continue
+            return strata_name, model_name
+    return None, None
+
+
+def filter_census_region_data(df, icd_code):
+    """Filter Census Region data for specific ICD code"""
+    # Filter to keep only 2000_2005 EQI period and specific ICD code
+    df = df[(df["EQI_Period"] == "2000_2005") & (df["ICD_Code"] == icd_code)].copy()
+
+    # Filter for Census Region models only
+    census_rows = []
+    for _, row in df.iterrows():
+        model = row["Model"]
+        strata, model_name = parse_census_region_model(model)
+        if strata is not None:
+            new_row = {
+                "Strata": strata,
+                "Model": model_name,
+                "EQI_Period": row["EQI_Period"],
+                "AAMR_Period": row["AAMR_Period"],
+                "Lag": row["Lag"],
+                "Q1": row["Q1"],
+                "Q2": row["Q2"],
+                "Q3": row["Q3"],
+                "Q4": row["Q4"],
+                "Q5": row["Q5"],
+            }
+            census_rows.append(new_row)
+
+    return pd.DataFrame(census_rows)
+
+
+def create_census_region_formatted_output(df, output_path):
+    """Create grouped output by Census Region strata with custom formatting"""
+    if len(df) == 0:
+        print(f"Warning: No Census Region data to write to {output_path}")
+        return
+
+    # Add sort keys
+    df["strata_order"] = df["Strata"].apply(census_region_strata_sort_key)
+    df["model_order"] = df["Model"].apply(
+        rucc_model_sort_key
+    )  # Reuse rucc_model_sort_key
+
+    # Sort by strata first, then model order, then AAMR_Period
+    df = df.sort_values(by=["strata_order", "model_order", "AAMR_Period", "Lag"])
+
+    # Append to file
+    with open(output_path, "a") as f:
+        # Group by strata
+        for strata in census_region_strata_order:
+            strata_df = df[df["Strata"] == strata]
+            if len(strata_df) == 0:
+                continue
+
+            # Write strata header
+            f.write(f"{strata}\n")
+
+            # Write each row
+            for _, row in strata_df.iterrows():
+                line = (
+                    f"{row['Model']}\t"
+                    f"{row['Lag']}\t"
+                    f"{format_result(row['Q1'])}\t"
+                    f"{format_result(row['Q2'])}\t"
+                    f"{format_result(row['Q3'])}\t"
+                    f"{format_result(row['Q4'])}\t"
+                    f"{format_result(row['Q5'])}\n"
+                )
+                f.write(line)
+
+
+# Process Census Region data for Cancer (C00_C97)
+cancer_census_file = os.path.join(climate_dir, "C00_C97_census_region.csv")
+if os.path.exists(cancer_census_file):
+    census_df = pd.read_csv(cancer_census_file)
+    cancer_census_df = filter_census_region_data(census_df, "C00_C97")
+    create_census_region_formatted_output(cancer_census_df, cancer_output_path)
+    print(f"Cancer Census Region data appended to {cancer_output_path}")
+
+# Process Census Region data for NDD (G20_G30_G12.2_F01_F03)
+ndd_census_file = os.path.join(climate_dir, "G20_G30_G12.2_F01_F03_census_region.csv")
+if os.path.exists(ndd_census_file):
+    census_df = pd.read_csv(ndd_census_file)
+    ndd_census_df = filter_census_region_data(census_df, "G20_G30_G12.2_F01_F03")
+    create_census_region_formatted_output(ndd_census_df, ndd_output_path)
+    print(f"NDD Census Region data appended to {ndd_output_path}")
+
+# ============================================================================
+# Köppen-Geiger Climate Zone Stratification (from brms_Climate directory)
+# ============================================================================
+
+# Köppen-Geiger strata mapping
+koppen_strata_mapping = {
+    "koppen_major_B": "Köppen-Geiger Climate Zone: Dry",
+    "koppen_major_C": "Köppen-Geiger Climate Zone: Temperate",
+    "koppen_major_D": "Köppen-Geiger Climate Zone: Continental",
+}
+
+koppen_strata_order = [
+    "Köppen-Geiger Climate Zone: Dry",
+    "Köppen-Geiger Climate Zone: Temperate",
+    "Köppen-Geiger Climate Zone: Continental",
+]
+
+
+def koppen_strata_sort_key(strata):
+    return (
+        koppen_strata_order.index(strata)
+        if strata in koppen_strata_order
+        else len(koppen_strata_order)
+    )
+
+
+def parse_koppen_model(model_str):
+    """Parse Köppen-Geiger model string to extract strata and model name"""
+    # Models look like: koppen_major_B_EQI, koppen_major_B_EQI_Air, etc.
+    for koppen_code, strata_name in koppen_strata_mapping.items():
+        if model_str.startswith(koppen_code + "_"):
+            suffix = model_str[
+                len(koppen_code) + 1 :
+            ]  # Remove "koppen_major_B_" prefix
+            # suffix is like "EQI", "EQI_Air", "EQI_Water", etc.
+            if suffix == "EQI":
+                model_name = "EQI"
+            elif suffix.startswith("EQI_"):
+                model_name = suffix[
+                    4:
+                ]  # Remove "EQI_" prefix to get "Air", "Water", etc.
+            else:
+                continue
+            return strata_name, model_name
+    return None, None
+
+
+def filter_koppen_data(df, icd_code):
+    """Filter Köppen-Geiger data for specific ICD code"""
+    # Filter to keep only 2000_2005 EQI period and specific ICD code
+    df = df[(df["EQI_Period"] == "2000_2005") & (df["ICD_Code"] == icd_code)].copy()
+
+    # Filter for Köppen-Geiger models only
+    koppen_rows = []
+    for _, row in df.iterrows():
+        model = row["Model"]
+        strata, model_name = parse_koppen_model(model)
+        if strata is not None:
+            new_row = {
+                "Strata": strata,
+                "Model": model_name,
+                "EQI_Period": row["EQI_Period"],
+                "AAMR_Period": row["AAMR_Period"],
+                "Lag": row["Lag"],
+                "Q1": row["Q1"],
+                "Q2": row["Q2"],
+                "Q3": row["Q3"],
+                "Q4": row["Q4"],
+                "Q5": row["Q5"],
+            }
+            koppen_rows.append(new_row)
+
+    return pd.DataFrame(koppen_rows)
+
+
+def create_koppen_formatted_output(df, output_path):
+    """Create grouped output by Köppen-Geiger strata with custom formatting"""
+    if len(df) == 0:
+        print(f"Warning: No Köppen-Geiger data to write to {output_path}")
+        return
+
+    # Add sort keys
+    df["strata_order"] = df["Strata"].apply(koppen_strata_sort_key)
+    df["model_order"] = df["Model"].apply(
+        rucc_model_sort_key
+    )  # Reuse rucc_model_sort_key
+
+    # Sort by strata first, then model order, then AAMR_Period
+    df = df.sort_values(by=["strata_order", "model_order", "AAMR_Period", "Lag"])
+
+    # Append to file
+    with open(output_path, "a") as f:
+        # Group by strata
+        for strata in koppen_strata_order:
+            strata_df = df[df["Strata"] == strata]
+            if len(strata_df) == 0:
+                continue
+
+            # Write strata header
+            f.write(f"{strata}\n")
+
+            # Write each row
+            for _, row in strata_df.iterrows():
+                line = (
+                    f"{row['Model']}\t"
+                    f"{row['Lag']}\t"
+                    f"{format_result(row['Q1'])}\t"
+                    f"{format_result(row['Q2'])}\t"
+                    f"{format_result(row['Q3'])}\t"
+                    f"{format_result(row['Q4'])}\t"
+                    f"{format_result(row['Q5'])}\n"
+                )
+                f.write(line)
+
+
+# Process Köppen-Geiger data for Cancer (C00_C97)
+cancer_koppen_file = os.path.join(climate_dir, "C00_C97_koppen_major.csv")
+if os.path.exists(cancer_koppen_file):
+    koppen_df = pd.read_csv(cancer_koppen_file)
+    cancer_koppen_df = filter_koppen_data(koppen_df, "C00_C97")
+    create_koppen_formatted_output(cancer_koppen_df, cancer_output_path)
+    print(f"Cancer Köppen-Geiger data appended to {cancer_output_path}")
+
+# Process Köppen-Geiger data for NDD (G20_G30_G12.2_F01_F03)
+ndd_koppen_file = os.path.join(climate_dir, "G20_G30_G12.2_F01_F03_koppen_major.csv")
+if os.path.exists(ndd_koppen_file):
+    koppen_df = pd.read_csv(ndd_koppen_file)
+    ndd_koppen_df = filter_koppen_data(koppen_df, "G20_G30_G12.2_F01_F03")
+    create_koppen_formatted_output(ndd_koppen_df, ndd_output_path)
+    print(f"NDD Köppen-Geiger data appended to {ndd_output_path}")
+
+# ============================================================================
+# County Economic Typology Stratification (from brms_Typology_LandUse directory)
+# ============================================================================
+
+typology_dir = os.path.join(base_dir, "Result", "brms_Typology_LandUse")
+
+# Typology strata mapping
+typology_strata_mapping = {
+    "Typology_Farming": "County Economic Typology: Farming",
+    "Typology_Mining": "County Economic Typology: Mining",
+    "Typology_Manufacturing": "County Economic Typology: Manufacturing",
+    "Typology_Government": "County Economic Typology: Government",
+    "Typology_Services": "County Economic Typology: Services",
+    "Typology_Nonspecialized": "County Economic Typology: Nonspecialized",
+}
+
+typology_strata_order = [
+    "County Economic Typology: Farming",
+    "County Economic Typology: Mining",
+    "County Economic Typology: Manufacturing",
+    "County Economic Typology: Government",
+    "County Economic Typology: Services",
+    "County Economic Typology: Nonspecialized",
+]
+
+
+def typology_strata_sort_key(strata):
+    return (
+        typology_strata_order.index(strata)
+        if strata in typology_strata_order
+        else len(typology_strata_order)
+    )
+
+
+def parse_typology_model(model_str):
+    """Parse Typology model string to extract strata and model name"""
+    # Models look like: Typology_Farming_EQI, Typology_Farming_EQI_Air, etc.
+    for typology_code, strata_name in typology_strata_mapping.items():
+        if model_str.startswith(typology_code + "_"):
+            suffix = model_str[
+                len(typology_code) + 1 :
+            ]  # Remove "Typology_Farming_" prefix
+            # suffix is like "EQI", "EQI_Air", "EQI_Water", etc.
+            if suffix == "EQI":
+                model_name = "EQI"
+            elif suffix.startswith("EQI_"):
+                model_name = suffix[
+                    4:
+                ]  # Remove "EQI_" prefix to get "Air", "Water", etc.
+            else:
+                continue
+            return strata_name, model_name
+    return None, None
+
+
+def filter_typology_data(df, icd_code):
+    """Filter Typology data for specific ICD code"""
+    # Filter to keep only 2000_2005 EQI period and specific ICD code
+    df = df[(df["EQI_Period"] == "2000_2005") & (df["ICD_Code"] == icd_code)].copy()
+
+    # Filter for Typology models only
+    typology_rows = []
+    for _, row in df.iterrows():
+        model = row["Model"]
+        strata, model_name = parse_typology_model(model)
+        if strata is not None:
+            new_row = {
+                "Strata": strata,
+                "Model": model_name,
+                "EQI_Period": row["EQI_Period"],
+                "AAMR_Period": row["AAMR_Period"],
+                "Lag": row["Lag"],
+                "Q1": row["Q1"],
+                "Q2": row["Q2"],
+                "Q3": row["Q3"],
+                "Q4": row["Q4"],
+                "Q5": row["Q5"],
+            }
+            typology_rows.append(new_row)
+
+    return pd.DataFrame(typology_rows)
+
+
+def create_typology_formatted_output(df, output_path):
+    """Create grouped output by Typology strata with custom formatting"""
+    if len(df) == 0:
+        print(f"Warning: No Typology data to write to {output_path}")
+        return
+
+    # Add sort keys
+    df["strata_order"] = df["Strata"].apply(typology_strata_sort_key)
+    df["model_order"] = df["Model"].apply(
+        rucc_model_sort_key
+    )  # Reuse rucc_model_sort_key
+
+    # Sort by strata first, then model order, then AAMR_Period
+    df = df.sort_values(by=["strata_order", "model_order", "AAMR_Period", "Lag"])
+
+    # Append to file
+    with open(output_path, "a") as f:
+        # Group by strata
+        for strata in typology_strata_order:
+            strata_df = df[df["Strata"] == strata]
+            if len(strata_df) == 0:
+                continue
+
+            # Write strata header
+            f.write(f"{strata}\n")
+
+            # Write each row
+            for _, row in strata_df.iterrows():
+                line = (
+                    f"{row['Model']}\t"
+                    f"{row['Lag']}\t"
+                    f"{format_result(row['Q1'])}\t"
+                    f"{format_result(row['Q2'])}\t"
+                    f"{format_result(row['Q3'])}\t"
+                    f"{format_result(row['Q4'])}\t"
+                    f"{format_result(row['Q5'])}\n"
+                )
+                f.write(line)
+
+
+# Process Typology data for NDD (G20_G30_G12.2_F01_F03) only
+ndd_typology_file = os.path.join(typology_dir, "G20_G30_G12.2_F01_F03_Typology.csv")
+if os.path.exists(ndd_typology_file):
+    typology_df = pd.read_csv(ndd_typology_file)
+    ndd_typology_df = filter_typology_data(typology_df, "G20_G30_G12.2_F01_F03")
+    create_typology_formatted_output(ndd_typology_df, ndd_output_path)
+    print(f"NDD Typology data appended to {ndd_output_path}")

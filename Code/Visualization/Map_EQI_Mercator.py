@@ -1,12 +1,12 @@
 import os
-import yaml
-import pandas as pd
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 from pathlib import Path
 
-# ... (您的 plt.rcParams 和 EQI_COLORS 定义保持不变) ...
+import geopandas as gpd
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import pandas as pd
+import yaml
+
 # Set matplotlib parameters for consistent styling
 plt.rcParams["font.family"] = "Georgia"
 plt.rcParams["font.size"] = 12
@@ -31,21 +31,21 @@ EQI_COLORS = {
 def plot_eqi_map(period, config):
     """
     Plot EQI distribution map for a given time period
-    FOR CONTIGUOUS US ONLY, using an oblique projection.
+    FOR CONTIGUOUS US ONLY, using an oblique Mercator projection.
     """
-    print(f"Creating EQI map for period {period}...")
+    print(f"Creating EQI map for period {period} (Mercator projection)...")
 
     # Paths from config
     shapefile_path = config["data_sources"]["tiger"]["shapefile"]
     eqi_dir = config["data_sources"]["epa_eqi"]["processed"]
-    output_dir = "Result/EQI_Map"
+    output_dir = "Result/Map"
     os.makedirs(output_dir, exist_ok=True)
 
     # Load shapefile
     counties = gpd.read_file(shapefile_path)
     counties["COUNTY_FIPS"] = counties["STATEFP"] + counties["COUNTYFP"]
 
-    # Filter to contiguous US (保留您原来的逻辑)
+    # Filter to contiguous US
     contiguous_states = [
         "01",
         "04",
@@ -112,30 +112,27 @@ def plot_eqi_map(period, config):
         counties_merged["EQI"].map(EQI_COLORS).fillna(EQI_COLORS["No Data"])
     )
 
-    # 【*** 关键修改 ***】
-    # 1. 定义斜轴投影 (Oblique Mercator)
-    #    您可以调整 alpha= (旋转角度) 和 lonc= (中心经度) 来获得想要的效果
+    # Define oblique Mercator projection
     oblique_crs = "+proj=omerc +lat_0=37 +lonc=-96 +alpha=1 +k=0.9996 +x_0=0 +y_0=0 +gamma=0 +ellps=WGS84 +units=m +no_defs"
 
-    # 2. 在绘图前转换坐标系
+    # Transform to projection
     counties_proj = counties_merged.to_crs(oblique_crs)
-    # *** 结束修改 ***
 
     # Plot
     fig, ax = plt.subplots(1, 1, figsize=(16, 10))
 
-    # 【修改】: 使用投影后的 `counties_proj` 绘图
+    # Plot counties with EQI colors
     counties_proj.plot(
         color=counties_proj["color"], linewidth=0.1, edgecolor="black", ax=ax
     )
 
-    # State boundaries (也需要使用投影后的数据)
+    # State boundaries
     state_boundaries = counties_proj.dissolve(by="STATEFP")
     state_boundaries.boundary.plot(ax=ax, color="black", linewidth=1.2, alpha=0.9)
 
     ax.set_axis_off()
 
-    # Legend (恢复到您原来的左下角位置)
+    # Legend
     legend_elements = [
         mpatches.Patch(color=EQI_COLORS[i], label=f"EQI {i}") for i in range(1, 6)
     ]
@@ -152,9 +149,7 @@ def plot_eqi_map(period, config):
     plt.suptitle(f"EQI Distribution Map ({title_period})", y=0.82)
 
     # Save
-    output_filename = os.path.join(
-        output_dir, f"EQI_Map_{period}_Oblique_Contiguous.png"
-    )
+    output_filename = os.path.join(output_dir, f"EQI_{period}_Mercator.png")
     plt.savefig(output_filename, dpi=300, bbox_inches="tight")
     print(f"Map saved to: {output_filename}")
     plt.close()
