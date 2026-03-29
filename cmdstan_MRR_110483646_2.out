@@ -1,0 +1,40 @@
+[2026-03-29 20:17:11] [INFO] - 项目根目录: /public/home/acf4pijnzl/WDP
+[2026-03-29 20:17:11] [INFO] - 开始处理任务 2
+[2026-03-29 20:17:11] [INFO] - 处理疾病: G30
+[1] "EQI"          "EQI_Air"      "EQI_Water"    "EQI_Land"     "EQI_Built"   
+[6] "EQI_Social"   "Smoking_Rate" "State_FIPS"  
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 248.6 seconds.
+Chain 2 finished in 251.9 seconds.
+Chain 1 finished in 254.6 seconds.
+Chain 4 finished in 258.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 253.4 seconds.
+Total execution time: 259.0 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 263.3 seconds.
+Chain 2 finished in 280.1 seconds.
+Chain 3 finished in 282.3 seconds.
+Chain 1 finished in 287.1 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 278.2 seconds.
+Total execution time: 287.2 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 229.1 seconds.
+Chain 1 finished in 260.9 seconds.
+Chain 4 finished in 265.7 seconds.
+Chain 2 finished in 269.8 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 256.4 seconds.
+Total execution time: 269.9 seconds.
+
+[2026-03-29 20:31:34] [INFO] - ✅ 完成: Cancer=G30
+[2026-03-29 20:31:34] [INFO] - 输出目录: Result/brms_MRR_lag/
