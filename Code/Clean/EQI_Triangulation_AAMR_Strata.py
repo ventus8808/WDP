@@ -56,6 +56,7 @@ LANDUSE_COLS = ["cluster_4"]
 # NDD ICD code to abbreviation mapping
 NDD_ABBR_MAP = {
     "G20_G30_G12.2_F01_F03": "NDD",
+    "G30_F01_F03": "Dementia",
     "G30": "AD",
     "G20": "PD",
     "F01": "VD",
@@ -65,7 +66,12 @@ NDD_ABBR_MAP = {
 }
 
 # All NDD ICD codes
-NDD_ALL_CODES = ["G20_G30_G12.2_F01_F03", "G30", "G20", "F01", "F03", "G10", "G12.2"]
+NDD_ALL_CODES = ["G20_G30_G12.2_F01_F03", "G30_F01_F03", "G30", "G20", "F01", "F03", "G10", "G12.2"]
+
+# Constants for Dementia synthesis
+_DEMENTIA_CODES = ["G30", "F01", "F03"]
+_DEMENTIA_ICD = "G30_F01_F03"
+_DEMENTIA_PERIODS = ["2006-2010", "2011-2015", "2016-2020"]
 
 
 def load_config() -> Tuple[Path, Dict]:
@@ -427,6 +433,150 @@ def process_file(
                 )
 
     return results
+
+
+# ---------------------------------------------------------------------------
+# Dementia synthesis helpers
+# ---------------------------------------------------------------------------
+
+
+def _process_clean_df(
+    df: pd.DataFrame,
+    year_range: str,
+    icd_code: str,
+    strat_data: Dict[str, pd.DataFrame],
+    config: Dict,
+) -> Dict[str, List[Dict]]:
+    """
+    Calculate stratified AAMRs from a pre-cleaned DataFrame.
+    Expects columns: COUNTY_FIPS, Age_Group, Deaths (numeric), Population (numeric).
+    """
+    icd_code_norm = icd_code.replace("-", "_")
+    results = {"RUCC": [], "Climate": [], "Cluster": [], "Typology": [], "LandUse": []}
+
+    def add_result(res_list, strat_type, strat_value, aamr, se, lower, upper, stats):
+        if strat_value != "National":
+            try:
+                val_float = float(strat_value)
+                strat_value = (
+                    str(int(val_float)) if val_float == int(val_float) else str(val_float)
+                )
+            except (ValueError, TypeError):
+                strat_value = str(strat_value)
+        res_list.append(
+            {
+                "Time_Period": year_range,
+                "ICD-10 Code": icd_code,
+                "Outcome": config.get("brms_analysis", {})
+                .get("icd_mapping", {})
+                .get(icd_code_norm, icd_code),
+                "Stratum_Type": strat_type,
+                "Stratum_Value": strat_value,
+                "Total_Deaths": int(stats["total_deaths"]),
+                "Total_Population": int(stats["total_population"]),
+                "AAMR": round(aamr, 4),
+                "AAMR_SE": round(se, 4),
+                "AAMR_Lower": round(lower, 4),
+                "AAMR_Upper": round(upper, 4),
+                "AAMRSE": f"{round(aamr, 2):.2f} ± {round(se, 2):.2f}",
+            }
+        )
+
+    for strat_key, sub_cols in [
+        ("RUCC", ["RUCC"]),
+        ("Climate", CLIMATE_COLS),
+        ("Cluster", CLUSTER_COLS),
+        ("Typology", TYPOLOGY_COLS),
+        ("LandUse", LANDUSE_COLS),
+    ]:
+        if strat_data[strat_key].empty:
+            continue
+        merge_df = df.merge(strat_data[strat_key], on="COUNTY_FIPS", how="left")
+        sub_cols = [c for c in sub_cols if c in merge_df.columns]
+        if not sub_cols:
+            continue
+        merge_df = merge_df.dropna(subset=sub_cols)
+
+        nat_agg = merge_df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+        nat_aamr, nat_stats = calculate_aamr_point(nat_agg)
+        nat_se = calculate_aamr_standard_error(nat_agg)
+        nat_lower, nat_upper = calculate_aamr_ci(nat_aamr, nat_stats)
+
+        for col in sub_cols:
+            if strat_key == "RUCC":
+                s_type = "RUCC"
+            elif strat_key == "Climate":
+                s_type = col
+            elif strat_key == "Cluster":
+                k = col.split("_")[1]
+                s_type = f"Cluster_k{k}"
+            elif strat_key == "Typology":
+                s_type = "Typology"
+            else:
+                s_type = "LandUse"
+
+            add_result(
+                results[strat_key], s_type, "National",
+                nat_aamr, nat_se, nat_lower, nat_upper, nat_stats,
+            )
+
+            grouped = merge_df.groupby([col, "Age_Group"])[["Deaths", "Population"]].sum()
+            strata = sorted(grouped.index.get_level_values(0).unique())
+            for stratum in strata:
+                stratum_agg = grouped.loc[stratum]
+                aamr, stats = calculate_aamr_point(stratum_agg)
+                se = calculate_aamr_standard_error(stratum_agg)
+                lower, upper = calculate_aamr_ci(aamr, stats)
+                add_result(
+                    results[strat_key], s_type, str(stratum),
+                    aamr, se, lower, upper, stats,
+                )
+
+    return results
+
+
+def synthesize_dementia_df(input_dir: Path) -> Dict[str, pd.DataFrame]:
+    """
+    Load G30, F01, F03 subtracted files and sum deaths per county × age group.
+
+    Returns {period: cleaned_df} with columns COUNTY_FIPS, Age_Group, Deaths, Population.
+    Population is taken from G30 (identical across ICD codes for the same county-age cell).
+    """
+    result = {}
+    for period in _DEMENTIA_PERIODS:
+        component_dfs = []
+        pop_ref = None
+        missing = []
+
+        for code in _DEMENTIA_CODES:
+            fp = input_dir / f"{period}_{code}.csv"
+            if not fp.exists():
+                missing.append(code)
+                continue
+            t = pd.read_csv(fp, dtype={"County Code": str})
+            t = t[t["County Code"].notna() & (t["Population"] != "Missing")].copy()
+            t["Deaths"] = pd.to_numeric(t["Deaths"], errors="coerce").fillna(0)
+            t["Population"] = pd.to_numeric(t["Population"], errors="coerce").fillna(0)
+            t = t.rename(
+                columns={"County Code": "COUNTY_FIPS", "Ten-Year Age Groups": "Age_Group"}
+            )
+            t["COUNTY_FIPS"] = t["COUNTY_FIPS"].str.zfill(5)
+            if pop_ref is None:
+                pop_ref = t[["COUNTY_FIPS", "Age_Group", "Population"]].copy()
+            component_dfs.append(t[["COUNTY_FIPS", "Age_Group", "Deaths"]])
+
+        if missing:
+            print(f"  ⚠ Missing dementia component file(s) for {period}: {missing}, skipping")
+            continue
+
+        combined = pd.concat(component_dfs, ignore_index=True)
+        death_sum = combined.groupby(
+            ["COUNTY_FIPS", "Age_Group"], as_index=False
+        )["Deaths"].sum()
+        merged = death_sum.merge(pop_ref, on=["COUNTY_FIPS", "Age_Group"], how="left")
+        result[period] = merged
+
+    return result
 
 
 def get_top5_cancers(df: pd.DataFrame, time_period: str = "2006-2010") -> List[str]:
@@ -1561,6 +1711,15 @@ def main():
         for key in all_results:
             if key in file_results:
                 all_results[key].extend(file_results[key])
+
+    # Synthesize Dementia (G30+F01+F03) stratified AAMR
+    print("\nSynthesizing Dementia (G30+F01+F03) stratified AAMR...")
+    dementia_dfs = synthesize_dementia_df(input_dir)
+    for period, dem_df in dementia_dfs.items():
+        dem_results = _process_clean_df(dem_df, period, _DEMENTIA_ICD, strat_data, config)
+        for key in all_results:
+            if key in dem_results:
+                all_results[key].extend(dem_results[key])
 
     # Write stratified AAMR outputs
     for strat_type in all_results:

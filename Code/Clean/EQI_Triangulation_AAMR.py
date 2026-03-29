@@ -289,6 +289,95 @@ def process_subtracted_file(file_path: Path) -> pd.DataFrame:
     return result_df
 
 
+# ---------------------------------------------------------------------------
+# Dementia synthesis (G30 + F01 + F03)
+# ---------------------------------------------------------------------------
+
+_DEMENTIA_CODES = ["G30", "F01", "F03"]
+_DEMENTIA_ICD = "G30_F01_F03"
+_DEMENTIA_PERIODS = ["2006-2010", "2011-2015", "2016-2020"]
+
+
+def _compute_aamr_from_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute per-county AAMR from a cleaned DataFrame.
+    Expects columns: 'County Code', 'Ten-Year Age Groups', 'Deaths', 'Population' (numeric).
+    """
+    counties = df["County Code"].unique()
+    results = []
+    for county_code in counties:
+        county_data = df[df["County Code"] == county_code].copy()
+        aamr, stats = calculate_aamr_point(county_data)
+        aamr_lower, aamr_upper = calculate_aamr_ci(county_data, aamr, stats)
+        se = calculate_aamr_standard_error(county_data)
+        results.append(
+            {
+                "COUNTY_FIPS": county_code,
+                "Deaths": int(stats["total_deaths"]),
+                "Population": int(stats["total_population"]),
+                "AAMR": round(aamr, 4),
+                "AAMR_SE": round(se, 4),
+                "AAMR_Lower": round(aamr_lower, 4),
+                "AAMR_Upper": round(aamr_upper, 4),
+            }
+        )
+    return pd.DataFrame(results).sort_values("COUNTY_FIPS")
+
+
+def synthesize_dementia(input_dir: Path, output_dir: Path) -> None:
+    """
+    Synthesize Dementia (G30_F01_F03) AAMR by summing deaths across G30, F01, F03.
+
+    For each time period, sums Deaths per county × age group (Population is shared
+    across ICD codes for the same county-age cell), then recalculates AAMR using the
+    same direct standardization (Fay-Feuer) method as individual diseases.
+    """
+    print(f"\n{'=' * 70}")
+    print("Synthesizing Dementia (G30+F01+F03) AAMR")
+    print(f"{'=' * 70}\n")
+
+    for period in _DEMENTIA_PERIODS:
+        component_dfs = []
+        pop_ref = None
+        missing = []
+
+        for code in _DEMENTIA_CODES:
+            fp = input_dir / f"{period}_{code}.csv"
+            if not fp.exists():
+                missing.append(code)
+                continue
+            t = pd.read_csv(fp, dtype={"County Code": str})
+            t = t[t["County Code"].notna() & (t["Population"] != "Missing")].copy()
+            t["Deaths"] = pd.to_numeric(t["Deaths"], errors="coerce").fillna(0)
+            t["Population"] = pd.to_numeric(t["Population"], errors="coerce").fillna(0)
+            if pop_ref is None:
+                pop_ref = t[["County Code", "Ten-Year Age Groups", "Population"]].copy()
+            component_dfs.append(t[["County Code", "Ten-Year Age Groups", "Deaths"]])
+
+        if missing:
+            print(f"  ⚠ Missing component file(s) for {period}: {missing}, skipping")
+            continue
+
+        combined = pd.concat(component_dfs, ignore_index=True)
+        death_sum = combined.groupby(
+            ["County Code", "Ten-Year Age Groups"], as_index=False
+        )["Deaths"].sum()
+        merged = death_sum.merge(
+            pop_ref, on=["County Code", "Ten-Year Age Groups"], how="left"
+        )
+
+        print(f"  Processing: {period}_{_DEMENTIA_ICD}.csv (synthesized)")
+        result_df = _compute_aamr_from_df(merged)
+        print(f"    ✓ Processed {len(result_df)} counties")
+        print(
+            f"      AAMR range: {result_df['AAMR'].min():.2f} - {result_df['AAMR'].max():.2f}"
+        )
+
+        out_path = output_dir / f"{period}_{_DEMENTIA_ICD}.csv"
+        result_df.to_csv(out_path, index=False)
+        print(f"    ✓ Saved to: {out_path.name}\n")
+
+
 def main():
     """Main execution function"""
     print("=" * 70)
@@ -343,6 +432,9 @@ def main():
         print(f"    ✓ Saved to: {output_filename}\n")
 
         processed_count += 1
+
+    # Synthesize Dementia (G30+F01+F03) AAMR
+    synthesize_dementia(input_dir, output_dir)
 
     # Final summary
     print("=" * 70)
