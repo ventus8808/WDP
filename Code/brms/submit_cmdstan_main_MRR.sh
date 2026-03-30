@@ -20,14 +20,15 @@ set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
 # --- Fixed NDD disease list ---
-NDD_DISEASES=(
-  "G20_G30_G12.2_F01_F03"
-  "G30_F01_F03"
-  "G30"
-  "G20"
-  "G12.2"
-  "G10"
-)
+# NDD_DISEASES=(
+#  "G20_G30_G12.2_F01_F03"
+#  "G30_F01_F03"
+#  "G30"
+#  "G20"
+#  "G12.2"
+#  "G10"
+#)
+NDD_DISEASES=("F01")
 
 # --- Locate project root ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
