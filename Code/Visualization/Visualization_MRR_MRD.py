@@ -74,17 +74,19 @@ df = pd.read_csv(MAIN_CSV)
 LEFT_DISEASES = [
     ("G20_G30_G12.2_F01_F03", "(A) NDD"),
     ("G30", "(C) AD"),
-    ("G12.2", "(E) ALS"),
+    ("F01", "(E) VD"),
+    ("G10", "(G) HD (negative control)"),
 ]
 RIGHT_DISEASES = [
     ("G30_F01_F03", "(B) Dementia"),
     ("G20", "(D) PD"),
-    ("G10", "(F) HD (negative control)"),
+    ("G12.2", "(F) ALS"),
 ]
 
 QUINTILES = ["Q2", "Q3", "Q4", "Q5"]
 N_COLS = len(QUINTILES)
-N_ROWS = 3
+N_ROWS_LEFT  = 4
+N_ROWS_RIGHT = 3
 
 LAGS = [5, 10, 15]
 
@@ -106,6 +108,7 @@ DISEASE_YLIM = {
     "G30": (0.8, 1.8),
     "G20": (0.5, 3.0),
     "G12.2": (0.0, 6.0),
+    "F01": (0.0, 5),
 }
 
 DISEASE_YTICKS = {
@@ -115,6 +118,7 @@ DISEASE_YTICKS = {
     "G30": [1, 1.2, 1.4, 1.6],
     "G20": [1, 1.5, 2.0, 2.5],
     "G12.2": [1, 2, 3, 4, 5],
+    "F01": [1, 2, 3, 4, 5],
 }
 
 # Scalar mappable for the colorbar legend
@@ -338,44 +342,46 @@ def plot_point(ax, xpos, mean, lower, upper, color, sig, ymin, ymax):
 # ---------------------------------------------------------------------------
 fig = plt.figure(figsize=(10, 10))
 
-gs_top = GridSpec(
-    1,
-    3,
-    figure=fig,
-    left=0.03,
-    right=0.96,
-    top=0.96,
-    bottom=0.07,
-    width_ratios=[5.0, 0.6, 5.0],
-    wspace=0.0,
+# Layout constants — compute right-panel bottom so every subplot is identical height
+_HSPACE  = 0.25
+_TOP     = 0.96
+_BOTTOM  = 0.07
+_H_FULL  = _TOP - _BOTTOM
+_H_RIGHT = _H_FULL * (N_ROWS_RIGHT + (N_ROWS_RIGHT - 1) * _HSPACE) / (
+    N_ROWS_LEFT + (N_ROWS_LEFT - 1) * _HSPACE
 )
-gs_left = GridSpecFromSubplotSpec(
-    3,
-    N_COLS,
-    subplot_spec=gs_top[0, 0],
-    hspace=0.25,
-    wspace=0.08,
-    height_ratios=[1, 1, 1],
+_BOTTOM_R = _TOP - _H_RIGHT   # right panel top-aligned, shorter bottom
+
+# Horizontal bounds  (equivalent to width_ratios=[5, 0.6, 5])
+_W = 0.96 - 0.03
+_SIDE_W = 5.0 / 10.6 * _W
+_GAP_W  = 0.6 / 10.6 * _W
+_L_L, _L_R = 0.03, 0.03 + _SIDE_W
+_R_L, _R_R = _L_R + _GAP_W, 0.96
+
+gs_left = GridSpec(
+    N_ROWS_LEFT, N_COLS,
+    left=_L_L, right=_L_R,
+    top=_TOP, bottom=_BOTTOM,
+    hspace=_HSPACE, wspace=0.08,
+    height_ratios=[1] * N_ROWS_LEFT,
 )
-gs_right = GridSpecFromSubplotSpec(
-    3,
-    N_COLS,
-    subplot_spec=gs_top[0, 2],
-    hspace=0.25,
-    wspace=0.08,
-    height_ratios=[2, 2, 2],
+gs_right = GridSpec(
+    N_ROWS_RIGHT, N_COLS,
+    left=_R_L, right=_R_R,
+    top=_TOP, bottom=_BOTTOM_R,
+    hspace=_HSPACE, wspace=0.08,
+    height_ratios=[1] * N_ROWS_RIGHT,
 )
 
-left_axes = [[fig.add_subplot(gs_left[r, c]) for c in range(N_COLS)] for r in range(3)]
-right_axes = [
-    [fig.add_subplot(gs_right[r, c]) for c in range(N_COLS)] for r in range(3)
-]
+left_axes  = [[fig.add_subplot(gs_left[r, c])  for c in range(N_COLS)] for r in range(N_ROWS_LEFT)]
+right_axes = [[fig.add_subplot(gs_right[r, c]) for c in range(N_COLS)] for r in range(N_ROWS_RIGHT)]
 
 
 # ---------------------------------------------------------------------------
 # Fill panels
 # ---------------------------------------------------------------------------
-def fill_group(axes_grid, diseases, show_ylabel=True):
+def fill_group(axes_grid, diseases, n_rows, show_ylabel=True):
     for row_idx, (icd_code, label) in enumerate(diseases):
         sub = df[df["ICD_Code"] == icd_code].copy()
         ymin, ymax = DISEASE_YLIM[icd_code]
@@ -413,7 +419,7 @@ def fill_group(axes_grid, diseases, show_ylabel=True):
                 )
 
             # Quintile label at bottom of last row
-            if row_idx == N_ROWS - 1:
+            if row_idx == n_rows - 1:
                 ax.set_xlabel(q, fontsize=11, fontweight="bold", labelpad=4)
 
             for lag in LAGS:
@@ -449,8 +455,8 @@ def fill_group(axes_grid, diseases, show_ylabel=True):
                 plot_point(ax, xpos, mean, lower, upper, color, sig, ymin, ymax)
 
 
-fill_group(left_axes, LEFT_DISEASES, show_ylabel=True)
-fill_group(right_axes, RIGHT_DISEASES, show_ylabel=False)
+fill_group(left_axes, LEFT_DISEASES, N_ROWS_LEFT, show_ylabel=True)
+fill_group(right_axes, RIGHT_DISEASES, N_ROWS_RIGHT, show_ylabel=False)
 
 # ---------------------------------------------------------------------------
 # Legend — horizontal line + centre dot (parallel line style)

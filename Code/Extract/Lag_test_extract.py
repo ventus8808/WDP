@@ -8,6 +8,7 @@ Output: Result/Tables/lag_test.csv (long format, sorted by disease then comparis
 """
 
 import os
+
 import pandas as pd
 import yaml
 
@@ -20,7 +21,17 @@ with open(config_path, "r") as f:
 icd_mapping = config["brms_analysis"]["icd_mapping"]
 icd_mapping["G30_F01_F03"] = "Dementia"
 
-input_dir  = os.path.join(base_dir, "Result", "brms_MRR_lag")
+abbr_mapping = {
+    "G20_G30_G12.2_F01_F03": "NDD",
+    "G30_F01_F03": "Dementia",
+    "G30": "AD",
+    "G20": "PD",
+    "F01": "VD",
+    "G12.2": "ALS",
+    "G10": "HD",
+}
+
+input_dir = os.path.join(base_dir, "Result", "brms_MRR_lag")
 output_dir = os.path.join(base_dir, "Result", "Tables")
 os.makedirs(output_dir, exist_ok=True)
 
@@ -51,29 +62,33 @@ if not frames:
     raise SystemExit(1)
 
 combined = pd.concat(frames, ignore_index=True)
-combined["Disease"] = combined["ICD_Code"].map(lambda x: icd_mapping.get(x, x))
+combined["Disease"] = combined["ICD_Code"].map(lambda x: abbr_mapping.get(x, x))
 
 # Sort by disease order then comparison order
-combined["_sd"] = combined["ICD_Code"].map(
-    {d: i for i, d in enumerate(DISEASE_ORDER)}
-).fillna(99)
-combined["_sc"] = combined["comparison"].map(
-    {c: i for i, c in enumerate(COMPARISON_ORDER)}
-).fillna(99)
+combined["_sd"] = (
+    combined["ICD_Code"].map({d: i for i, d in enumerate(DISEASE_ORDER)}).fillna(99)
+)
+combined["_sc"] = (
+    combined["comparison"]
+    .map({c: i for i, c in enumerate(COMPARISON_ORDER)})
+    .fillna(99)
+)
 combined = (
     combined.sort_values(["_sd", "_sc"])
     .drop(columns=["_sd", "_sc"])
     .reset_index(drop=True)
 )
 
-combined["Diff (95% CI)"] = combined.apply(
-    lambda r: f"{r['diff_mean']:.2f}({r['diff_lower']:.2f},{r['diff_upper']:.2f})", axis=1
+combined["Comparison"] = combined["comparison"].str.replace("_", " ", regex=False)
+combined["Difference (95% CI)"] = combined.apply(
+    lambda r: f"{r['diff_mean']:.2f}({r['diff_lower']:.2f},{r['diff_upper']:.2f})",
+    axis=1,
 )
 combined["P"] = combined["P_a_gt_b"].apply(
-    lambda p: "p<0.05" if p < 0.05 else f"{p:.2f}"
+    lambda p: "< 0.05" if p < 0.05 else f"{p:.2f}"
 )
 
-combined = combined[["ICD_Code", "Disease", "comparison", "Diff (95% CI)", "P"]]
+combined = combined[["Disease", "Comparison", "Difference (95% CI)", "P"]]
 
 output_path = os.path.join(output_dir, "lag_test.csv")
 combined.to_csv(output_path, index=False)

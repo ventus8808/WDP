@@ -1,19 +1,22 @@
-ICD_Code,Disease,comparison,Diff (95% CI),P
-G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),lag5_vs_lag10,"-1.91(-5.12,1.37)",0.12
-G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),lag10_vs_lag15,"4.05(0.61,7.46)",0.99
-G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),lag15_vs_lag5,"-2.14(-5.40,1.14)",0.10
-G30_F01_F03,Dementia,lag5_vs_lag10,"-1.88(-4.82,1.15)",0.11
-G30_F01_F03,Dementia,lag10_vs_lag15,"4.29(1.08,7.23)",1.00
-G30_F01_F03,Dementia,lag15_vs_lag5,"-2.41(-5.50,0.72)",0.06
-G30,Alzheimer's Disease (AD),lag5_vs_lag10,"1.17(-0.94,3.22)",0.86
-G30,Alzheimer's Disease (AD),lag10_vs_lag15,"-2.34(-4.66,-0.05)",p<0.05
-G30,Alzheimer's Disease (AD),lag15_vs_lag5,"1.17(-1.13,3.43)",0.84
-G20,Parkinson's Disease (PD),lag5_vs_lag10,"-0.17(-0.70,0.34)",0.25
-G20,Parkinson's Disease (PD),lag10_vs_lag15,"-0.36(-0.93,0.21)",0.10
-G20,Parkinson's Disease (PD),lag15_vs_lag5,"0.53(-0.05,1.10)",0.96
-G12.2,Amyotrophic Lateral Sclerosis (ALS),lag5_vs_lag10,"0.04(-0.14,0.22)",0.67
-G12.2,Amyotrophic Lateral Sclerosis (ALS),lag10_vs_lag15,"0.25(0.08,0.42)",1.00
-G12.2,Amyotrophic Lateral Sclerosis (ALS),lag15_vs_lag5,"-0.29(-0.47,-0.11)",p<0.05
-G10,Huntington's Disease (HD),lag5_vs_lag10,"-0.04(-0.07,-0.01)",p<0.05
-G10,Huntington's Disease (HD),lag10_vs_lag15,"-0.01(-0.04,0.02)",0.22
-G10,Huntington's Disease (HD),lag15_vs_lag5,"0.05(0.03,0.08)",1.00
+Disease,Comparison,Difference (95% CI),P
+NDD,lag5 vs lag10,"-1.91(-5.12,1.37)",0.12
+NDD,lag10 vs lag15,"4.05(0.61,7.46)",0.99
+NDD,lag15 vs lag5,"-2.14(-5.40,1.14)",0.10
+Dementia,lag5 vs lag10,"-1.88(-4.82,1.15)",0.11
+Dementia,lag10 vs lag15,"4.29(1.08,7.23)",1.00
+Dementia,lag15 vs lag5,"-2.41(-5.50,0.72)",0.06
+AD,lag5 vs lag10,"1.17(-0.94,3.22)",0.86
+AD,lag10 vs lag15,"-2.34(-4.66,-0.05)",< 0.05
+AD,lag15 vs lag5,"1.17(-1.13,3.43)",0.84
+PD,lag5 vs lag10,"-0.17(-0.70,0.34)",0.25
+PD,lag10 vs lag15,"-0.36(-0.93,0.21)",0.10
+PD,lag15 vs lag5,"0.53(-0.05,1.10)",0.96
+VD,lag5 vs lag10,"-0.15(-0.54,0.24)",0.22
+VD,lag10 vs lag15,"-0.27(-0.72,0.20)",0.13
+VD,lag15 vs lag5,"0.41(-0.02,0.84)",0.97
+ALS,lag5 vs lag10,"0.04(-0.14,0.22)",0.67
+ALS,lag10 vs lag15,"0.25(0.08,0.42)",1.00
+ALS,lag15 vs lag5,"-0.29(-0.47,-0.11)",< 0.05
+HD,lag5 vs lag10,"-0.04(-0.07,-0.01)",< 0.05
+HD,lag10 vs lag15,"-0.01(-0.04,0.02)",0.22
+HD,lag15 vs lag5,"0.05(0.03,0.08)",1.00

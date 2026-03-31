@@ -132,7 +132,7 @@ if all_dfs:
 
     # Build formatted version: disease name as section header rows
     # Only 2000_2005 period; Model and Lag as separate columns; Q1 fixed at 0
-    outcome_order = ["NDD", "Dementia", "HD", "PD", "AD", "ALS", "VD"]
+    outcome_order = ["NDD", "Dementia", "AD", "PD", "VD", "ALS", "HD"]
     base_df = final_df[final_df["EQI_Period"] == "2000_2005"].copy()
     formatted_rows = []
     for outcome in outcome_order:
