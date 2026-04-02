@@ -4,6 +4,11 @@ Extract lag comparison test results from brms_MRR_lag/*_lag_test.csv.
 Each file contains pairwise lag comparisons:
     ICD_Code, comparison, diff_mean, diff_lower, diff_upper, P_a_gt_b
 
+P_a_gt_b = posterior probability that lag_a MRD > lag_b MRD.
+  - P >= 0.95 → lag_a significantly greater than lag_b
+  - P <= 0.05 → lag_b significantly greater than lag_a (reversed direction)
+  - 0.05 < P < 0.95 → no significant difference
+
 Output: Result/Tables/lag_test.csv (long format, sorted by disease then comparison)
 """
 
@@ -49,6 +54,27 @@ DISEASE_ORDER = [
 
 COMPARISON_ORDER = ["lag5_vs_lag10", "lag10_vs_lag15", "lag15_vs_lag5"]
 
+
+def make_interpretation(row):
+    """
+    Combine P_a_gt_b and comparison label into a plain-language result.
+    * = significant at posterior probability threshold of 0.95/0.05.
+    """
+    p = row["P_a_gt_b"]
+    comp = row["comparison"]  # e.g. "lag5_vs_lag10"
+    parts = comp.split("_vs_")
+    if len(parts) != 2:
+        return "—"
+    a, b = parts[0], parts[1]  # e.g. "lag5", "lag10"
+
+    if p >= 0.95:
+        return f"{a} > {b} *"  # lag_a is significantly larger
+    elif p <= 0.05:
+        return f"{b} > {a} *"  # lag_b is significantly larger
+    else:
+        return "No significant difference"
+
+
 frames = []
 for fname in sorted(f for f in os.listdir(input_dir) if f.endswith("_lag_test.csv")):
     icd_code = fname.replace("_lag_test.csv", "")
@@ -64,7 +90,7 @@ if not frames:
 combined = pd.concat(frames, ignore_index=True)
 combined["Disease"] = combined["ICD_Code"].map(lambda x: abbr_mapping.get(x, x))
 
-# Sort by disease order then comparison order
+# Sort
 combined["_sd"] = (
     combined["ICD_Code"].map({d: i for i, d in enumerate(DISEASE_ORDER)}).fillna(99)
 )
@@ -79,16 +105,25 @@ combined = (
     .reset_index(drop=True)
 )
 
-combined["Comparison"] = combined["comparison"].str.replace("_", " ", regex=False)
-combined["Difference (95% CI)"] = combined.apply(
-    lambda r: f"{r['diff_mean']:.2f}({r['diff_lower']:.2f},{r['diff_upper']:.2f})",
-    axis=1,
-)
-combined["P"] = combined["P_a_gt_b"].apply(
-    lambda p: "< 0.05" if p < 0.05 else f"{p:.2f}"
+# Format columns
+combined["Comparison"] = combined["comparison"].str.replace(
+    "_vs_", " vs. ", regex=False
 )
 
-combined = combined[["Disease", "Comparison", "Difference (95% CI)", "P"]]
+combined["MRD Difference (95% CrI)"] = combined.apply(
+    lambda r: f"{r['diff_mean']:.2f} ({r['diff_lower']:.2f}, {r['diff_upper']:.2f})",
+    axis=1,
+)
+
+combined["P(a > b)"] = combined["P_a_gt_b"].apply(
+    lambda p: "< 0.05" if p < 0.05 else ("> 0.95" if p > 0.95 else f"{p:.2f}")
+)
+
+combined["Direction"] = combined.apply(make_interpretation, axis=1)
+
+combined = combined[
+    ["Disease", "Comparison", "MRD Difference (95% CrI)", "P(a > b)", "Direction"]
+]
 
 output_path = os.path.join(output_dir, "lag_test.csv")
 combined.to_csv(output_path, index=False)

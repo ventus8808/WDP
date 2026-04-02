@@ -1194,6 +1194,210 @@ def process_stratified_ndd_files_sex_only(
     return result_rows
 
 
+def process_sex_stratified_for_code(
+    project_root: Path, icd_code: str, all_results: Dict[str, List[Dict]] = None
+) -> Dict[str, Dict]:
+    """
+    Process sex stratified files for any ICD code from Stratified_Subtracted directory.
+    Male deaths are calculated as Total - Female for consistency.
+
+    Returns dict with 'male' and 'female' keys, each containing a row dict.
+    """
+    input_dir = project_root / "Data/Original/CDC Triangulation/Stratified_Subtracted"
+    if not input_dir.exists():
+        return {}
+
+    time_periods = ["2006-2010", "2011-2015", "2016-2020"]
+
+    # Get national totals for this ICD code from all_results
+    national_totals = {}
+    if all_results and all_results.get("RUCC"):
+        df = pd.DataFrame(all_results["RUCC"])
+        ndd_national = df[
+            (df["Stratum_Value"] == "National") & (df["ICD-10 Code"] == icd_code)
+        ].copy()
+        for period in time_periods:
+            period_data = ndd_national[ndd_national["Time_Period"] == period]
+            if not period_data.empty:
+                national_totals[period] = {
+                    "deaths": int(period_data["Total_Deaths"].iloc[0]),
+                    "population": int(period_data["Total_Population"].iloc[0]),
+                }
+
+    # Get Female data
+    female_data = {}
+    for period in time_periods:
+        file_path = input_dir / f"{period}_{icd_code}_Female.csv"
+        if file_path.exists():
+            df = pd.read_csv(file_path, dtype={"County Code": str})
+            df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
+            df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
+            df["Population"] = pd.to_numeric(df["Population"], errors="coerce").fillna(0)
+            df = df.rename(columns={"Ten-Year Age Groups": "Age_Group"})
+
+            agg_df = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+            aamr, stats = calculate_aamr_point(agg_df)
+            se = calculate_aamr_standard_error(agg_df)
+
+            female_data[period] = {
+                "deaths": stats["total_deaths"],
+                "population": stats["total_population"],
+                "aamr": aamr,
+                "se": se,
+            }
+
+    result = {}
+
+    # Calculate Male as Total - Female
+    male_row: Dict = {"_type": "male"}
+    for period in time_periods:
+        if period in national_totals and period in female_data:
+            total_deaths = national_totals[period]["deaths"]
+            female_deaths = female_data[period]["deaths"]
+            male_deaths = total_deaths - female_deaths
+
+            file_path = input_dir / f"{period}_{icd_code}_Male.csv"
+            if file_path.exists():
+                df = pd.read_csv(file_path, dtype={"County Code": str})
+                df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
+                df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
+                df["Population"] = pd.to_numeric(
+                    df["Population"], errors="coerce"
+                ).fillna(0)
+                df = df.rename(columns={"Ten-Year Age Groups": "Age_Group"})
+
+                agg_df = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+                aamr, stats = calculate_aamr_point(agg_df)
+                se = calculate_aamr_standard_error(agg_df)
+
+                population = stats["total_population"]
+                pct = (male_deaths / population) * 1000 if population > 0 else 0
+                male_row[f"{period} Death,n(‰)"] = f"{male_deaths:,} ({pct:.2f}‰)"
+                male_row[f"{period} AAMR"] = f"{aamr:.2f} ± {se:.2f}"
+
+    result["male"] = male_row
+
+    # Female row
+    female_row: Dict = {"_type": "female"}
+    for period, data in female_data.items():
+        deaths = data["deaths"]
+        population = data["population"]
+        aamr = data["aamr"]
+        se = data["se"]
+
+        pct = (deaths / population) * 1000 if population > 0 else 0
+        female_row[f"{period} Death,n(‰)"] = f"{deaths:,} ({pct:.2f}‰)"
+        female_row[f"{period} AAMR"] = f"{aamr:.2f} ± {se:.2f}"
+
+    result["female"] = female_row
+
+    return result
+
+
+def process_sex_stratified_all_codes(
+    project_root: Path, all_results: Dict[str, List[Dict]]
+) -> List[Dict]:
+    """
+    Process sex stratified files for all NDD codes from Stratified_Subtracted directory.
+    Returns list of result dicts in all_results format with Stratum_Type='Sex'.
+    Male deaths are calculated as Total - Female for consistency.
+    """
+    input_dir = project_root / "Data/Original/CDC Triangulation/Stratified_Subtracted"
+    if not input_dir.exists():
+        return []
+
+    time_periods = ["2006-2010", "2011-2015", "2016-2020"]
+    results = []
+
+    # Pre-fetch national death totals for all codes (used for Male = Total - Female)
+    national_totals: Dict[str, Dict[str, int]] = {}
+    if all_results and all_results.get("RUCC"):
+        nat_df = pd.DataFrame(all_results["RUCC"])
+        nat_df = nat_df[nat_df["Stratum_Value"] == "National"]
+        for code in NDD_ALL_CODES:
+            code_df = nat_df[nat_df["ICD-10 Code"] == code]
+            national_totals[code] = {}
+            for period in time_periods:
+                period_df = code_df[code_df["Time_Period"] == period]
+                if not period_df.empty:
+                    national_totals[code][period] = int(period_df["Total_Deaths"].iloc[0])
+
+    for code in NDD_ALL_CODES:
+        female_deaths_by_period: Dict[str, int] = {}
+
+        # Female
+        for period in time_periods:
+            female_path = input_dir / f"{period}_{code}_Female.csv"
+            if not female_path.exists():
+                continue
+            df = pd.read_csv(female_path, dtype={"County Code": str})
+            df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
+            df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
+            df["Population"] = pd.to_numeric(df["Population"], errors="coerce").fillna(0)
+            df = df.rename(columns={"Ten-Year Age Groups": "Age_Group"})
+            agg_df = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+            aamr, stats = calculate_aamr_point(agg_df)
+            se = calculate_aamr_standard_error(agg_df)
+            lower, upper = calculate_aamr_ci(aamr, stats)
+            female_deaths_by_period[period] = stats["total_deaths"]
+            results.append(
+                {
+                    "Time_Period": period,
+                    "ICD-10 Code": code,
+                    "Outcome": NDD_ABBR_MAP.get(code, code),
+                    "Stratum_Type": "Sex",
+                    "Stratum_Value": "Female",
+                    "Total_Deaths": stats["total_deaths"],
+                    "Total_Population": stats["total_population"],
+                    "AAMR": round(aamr, 4),
+                    "AAMR_SE": round(se, 4),
+                    "AAMR_Lower": round(lower, 4),
+                    "AAMR_Upper": round(upper, 4),
+                    "AAMRSE": f"{round(aamr, 2):.2f} ± {round(se, 2):.2f}",
+                }
+            )
+
+        # Male (AAMR from Male file; deaths = Total - Female for consistency)
+        for period in time_periods:
+            male_path = input_dir / f"{period}_{code}_Male.csv"
+            if not male_path.exists():
+                continue
+            df = pd.read_csv(male_path, dtype={"County Code": str})
+            df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
+            df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
+            df["Population"] = pd.to_numeric(df["Population"], errors="coerce").fillna(0)
+            df = df.rename(columns={"Ten-Year Age Groups": "Age_Group"})
+            agg_df = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+            aamr, stats = calculate_aamr_point(agg_df)
+            se = calculate_aamr_standard_error(agg_df)
+            lower, upper = calculate_aamr_ci(aamr, stats)
+            male_deaths = stats["total_deaths"]
+            if (
+                code in national_totals
+                and period in national_totals[code]
+                and period in female_deaths_by_period
+            ):
+                male_deaths = national_totals[code][period] - female_deaths_by_period[period]
+            results.append(
+                {
+                    "Time_Period": period,
+                    "ICD-10 Code": code,
+                    "Outcome": NDD_ABBR_MAP.get(code, code),
+                    "Stratum_Type": "Sex",
+                    "Stratum_Value": "Male",
+                    "Total_Deaths": male_deaths,
+                    "Total_Population": stats["total_population"],
+                    "AAMR": round(aamr, 4),
+                    "AAMR_SE": round(se, 4),
+                    "AAMR_Lower": round(lower, 4),
+                    "AAMR_Upper": round(upper, 4),
+                    "AAMRSE": f"{round(aamr, 2):.2f} ± {round(se, 2):.2f}",
+                }
+            )
+
+    return results
+
+
 def process_stratified_ndd_files_race_only(project_root: Path) -> List[Dict]:
     """
     Process race stratified NDD files from Stratified_Subtracted directory.
@@ -1329,6 +1533,7 @@ def create_ndd_strata_table_with_demographics(
             },
         ),
         ("LandUse", "LandUse", None),
+        ("Sex", "Sex", {"Male": "Sex: Male", "Female": "Sex: Female"}),
     ]
 
     result_rows = []
@@ -1344,36 +1549,48 @@ def create_ndd_strata_table_with_demographics(
         if not national_data.empty:
             result_rows.append({"Outcome": "National"})
 
-            # Get sex stratified data
-            sex_rows = process_stratified_ndd_files_sex_only(project_root, all_results)
+            # Pre-compute sex stratified data for all NDD codes
+            sex_data_by_code = {}
+            for _code in NDD_ALL_CODES:
+                sex_data_by_code[_code] = process_sex_stratified_for_code(
+                    project_root, _code, all_results
+                )
 
-            # Define specific order: NDD, NDD (Male), NDD (Female), Dementia, AD, PD, VD, ALS, HD
+            # Order: each NDD outcome followed by its (M) and (F) rows
             national_order = [
                 ("G20_G30_G12.2_F01_F03", "NDD"),
-                ("sex_male", "NDD (Male)"),
-                ("sex_female", "NDD (Female)"),
+                ("sex_male_G20_G30_G12.2_F01_F03", "NDD (M)"),
+                ("sex_female_G20_G30_G12.2_F01_F03", "NDD (F)"),
                 ("G30_F01_F03", "Dementia"),
+                ("sex_male_G30_F01_F03", "Dementia (M)"),
+                ("sex_female_G30_F01_F03", "Dementia (F)"),
                 ("G30", "AD"),
+                ("sex_male_G30", "AD (M)"),
+                ("sex_female_G30", "AD (F)"),
                 ("G20", "PD"),
+                ("sex_male_G20", "PD (M)"),
+                ("sex_female_G20", "PD (F)"),
                 ("F01", "VD"),
+                ("sex_male_F01", "VD (M)"),
+                ("sex_female_F01", "VD (F)"),
                 ("G12.2", "ALS"),
+                ("sex_male_G12.2", "ALS (M)"),
+                ("sex_female_G12.2", "ALS (F)"),
                 ("G10", "HD"),
+                ("sex_male_G10", "HD (M)"),
+                ("sex_female_G10", "HD (F)"),
             ]
 
             for code, display_name in national_order:
-                if code.startswith("sex_"):
-                    # Get from sex_rows
-                    sex_type = code.replace("sex_", "")
-                    for sex_row in sex_rows:
-                        if sex_row.get("_type") == sex_type:
-                            row = {
-                                k: v
-                                for k, v in sex_row.items()
-                                if not k.startswith("_")
-                            }
-                            row["Outcome"] = display_name
-                            result_rows.append(row)
-                            break
+                if code.startswith("sex_male_") or code.startswith("sex_female_"):
+                    sex_type = "male" if code.startswith("sex_male_") else "female"
+                    icd = code.replace("sex_male_", "").replace("sex_female_", "")
+                    sex_entry = sex_data_by_code.get(icd, {}).get(sex_type, {})
+                    period_keys = [k for k in sex_entry if not k.startswith("_")]
+                    if period_keys:
+                        row = {k: v for k, v in sex_entry.items() if not k.startswith("_")}
+                        row["Outcome"] = display_name
+                        result_rows.append(row)
                 else:
                     code_data = national_data[national_data["ICD-10 Code"] == code]
                     if code_data.empty:
@@ -1555,6 +1772,7 @@ def main():
         "Cluster": [],
         "Typology": [],
         "LandUse": [],
+        "Sex": [],
     }
 
     for file_path in sorted(subtracted_files):
@@ -1562,6 +1780,9 @@ def main():
         for key in all_results:
             if key in file_results:
                 all_results[key].extend(file_results[key])
+
+    # Populate sex stratification after all county-level results are collected
+    all_results["Sex"] = process_sex_stratified_all_codes(project_root, all_results)
 
     # Write stratified AAMR outputs
     for strat_type in all_results:

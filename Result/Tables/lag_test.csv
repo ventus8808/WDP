@@ -1,22 +1,22 @@
-Disease,Comparison,Difference (95% CI),P
-NDD,lag5 vs lag10,"-1.91(-5.12,1.37)",0.12
-NDD,lag10 vs lag15,"4.05(0.61,7.46)",0.99
-NDD,lag15 vs lag5,"-2.14(-5.40,1.14)",0.10
-Dementia,lag5 vs lag10,"-1.88(-4.82,1.15)",0.11
-Dementia,lag10 vs lag15,"4.29(1.08,7.23)",1.00
-Dementia,lag15 vs lag5,"-2.41(-5.50,0.72)",0.06
-AD,lag5 vs lag10,"1.17(-0.94,3.22)",0.86
-AD,lag10 vs lag15,"-2.34(-4.66,-0.05)",< 0.05
-AD,lag15 vs lag5,"1.17(-1.13,3.43)",0.84
-PD,lag5 vs lag10,"-0.17(-0.70,0.34)",0.25
-PD,lag10 vs lag15,"-0.36(-0.93,0.21)",0.10
-PD,lag15 vs lag5,"0.53(-0.05,1.10)",0.96
-VD,lag5 vs lag10,"-0.15(-0.54,0.24)",0.22
-VD,lag10 vs lag15,"-0.27(-0.72,0.20)",0.13
-VD,lag15 vs lag5,"0.41(-0.02,0.84)",0.97
-ALS,lag5 vs lag10,"0.04(-0.14,0.22)",0.67
-ALS,lag10 vs lag15,"0.25(0.08,0.42)",1.00
-ALS,lag15 vs lag5,"-0.29(-0.47,-0.11)",< 0.05
-HD,lag5 vs lag10,"-0.04(-0.07,-0.01)",< 0.05
-HD,lag10 vs lag15,"-0.01(-0.04,0.02)",0.22
-HD,lag15 vs lag5,"0.05(0.03,0.08)",1.00
+Disease,Comparison,MRD Difference (95% CrI),P(a > b),Direction
+NDD,lag5 vs. lag10,"-1.91 (-5.12, 1.37)",0.12,No significant difference
+NDD,lag10 vs. lag15,"4.05 (0.61, 7.46)",> 0.95,lag10 > lag15 *
+NDD,lag15 vs. lag5,"-2.14 (-5.40, 1.14)",0.10,No significant difference
+Dementia,lag5 vs. lag10,"-1.88 (-4.82, 1.15)",0.11,No significant difference
+Dementia,lag10 vs. lag15,"4.29 (1.08, 7.23)",> 0.95,lag10 > lag15 *
+Dementia,lag15 vs. lag5,"-2.41 (-5.50, 0.72)",0.06,No significant difference
+AD,lag5 vs. lag10,"1.17 (-0.94, 3.22)",0.86,No significant difference
+AD,lag10 vs. lag15,"-2.34 (-4.66, -0.05)",< 0.05,lag15 > lag10 *
+AD,lag15 vs. lag5,"1.17 (-1.13, 3.43)",0.84,No significant difference
+PD,lag5 vs. lag10,"-0.17 (-0.70, 0.34)",0.25,No significant difference
+PD,lag10 vs. lag15,"-0.36 (-0.93, 0.21)",0.10,No significant difference
+PD,lag15 vs. lag5,"0.53 (-0.05, 1.10)",> 0.95,lag15 > lag5 *
+VD,lag5 vs. lag10,"-0.15 (-0.54, 0.24)",0.22,No significant difference
+VD,lag10 vs. lag15,"-0.27 (-0.72, 0.20)",0.13,No significant difference
+VD,lag15 vs. lag5,"0.41 (-0.02, 0.84)",> 0.95,lag15 > lag5 *
+ALS,lag5 vs. lag10,"0.04 (-0.14, 0.22)",0.67,No significant difference
+ALS,lag10 vs. lag15,"0.25 (0.08, 0.42)",> 0.95,lag10 > lag15 *
+ALS,lag15 vs. lag5,"-0.29 (-0.47, -0.11)",< 0.05,lag5 > lag15 *
+HD,lag5 vs. lag10,"-0.04 (-0.07, -0.01)",< 0.05,lag10 > lag5 *
+HD,lag10 vs. lag15,"-0.01 (-0.04, 0.02)",0.22,No significant difference
+HD,lag15 vs. lag5,"0.05 (0.03, 0.08)",> 0.95,lag15 > lag5 *

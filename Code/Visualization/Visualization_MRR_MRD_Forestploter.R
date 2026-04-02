@@ -28,7 +28,7 @@ DISEASE_MAP_1 <- list(
 DISEASE_MAP_2 <- list(
   "F01" = "VD",
   "G12.2" = "ALS",
-  "G10" = "HD(control)"
+  "G10" = "HD (Control)"
 )
 
 QUINTILES <- c("Q2", "Q3", "Q4", "Q5")

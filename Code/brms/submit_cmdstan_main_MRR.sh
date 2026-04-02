@@ -1,6 +1,6 @@
 #!/bin/bash
 # Slurm array launcher for cmdstan_main_MRR.R
-# One task per NDD disease; each task runs 3 EQI0005 scenarios (lags 5/10/15),
+# One task per cancer type; each task runs 3 EQI0005 scenarios (lags 5/10/15),
 # Overall EQI model only, and outputs MRD + MRR + lag test to Result/brms_MRR_lag/.
 # Usage:
 #   bash Code/brms/submit_cmdstan_main_MRR.sh    # submit array to Slurm
@@ -19,16 +19,20 @@
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
-# --- Fixed NDD disease list ---
-# NDD_DISEASES=(
-#  "G20_G30_G12.2_F01_F03"
-#  "G30_F01_F03"
-#  "G30"
-#  "G20"
-#  "G12.2"
-#  "G10"
-#)
-NDD_DISEASES=("F01")
+# --- Fixed cancer list (ICD codes beginning with C) ---
+CANCER_TYPES=(
+  "C00_C97"
+  "C18_C21"
+  "C22"
+  "C25"
+  "C34"
+  "C50"
+  "C56"
+  "C61"
+  "C64_C65"
+  "C82_C85"
+  "C91_C95"
+)
 
 # --- Locate project root ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -76,15 +80,15 @@ fi
 
 # --- Controller mode: submit array ---
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  N=${#NDD_DISEASES[@]}
-  log INFO "提交数组任务: 0-$((N-1)) (共 $N 个疾病)"
-  for i in "${!NDD_DISEASES[@]}"; do
-    log INFO "  [$i] ${NDD_DISEASES[$i]}"
+  N=${#CANCER_TYPES[@]}
+  log INFO "提交数组任务: 0-$((N-1)) (共 $N 个癌症类型)"
+  for i in "${!CANCER_TYPES[@]}"; do
+    log INFO "  [$i] ${CANCER_TYPES[$i]}"
   done
-  # Pass the disease list as a colon-separated env var to workers
-  DISEASE_LIST=$(IFS=':'; echo "${NDD_DISEASES[*]}")
+  # Pass the cancer list as a colon-separated env var to workers
+  CANCER_LIST=$(IFS=':'; echo "${CANCER_TYPES[*]}")
   sbatch --array=0-$((N-1)) \
-    --export=ALL,DISEASE_LIST="$DISEASE_LIST",ENV_NAME="$ENV_NAME" \
+    --export=ALL,CANCER_LIST="$CANCER_LIST",ENV_NAME="$ENV_NAME" \
     "$0"
   log INFO "提交完成。使用 squeue 查看进度。"
   exit 0
@@ -94,12 +98,12 @@ fi
 log INFO "开始处理任务 $SLURM_ARRAY_TASK_ID"
 
 # Reconstruct array from colon-separated env var
-IFS=':' read -ra DISEASES <<< "$DISEASE_LIST"
-CANCER_TYPE="${DISEASES[$SLURM_ARRAY_TASK_ID]}"
+IFS=':' read -ra CANCERS <<< "$CANCER_LIST"
+CANCER_TYPE="${CANCERS[$SLURM_ARRAY_TASK_ID]}"
 if [ -z "$CANCER_TYPE" ]; then
-  log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的疾病类型"; exit 1
+  log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的癌症类型"; exit 1
 fi
-log INFO "处理疾病: $CANCER_TYPE"
+log INFO "处理癌症类型: $CANCER_TYPE"
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
