@@ -48,6 +48,11 @@ os.makedirs(output_dir, exist_ok=True)
 
 SKIP_CODES = {"F03"}
 
+# For these ICD codes at Lag=15, Q1 is not the reference (≠1.0),
+# so express each quintile as ratio relative to Q1.
+# LAG15_RATIO_CODES = {"G20_G30_G12.2_F01_F03", "G30_F01_F03"}
+LAG15_RATIO_CODES = {}
+
 NDD_ORDER = [
     "G20_G30_G12.2_F01_F03",
     "G30_F01_F03",
@@ -75,9 +80,9 @@ CANCER_ORDER = [
 
 def sort_df(df, disease_order):
     df = df.copy()
-    df["_sd"] = df["ICD_Code"].map(
-        {d: i for i, d in enumerate(disease_order)}
-    ).fillna(99)
+    df["_sd"] = (
+        df["ICD_Code"].map({d: i for i, d in enumerate(disease_order)}).fillna(99)
+    )
     df["_sq"] = df["Quintile"].str.replace("Q", "", regex=False).astype(int)
     return (
         df.sort_values(["_sd", "Lag", "_sq"])
@@ -116,21 +121,55 @@ def parse_mrd_files(fnames_icd):
                 if mean is None:
                     continue
                 p_col = f"{q}_p"
-                p_val = float(r[p_col]) if p_col in raw.columns and pd.notna(r.get(p_col)) else None
-                rows.append({
-                    "ICD_Code":    icd_code,
-                    "EQI_Period":  r.get("EQI_Period"),
-                    "AAMR_Period": r.get("AAMR_Period"),
-                    "Lag":         int(r["Lag"]),
-                    "Quintile":    q,
-                    "MRD_mean":    mean,
-                    "MRD_lower":   lower,
-                    "MRD_upper":   upper,
-                    "p_MRD":       p_val,
-                })
+                p_val = (
+                    float(r[p_col])
+                    if p_col in raw.columns and pd.notna(r.get(p_col))
+                    else None
+                )
+                rows.append(
+                    {
+                        "ICD_Code": icd_code,
+                        "EQI_Period": r.get("EQI_Period"),
+                        "AAMR_Period": r.get("AAMR_Period"),
+                        "Lag": int(r["Lag"]),
+                        "Quintile": q,
+                        "MRD_mean": mean,
+                        "MRD_lower": lower,
+                        "MRD_upper": upper,
+                        "p_MRD": p_val,
+                    }
+                )
         if rows:
             frames.append(pd.DataFrame(rows))
     return pd.concat(frames, ignore_index=True) if frames else None
+
+
+def apply_lag15_ratio(mrr: pd.DataFrame) -> pd.DataFrame:
+    """For LAG15_RATIO_CODES at Lag=15, divide all quintiles' MRR_mean/lower/upper by Q1_MRR_mean."""
+    mask = mrr["ICD_Code"].isin(LAG15_RATIO_CODES) & (mrr["Lag"] == 15)
+    if not mask.any():
+        return mrr
+
+    mrr = mrr.copy()
+    for (icd, eqi, aamr), grp in mrr[mask].groupby(
+        ["ICD_Code", "EQI_Period", "AAMR_Period"]
+    ):
+        q1 = grp[grp["Quintile"] == "Q1"]
+        if q1.empty:
+            continue
+        q1_mean = q1["MRR_mean"].iloc[0]
+
+        idx = grp.index
+        mrr.loc[idx, "MRR_mean"] = mrr.loc[idx, "MRR_mean"] / q1_mean
+        mrr.loc[idx, "MRR_lower"] = mrr.loc[idx, "MRR_lower"] / q1_mean
+        mrr.loc[idx, "MRR_upper"] = mrr.loc[idx, "MRR_upper"] / q1_mean
+    return mrr
+
+
+def round_numerics(df: pd.DataFrame) -> pd.DataFrame:
+    num_cols = df.select_dtypes(include="number").columns
+    df[num_cols] = df[num_cols].round(2)
+    return df
 
 
 def save_group(mrr_frames, mrd_file_pairs, disease_order, mrr_out, main_out, label):
@@ -139,34 +178,48 @@ def save_group(mrr_frames, mrd_file_pairs, disease_order, mrr_out, main_out, lab
         return
 
     mrr = pd.concat(mrr_frames, ignore_index=True)
+    mrr = apply_lag15_ratio(mrr)
     mrr = mrr[mrr["Quintile"] != "Q1"]
     mrr["Disease"] = mrr["ICD_Code"].map(lambda x: icd_mapping.get(x, x))
 
-    mrr_cols = ["ICD_Code", "Disease", "EQI_Period", "AAMR_Period",
-                "Lag", "Quintile", "MRR_mean", "MRR_lower", "MRR_upper", "pct_diff", "p"]
+    mrr_cols = [
+        "ICD_Code",
+        "Disease",
+        "EQI_Period",
+        "AAMR_Period",
+        "Lag",
+        "Quintile",
+        "MRR_mean",
+        "MRR_lower",
+        "MRR_upper",
+    ]
     mrr = mrr[[c for c in mrr_cols if c in mrr.columns]]
     mrr = sort_df(mrr, disease_order)
+    mrr = round_numerics(mrr)
 
     mrr.to_csv(mrr_out, index=False)
     print(f"Saved {os.path.basename(mrr_out)} ({len(mrr)} rows)")
 
     mrd = parse_mrd_files(mrd_file_pairs)
     if mrd is not None:
-        merged = mrr.rename(columns={"p": "p_MRR"}).merge(
-            mrd[["ICD_Code", "Lag", "Quintile", "MRD_mean", "MRD_lower", "MRD_upper", "p_MRD"]],
+        merged = mrr.merge(
+            mrd[["ICD_Code", "Lag", "Quintile", "MRD_mean", "MRD_lower", "MRD_upper"]],
             on=["ICD_Code", "Lag", "Quintile"],
             how="left",
         )
         merged = sort_df(merged, disease_order)
+        merged = round_numerics(merged)
         merged.to_csv(main_out, index=False)
         print(f"Saved {os.path.basename(main_out)} ({len(merged)} rows)")
         print(
-            merged[["ICD_Code", "Lag", "Quintile", "MRR_mean", "MRD_mean", "p_MRD"]]
+            merged[["ICD_Code", "Lag", "Quintile", "MRR_mean", "MRD_mean"]]
             .head(12)
             .to_string(index=False)
         )
     else:
-        print(f"No *_main.csv files found for {label} — {os.path.basename(main_out)} not written.")
+        print(
+            f"No *_main.csv files found for {label} — {os.path.basename(main_out)} not written."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -199,14 +252,18 @@ if not ndd_mrr_frames and not cancer_mrr_frames:
     raise SystemExit(1)
 
 save_group(
-    ndd_mrr_frames, ndd_mrd_pairs, NDD_ORDER,
+    ndd_mrr_frames,
+    ndd_mrd_pairs,
+    NDD_ORDER,
     os.path.join(output_dir, "NDD_MRR.csv"),
-    os.path.join(output_dir, "NDD_main.csv"),
+    os.path.join(output_dir, "NDD_MRR_MRD.csv"),
     "NDD",
 )
 
 save_group(
-    cancer_mrr_frames, cancer_mrd_pairs, CANCER_ORDER,
+    cancer_mrr_frames,
+    cancer_mrd_pairs,
+    CANCER_ORDER,
     os.path.join(output_dir, "Cancer_MRR.csv"),
     os.path.join(output_dir, "Cancer_main.csv"),
     "Cancer",

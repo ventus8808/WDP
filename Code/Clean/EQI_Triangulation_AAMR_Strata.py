@@ -287,12 +287,28 @@ def load_stratification_data(
     else:
         print(f"Warning: LandUse file not found at {landuse_path}")
 
+    # EQI quintile assignments for both periods
+    eqi_dir = (
+        project_root
+        / config.get("data_sources", {}).get("epa_eqi", {}).get("processed", "Data/Processed/EQI")
+    )
+    eqi_0005_df = pd.DataFrame()
+    fp = eqi_dir / "EQI0005.csv"
+    if fp.exists():
+        t = pd.read_csv(fp, dtype={"COUNTY_FIPS": str})
+        t["COUNTY_FIPS"] = t["COUNTY_FIPS"].str.zfill(5)
+        if "EQI" in t.columns:
+            eqi_0005_df = t[["COUNTY_FIPS", "EQI"]].copy()
+    else:
+        print(f"Warning: EQI0005.csv not found at {fp}")
+
     return {
         "RUCC": rucc_df,
         "Climate": climate_df,
         "Cluster": cluster_df,
         "Typology": typology_df,
         "LandUse": landuse_df,
+        "EQI_0005": eqi_0005_df,
     }
 
 
@@ -314,7 +330,7 @@ def process_file(
     )
     df["COUNTY_FIPS"] = df["COUNTY_FIPS"].str.zfill(5)
 
-    results = {"RUCC": [], "Climate": [], "Cluster": [], "Typology": [], "LandUse": []}
+    results = {"RUCC": [], "Climate": [], "Cluster": [], "Typology": [], "LandUse": [], "EQI": []}
 
     # Helper to add result
     def add_result(
@@ -426,6 +442,31 @@ def process_file(
                     upper,
                     stats,
                 )
+
+    # EQI quintile stratification — always EQI 2000-2005 (single exposure period, 3 lags)
+    eqi_df = strat_data.get("EQI_0005", pd.DataFrame())
+
+    if not eqi_df.empty:
+        eqi_merged = df.merge(eqi_df, on="COUNTY_FIPS", how="left")
+        eqi_merged = eqi_merged.dropna(subset=["EQI"])
+
+        nat_agg = eqi_merged.groupby("Age_Group")[["Deaths", "Population"]].sum()
+        nat_aamr, nat_stats = calculate_aamr_point(nat_agg)
+        nat_se = calculate_aamr_standard_error(nat_agg)
+        nat_lower, nat_upper = calculate_aamr_ci(nat_aamr, nat_stats)
+        add_result(results["EQI"], "EQI", "National", nat_aamr, nat_se, nat_lower, nat_upper, nat_stats)
+
+        grouped = eqi_merged.groupby(["EQI", "Age_Group"])[["Deaths", "Population"]].sum()
+        for q in sorted(eqi_merged["EQI"].dropna().unique()):
+            q_int = int(q)
+            try:
+                q_agg = grouped.loc[q_int]
+            except KeyError:
+                continue
+            aamr, stats = calculate_aamr_point(q_agg)
+            se = calculate_aamr_standard_error(q_agg)
+            lower, upper = calculate_aamr_ci(aamr, stats)
+            add_result(results["EQI"], "EQI", f"Q{q_int}", aamr, se, lower, upper, stats)
 
     return results
 
@@ -701,6 +742,7 @@ def create_summary_tables(all_results: Dict[str, List[Dict]], output_dir: Path):
         "RUCC": ["RUCC"],
         "Climate": ["census_region", "koppen_major", "doe_major"],
         "Cluster": ["Cluster_k5"],  # Using k=5 clusters
+        "EQI": ["EQI"],
     }
 
     all_cancer_summaries = []
@@ -895,6 +937,17 @@ def create_ndd_strata_table(all_results: Dict[str, List[Dict]], output_dir: Path
             },
         ),
         ("LandUse", "LandUse", None),
+        (
+            "EQI",
+            "EQI",
+            {
+                "Q1": "EQI Quintile 1 (Least deprived)",
+                "Q2": "EQI Quintile 2",
+                "Q3": "EQI Quintile 3",
+                "Q4": "EQI Quintile 4",
+                "Q5": "EQI Quintile 5 (Most deprived)",
+            },
+        ),
     ]
 
     result_rows = []
@@ -1772,6 +1825,7 @@ def main():
         "Cluster": [],
         "Typology": [],
         "LandUse": [],
+        "EQI": [],
         "Sex": [],
     }
 
