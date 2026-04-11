@@ -19,19 +19,17 @@
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
+
 # --- Fixed cancer list (ICD codes beginning with C) ---
 CANCER_TYPES=(
-  "C00_C97"
-  "C18_C21"
-  "C22"
-  "C25"
-  "C34"
-  "C50"
-  "C56"
-  "C61"
-  "C64_C65"
-  "C82_C85"
-  "C91_C95"
+  "F01"
+  "F03"
+  "G10"
+  "G12.2"
+  "G20"
+  "G20_G30_G12.2_F01_F03"
+  "G30"
+  "G30_F01_F03"
 )
 
 # --- Locate project root ---

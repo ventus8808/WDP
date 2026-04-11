@@ -5,11 +5,17 @@ Each file contains pairwise lag comparisons:
     ICD_Code, comparison, diff_mean, diff_lower, diff_upper, P_a_gt_b
 
 P_a_gt_b = posterior probability that lag_a MRD > lag_b MRD.
-  - P >= 0.95 → lag_a significantly greater than lag_b
-  - P <= 0.05 → lag_b significantly greater than lag_a (reversed direction)
+  - P >= 0.95 → lag_a significantly greater than lag_b  (*)
+  - P <= 0.05 → lag_b significantly greater than lag_a  (*)
   - 0.05 < P < 0.95 → no significant difference
 
-Output: Result/Tables/lag_test.csv (long format, sorted by disease then comparison)
+Output (wide format — one row per disease):
+  Result/Tables/NDD_lag_test.csv
+  Result/Tables/Cancer_lag_test.csv
+
+Columns: Disease | lag5 vs. lag10 | lag10 vs. lag15 | lag15 vs. lag5 | Direction
+  * appended to the MRD cell when the comparison is significant.
+  Direction is derived from all three pairwise significance results.
 """
 
 import os
@@ -26,7 +32,7 @@ with open(config_path, "r") as f:
 icd_mapping = config["brms_analysis"]["icd_mapping"]
 icd_mapping["G30_F01_F03"] = "Dementia"
 
-abbr_mapping = {
+NDD_ABBR = {
     "G20_G30_G12.2_F01_F03": "NDD",
     "G30_F01_F03": "Dementia",
     "G30": "AD",
@@ -36,13 +42,22 @@ abbr_mapping = {
     "G10": "HD",
 }
 
+CANCER_ABBR = {
+    "C00_C97": "All Cancer",
+    "C34":     "Lung",
+    "C18_C21": "Colorectal",
+    "C50":     "Breast",
+    "C25":     "Pancreas",
+    "C61":     "Prostate",
+}
+
 input_dir = os.path.join(base_dir, "Result", "brms_MRR_lag")
 output_dir = os.path.join(base_dir, "Result", "Tables")
 os.makedirs(output_dir, exist_ok=True)
 
 SKIP_CODES = {"F03"}
 
-DISEASE_ORDER = [
+NDD_ORDER = [
     "G20_G30_G12.2_F01_F03",
     "G30_F01_F03",
     "G30",
@@ -52,80 +67,175 @@ DISEASE_ORDER = [
     "G10",
 ]
 
+CANCER_ORDER = [
+    "C00_C97",
+    "C34",
+    "C18_C21",
+    "C50",
+    "C25",
+    "C61",
+]
+
 COMPARISON_ORDER = ["lag5_vs_lag10", "lag10_vs_lag15", "lag15_vs_lag5"]
+COMPARISON_LABELS = {
+    "lag5_vs_lag10":  "lag5 vs. lag10",
+    "lag10_vs_lag15": "lag10 vs. lag15",
+    "lag15_vs_lag5":  "lag15 vs. lag5",
+}
 
 
-def make_interpretation(row):
-    """
-    Combine P_a_gt_b and comparison label into a plain-language result.
-    * = significant at posterior probability threshold of 0.95/0.05.
-    """
-    p = row["P_a_gt_b"]
-    comp = row["comparison"]  # e.g. "lag5_vs_lag10"
-    parts = comp.split("_vs_")
-    if len(parts) != 2:
-        return "—"
-    a, b = parts[0], parts[1]  # e.g. "lag5", "lag10"
+def to_float_p(p):
+    try:
+        return float(p)
+    except (ValueError, TypeError):
+        return 0.0001  # e.g. "p<0.0001"
 
+
+def sig_sign(p):
+    """+1 if a>b significant, -1 if b>a significant, 0 if no diff."""
     if p >= 0.95:
-        return f"{a} > {b} *"  # lag_a is significantly larger
-    elif p <= 0.05:
-        return f"{b} > {a} *"  # lag_b is significantly larger
-    else:
+        return 1
+    if p <= 0.05:
+        return -1
+    return 0
+
+
+def fmt_cell(diff_mean, diff_lower, diff_upper, p_num):
+    """Format MRD difference; append * when significant."""
+    cell = f"{diff_mean:.2f} ({diff_lower:.2f}, {diff_upper:.2f})"
+    if p_num >= 0.95 or p_num <= 0.05:
+        cell += "*"
+    return cell
+
+
+def determine_direction(s5v10, s10v15, s15v5):
+    """
+    Derive a plain-language ordering from three pairwise significance signs.
+
+    s5v10  : +1 = lag5 > lag10 sig,  -1 = lag10 > lag5 sig,  0 = NS
+    s10v15 : +1 = lag10 > lag15 sig, -1 = lag15 > lag10 sig, 0 = NS
+    s15v5  : +1 = lag15 > lag5 sig,  -1 = lag5 > lag15 sig,  0 = NS
+    """
+    if s5v10 == 0 and s10v15 == 0 and s15v5 == 0:
         return "No significant difference"
 
+    # --- Two-comparison chains (s5v10 & s10v15) ---
+    if s5v10 == 1 and s10v15 == 1:
+        return "lag5 > lag10 > lag15"
+    if s5v10 == -1 and s10v15 == -1:
+        return "lag15 > lag10 > lag5"
+    if s5v10 == 1 and s10v15 == -1:          # lag5 > lag10, lag15 > lag10 → trough at lag10
+        if s15v5 == 1:
+            return "lag10 < lag5 < lag15"
+        if s15v5 == -1:
+            return "lag10 < lag15 < lag5"
+        return "lag5 > lag10, lag15 > lag10"
+    if s5v10 == -1 and s10v15 == 1:          # lag10 > lag5, lag10 > lag15 → peak at lag10
+        if s15v5 == 1:
+            return "lag5 < lag15 < lag10"
+        if s15v5 == -1:
+            return "lag15 < lag5 < lag10"
+        return "lag10 > lag5, lag10 > lag15"
 
-frames = []
+    # --- Two-comparison chains (s10v15 & s15v5), s5v10 == 0 ---
+    if s10v15 == 1 and s15v5 == 1:
+        return "lag10 > lag15 > lag5"
+    if s10v15 == -1 and s15v5 == -1:
+        return "lag5 > lag15 > lag10"
+    if s10v15 == -1 and s15v5 == 1:          # lag15 > lag10, lag15 > lag5 → peak at lag15
+        return "lag15 > lag10, lag15 > lag5"
+    if s10v15 == 1 and s15v5 == -1:          # lag10 > lag15, lag5 > lag15 → trough at lag15
+        return "lag10 > lag15, lag5 > lag15"
+
+    # --- Two-comparison chains (s5v10 & s15v5), s10v15 == 0 ---
+    if s5v10 == 1 and s15v5 == 1:
+        return "lag15 > lag5 > lag10"
+    if s5v10 == -1 and s15v5 == -1:
+        return "lag10 > lag5 > lag15"
+    if s5v10 == 1 and s15v5 == -1:           # lag5 > lag10, lag5 > lag15 → peak at lag5
+        return "lag5 > lag10, lag5 > lag15"
+    if s5v10 == -1 and s15v5 == 1:           # lag10 > lag5, lag15 > lag5 → trough at lag5
+        return "lag5 < lag10, lag5 < lag15"
+
+    # --- Single significant comparison ---
+    if s5v10 == 1:   return "lag5 > lag10"
+    if s5v10 == -1:  return "lag10 > lag5"
+    if s10v15 == 1:  return "lag10 > lag15"
+    if s10v15 == -1: return "lag15 > lag10"
+    if s15v5 == 1:   return "lag15 > lag5"
+    if s15v5 == -1:  return "lag5 > lag15"
+
+    return "No significant difference"
+
+
+def format_and_save(frames, abbr_map, disease_order, output_path, label):
+    if not frames:
+        print(f"No files found for {label}, skipping.")
+        return
+
+    combined = pd.concat(frames, ignore_index=True)
+    combined["_p_num"] = combined["P_a_gt_b"].map(to_float_p)
+
+    rows = []
+    for icd_code in disease_order:
+        sub = combined[combined["ICD_Code"] == icd_code]
+        if sub.empty:
+            continue
+
+        row = {"Disease": abbr_map.get(icd_code, icd_code)}
+        p_signs = {}
+
+        for comp in COMPARISON_ORDER:
+            comp_row = sub[sub["comparison"] == comp]
+            col = COMPARISON_LABELS[comp]
+            if comp_row.empty:
+                row[col] = ""
+                p_signs[comp] = 0
+            else:
+                r = comp_row.iloc[0]
+                p_num = r["_p_num"]
+                p_signs[comp] = p_num
+                row[col] = fmt_cell(r["diff_mean"], r["diff_lower"], r["diff_upper"], p_num)
+
+        row["Direction"] = determine_direction(
+            sig_sign(p_signs.get("lag5_vs_lag10", 0)),
+            sig_sign(p_signs.get("lag10_vs_lag15", 0)),
+            sig_sign(p_signs.get("lag15_vs_lag5", 0)),
+        )
+        rows.append(row)
+
+    result = pd.DataFrame(rows, columns=["Disease"] + list(COMPARISON_LABELS.values()) + ["Direction"])
+    result.to_csv(output_path, index=False)
+    fname = os.path.basename(output_path)
+    print(f"Saved {fname} ({len(result)} rows)")
+    print(result.to_string(index=False))
+
+
+ndd_frames = []
+cancer_frames = []
+
 for fname in sorted(f for f in os.listdir(input_dir) if f.endswith("_lag_test.csv")):
     icd_code = fname.replace("_lag_test.csv", "")
     if icd_code in SKIP_CODES:
         continue
     df = pd.read_csv(os.path.join(input_dir, fname))
-    frames.append(df)
+    if icd_code in CANCER_ORDER:
+        cancer_frames.append(df)
+    elif not icd_code.startswith("C"):
+        ndd_frames.append(df)
 
-if not frames:
-    print("No *_lag_test.csv files found.")
-    raise SystemExit(1)
-
-combined = pd.concat(frames, ignore_index=True)
-combined["Disease"] = combined["ICD_Code"].map(lambda x: abbr_mapping.get(x, x))
-
-# Sort
-combined["_sd"] = (
-    combined["ICD_Code"].map({d: i for i, d in enumerate(DISEASE_ORDER)}).fillna(99)
-)
-combined["_sc"] = (
-    combined["comparison"]
-    .map({c: i for i, c in enumerate(COMPARISON_ORDER)})
-    .fillna(99)
-)
-combined = (
-    combined.sort_values(["_sd", "_sc"])
-    .drop(columns=["_sd", "_sc"])
-    .reset_index(drop=True)
+format_and_save(
+    ndd_frames,
+    NDD_ABBR,
+    NDD_ORDER,
+    os.path.join(output_dir, "NDD_lag_test.csv"),
+    "NDD",
 )
 
-# Format columns
-combined["Comparison"] = combined["comparison"].str.replace(
-    "_vs_", " vs. ", regex=False
+format_and_save(
+    cancer_frames,
+    CANCER_ABBR,
+    CANCER_ORDER,
+    os.path.join(output_dir, "Cancer_lag_test.csv"),
+    "Cancer",
 )
-
-combined["MRD Difference (95% CrI)"] = combined.apply(
-    lambda r: f"{r['diff_mean']:.2f} ({r['diff_lower']:.2f}, {r['diff_upper']:.2f})",
-    axis=1,
-)
-
-combined["P(a > b)"] = combined["P_a_gt_b"].apply(
-    lambda p: "< 0.05" if p < 0.05 else ("> 0.95" if p > 0.95 else f"{p:.2f}")
-)
-
-combined["Direction"] = combined.apply(make_interpretation, axis=1)
-
-combined = combined[
-    ["Disease", "Comparison", "MRD Difference (95% CrI)", "P(a > b)", "Direction"]
-]
-
-output_path = os.path.join(output_dir, "lag_test.csv")
-combined.to_csv(output_path, index=False)
-print(f"Saved lag_test.csv ({len(combined)} rows)")
-print(combined.to_string(index=False))

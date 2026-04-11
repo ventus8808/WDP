@@ -177,18 +177,23 @@ extract_quintiles <- function(draw_df, names_vec, prefix) {
   out
 }
 
-# Compute MRR (Q2-Q5 vs Q1) from posterior draws.
-# mu_Q1 is the fixed-effect prediction at mean Smoking_Rate with EQI = Q1 (random effects at 0).
-compute_mrr <- function(draws, names_vec, layer_dt, cancer, eqi_out, aamr_out, lagv) {
+# Compute MRR (Q1-Q5 vs Lag5 Q1) from posterior draws.
+# ref_draws: posterior draws of mu_Q1 from the Lag5 model (the universal reference).
+#            If NULL (should not happen after lag5 is processed), falls back to current Q1.
+compute_mrr <- function(draws, names_vec, layer_dt, cancer, eqi_out, aamr_out, lagv, ref_draws) {
   smoking_idx  <- match("Smoking_Rate", names_vec)
   mean_smoking <- mean(layer_dt$Smoking_Rate, na.rm=TRUE)
   mu_Q1_draws  <- draws[["beta[1]"]] + draws[[paste0("beta[", smoking_idx, "]")]] * mean_smoking
 
-  mrr_rows <- lapply(2:5, function(q) {
-    q_idx <- match(paste0("EQI_factor", q), names_vec)
-    if (is.na(q_idx)) return(NULL)
-    mu_Qq <- mu_Q1_draws + draws[[paste0("beta[", q_idx, "]")]]
-    MRR_q <- mu_Qq / mu_Q1_draws
+  mrr_rows <- lapply(1:5, function(q) {
+    if (q == 1) {
+      mu_Qq <- mu_Q1_draws
+    } else {
+      q_idx <- match(paste0("EQI_factor", q), names_vec)
+      if (is.na(q_idx)) return(NULL)
+      mu_Qq <- mu_Q1_draws + draws[[paste0("beta[", q_idx, "]")]]
+    }
+    MRR_q <- mu_Qq / ref_draws
     # Two-sided posterior p: P(MRR != 1) via Jeffreys-corrected proportion
     mrr_centered <- MRR_q - 1
     pos <- sum(mrr_centered > 0, na.rm=TRUE); neg <- sum(mrr_centered < 0, na.rm=TRUE); nn <- pos + neg
@@ -239,9 +244,10 @@ run_lag_test <- function(lag_q5_store, cancer, out_dir) {
 # ===========================================================================
 for (cancer in selected) {
   message("===== Disease: ", cancer, " =====")
-  outfile      <- file.path(out_dir, paste0(cancer, "_main.csv"))
-  mrr_file     <- file.path(out_dir, paste0(cancer, "_MRR.csv"))
-  lag_q5_store <- list()   # keyed by lag value: "5", "10", "15"
+  outfile        <- file.path(out_dir, paste0(cancer, "_main.csv"))
+  mrr_file       <- file.path(out_dir, paste0(cancer, "_MRR.csv"))
+  lag_q5_store   <- list()   # keyed by lag value: "5", "10", "15"
+  lag5_ref_draws <- NULL     # Lag5 Q1 draws; used as universal MRR reference for all lags
 
   for (sc in scenario_list) {
     scen_key <- sc$key; eqi_p <- sc$eqi; aamr_p <- sc$aamr; lagv <- sc$lag
@@ -290,6 +296,17 @@ for (cancer in selected) {
     draws <- as_draws_df(fit_overall$draws("beta"))
     colnames(draws) <- paste0("beta[", seq_len(ncol(draws)), "]")
 
+    # ---- Compute and cache Lag5 Q1 as universal MRR reference ----
+    {
+      smoking_idx_ref  <- match("Smoking_Rate", des_overall$names)
+      mean_smoking_ref <- mean(layer_dt$Smoking_Rate, na.rm=TRUE)
+      mu_Q1_current    <- draws[["beta[1]"]] + draws[[paste0("beta[", smoking_idx_ref, "]")]] * mean_smoking_ref
+      if (lagv == 5) lag5_ref_draws <- mu_Q1_current
+    }
+    if (is.null(lag5_ref_draws)) {
+      message("[WARN] lag5_ref_draws not yet available for lag", lagv, " — skipping MRR"); next
+    }
+
     # ---- MRD output (original format, unchanged) ----
     q_over    <- extract_quintiles(draws, des_overall$names, "EQI_factor")
     summ_over <- posterior::summarize_draws(fit_overall$draws("beta"))
@@ -314,8 +331,8 @@ for (cancer in selected) {
     append_rows(outfile, row_over)
     message("[OK] ", scen_key, " MRD")
 
-    # ---- MRR: Q2-Q5 vs Q1 ----
-    mrr_df <- compute_mrr(draws, des_overall$names, layer_dt, cancer, eqi_out, aamr_out, lagv)
+    # ---- MRR: Q1-Q5 vs Lag5 Q1 (universal reference for all lags) ----
+    mrr_df <- compute_mrr(draws, des_overall$names, layer_dt, cancer, eqi_out, aamr_out, lagv, ref_draws=lag5_ref_draws)
     if (nrow(mrr_df) > 0) append_rows(mrr_file, mrr_df)
     message("[OK] ", scen_key, " MRR")
 
