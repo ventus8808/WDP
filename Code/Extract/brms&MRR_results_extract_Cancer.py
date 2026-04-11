@@ -76,6 +76,10 @@ for icd in TOP5_CANCER:
 # ---------------------------------------------------------------------------
 # MRR — Result/brms_MRR_lag/*_MRR.csv, pivot quintiles to wide
 # ---------------------------------------------------------------------------
+# The CSV may contain appended runs; keep the last occurrence of each
+# (ICD_Code, EQI_Period, Lag, Quintile) to get the most recent results.
+# Q1 rows for Lag 10 and Lag 15 are dropped — Lag 5 Q1 is the universal
+# reference (shown as "1.0") so inter-lag Q1 values are not displayed.
 mrr_wide = {}  # key: (icd, eqi_period, lag) → {Q2: "x(l,u)", ...}
 for icd in TOP5_CANCER:
     fpath = os.path.join(mrr_dir, f"{icd}_MRR.csv")
@@ -83,9 +87,14 @@ for icd in TOP5_CANCER:
         print(f"MRR file not found: {fpath}")
         continue
     raw = pd.read_csv(fpath)
+    raw = raw[raw["EQI_Period"].isin(EQI_PERIODS)].copy()
+    # Keep only the last row for each unique key (handles appended duplicates)
+    raw = raw.drop_duplicates(
+        subset=["ICD_Code", "EQI_Period", "Lag", "Quintile"], keep="last"
+    )
+    # Drop Q1 for Lag 10 and Lag 15 — not shown in output table
+    raw = raw[~((raw["Quintile"] == "Q1") & (raw["Lag"] != 5))]
     for _, r in raw.iterrows():
-        if r["EQI_Period"] not in EQI_PERIODS:
-            continue
         key = (icd, r["EQI_Period"], int(r["Lag"]))
         if key not in mrr_wide:
             mrr_wide[key] = {}
@@ -103,7 +112,7 @@ for (icd, eqi_period, lag), q_vals in mrr_wide.items():
         "Lag":        lag,
         "_metric":    1,
         "_order":     CANCER_ORDER[icd],
-        "Q1":         "1.0",
+        "Q1":         "1.0",  # Lag 5 Q1 is the universal reference
     }
     for q in ["Q2", "Q3", "Q4", "Q5"]:
         row[q] = q_vals.get(q)

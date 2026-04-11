@@ -107,6 +107,10 @@ def parse_mrd_files(fnames_icd):
         raw = pd.read_csv(os.path.join(input_dir, fname))
         if "Model" in raw.columns:
             raw["Model"] = raw["Model"].astype(str).str.strip('"')
+        # New results are at the top — keep first occurrence of each lag row
+        dedup_cols = [c for c in ["EQI_Period", "AAMR_Period", "Lag"] if c in raw.columns]
+        if dedup_cols:
+            raw = raw.drop_duplicates(subset=dedup_cols, keep="first")
         rows = []
         for _, r in raw.iterrows():
             for q in ["Q2", "Q3", "Q4", "Q5"]:
@@ -179,6 +183,7 @@ for fname in sorted(f for f in os.listdir(input_dir) if f.endswith("_MRR.csv")):
     if icd_code in SKIP_CODES:
         continue
     df = pd.read_csv(os.path.join(input_dir, fname))
+    df = df.iloc[:12]          # keep only first 12 rows (new results: Q2-Q5 × 3 lags)
     if icd_code.startswith("C"):
         cancer_mrr_frames.append(df)
     else:

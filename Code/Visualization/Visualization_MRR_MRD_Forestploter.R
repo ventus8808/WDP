@@ -8,27 +8,32 @@ args <- commandArgs(trailingOnly = FALSE)
 script_file <- sub("--file=", "", args[grep("--file=", args)])
 script_dir <- if (length(script_file) > 0) dirname(normalizePath(script_file)) else getwd()
 base_dir <- normalizePath(file.path(script_dir, "..", ".."), mustWork = FALSE)
-csv_path <- file.path(base_dir, "Result", "Tables", "main.csv")
+csv_path <- file.path(base_dir, "Result", "Tables", "NDD_main.csv")
 out_dir <- file.path(base_dir, "Result", "MRR_Forest")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 raw <- read.csv(csv_path, stringsAsFactors = FALSE)
+# Keep only the first occurrence of each key — new results are at the top of the file
+raw <- raw[!duplicated(raw[, c("ICD_Code", "Lag", "Quintile")]), ]
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-# Plot 1: NDD, Dementia, AD, PD
+# Plot 0: VD only (own axis scale, placed leftmost)
+DISEASE_MAP_0 <- list(
+  "F01" = "VD"
+)
+# Plot 1: NDD, Dementia, AD
 DISEASE_MAP_1 <- list(
   "G20_G30_G12.2_F01_F03" = "NDD",
   "G30_F01_F03" = "Dementia",
-  "G30" = "AD",
-  "G20" = "PD"
+  "G30" = "AD"
 )
-# Plot 2: VD, ALS, HD
+# Plot 2: PD, ALS, HD
 DISEASE_MAP_2 <- list(
-  "F01" = "VD",
+  "G20" = "PD",
   "G12.2" = "ALS",
-  "G10" = "HD (Control)"
+  "G10" = "HD(Control)"
 )
 
 QUINTILES <- c("Q2", "Q3", "Q4", "Q5")
@@ -149,10 +154,13 @@ make_forest <- function(dt, mrr_xlim, mrd_xlim, mrr_ticks, mrd_ticks, show_legen
 
   # Display: label | mrr_plot | gap | mrd_plot
   display <- dt[, c("label", "mrr_plot", "gap", "mrd_plot")]
-  colnames(display) <- c("Quintile", "Relative effect", "", "Abosolute effect")
+  colnames(display) <- c("Quintile", "       Relative effect", "", "  Abosolute effect")
+
+
+
 
   tm <- forest_theme(
-    base_size = 9,
+    base_size = 10,
     ci_pch = 16,
     ci_col = LAG_COLORS,
     ci_fill = LAG_COLORS,
@@ -164,6 +172,8 @@ make_forest <- function(dt, mrr_xlim, mrd_xlim, mrr_ticks, mrd_ticks, show_legen
     legend_name = "Lag",
     legend_value = LAG_LABELS,
     legend_position = if (show_legend) "bottom" else "none",
+    legend_cex = 0.9, # legend symbol size — matches sizes= in forest()
+    legend_lwd = 8, # legend line width — matches ci_lwd
     core = list(padding = unit(c(2, 3), "mm"))
   )
 
@@ -189,8 +199,8 @@ make_forest <- function(dt, mrr_xlim, mrd_xlim, mrr_ticks, mrd_ticks, show_legen
     xlim = list(mrr_xlim, mrd_xlim),
     ticks_at = list(mrr_ticks, mrd_ticks),
     xlab = c("MRR", "MRD"),
-    nudge_y = 0.25,
-    sizes = 0.35,
+    nudge_y = 0.22,
+    sizes = 0.32,
     theme = tm
   )
 }
@@ -207,27 +217,37 @@ force_width <- function(p, target_in) {
 # ---------------------------------------------------------------------------
 # Axis settings — adjust these to change plot ranges
 # ---------------------------------------------------------------------------
-# Plot 1: NDD / Dementia / AD / PD
+# Plot 0: VD only
+P0_MRR_XLIM <- c(0.5, 6.5)
+P0_MRR_TICKS <- c(1, 2, 3, 4, 5, 6)
+P0_MRD_XLIM <- c(-0.3, 4.2)
+P0_MRD_TICKS <- c(0, 1, 2, 3, 4)
+
+# Plot 1: NDD / Dementia / AD
 # MRR range: [1.11, 2.99],  MRD range: [2.1, 29.0]
-P1_MRR_XLIM <- c(0.8, 3.2)
-P1_MRR_TICKS <- c(1.0, 1.5, 2.0, 2.5, 3.0)
-P1_MRD_XLIM <- c(-2, 32)
-P1_MRD_TICKS <- c(0, 5, 10, 15, 20, 25, 30)
+P1_MRR_XLIM <- c(0.9, 2)
+P1_MRR_TICKS <- c(1.0, 1.2, 1.4, 1.6, 1.8)
+P1_MRD_XLIM <- c(-2, 30)
+P1_MRD_TICKS <- c(0, 5, 10, 15, 20, 25)
 
-# Plot 2: VD / ALS / HD (negative control)
-# MRR range: [1.21, 5.53] for VD+ALS; HD extreme values clipped
-# MRD range: [0.0, 3.0]
-P2_MRR_XLIM <- c(0.8, 6.0)
+# Plot 2: PD / ALS / HD (negative control)
+P2_MRR_XLIM <- c(0.8, 5.5)
 P2_MRR_TICKS <- c(1, 2, 3, 4, 5)
-P2_MRD_XLIM <- c(-0.5, 3.5)
-P2_MRD_TICKS <- c(0, 1, 2, 3)
+P2_MRD_XLIM <- c(-0.5, 6.5)
+P2_MRD_TICKS <- c(0, 2, 4, 6)
 
 # ---------------------------------------------------------------------------
-# Generate both plots
+# Generate three plots
 # ---------------------------------------------------------------------------
+dt0 <- build_table(DISEASE_MAP_0)
 dt1 <- build_table(DISEASE_MAP_1)
 dt2 <- build_table(DISEASE_MAP_2)
 
+p0 <- make_forest(dt0,
+  mrr_xlim = P0_MRR_XLIM, mrd_xlim = P0_MRD_XLIM,
+  mrr_ticks = P0_MRR_TICKS, mrd_ticks = P0_MRD_TICKS,
+  show_legend = FALSE
+)
 p1 <- make_forest(dt1,
   mrr_xlim = P1_MRR_XLIM, mrd_xlim = P1_MRD_XLIM,
   mrr_ticks = P1_MRR_TICKS, mrd_ticks = P1_MRD_TICKS,
@@ -236,48 +256,130 @@ p1 <- make_forest(dt1,
 p2 <- make_forest(dt2,
   mrr_xlim = P2_MRR_XLIM, mrd_xlim = P2_MRD_XLIM,
   mrr_ticks = P2_MRR_TICKS, mrd_ticks = P2_MRD_TICKS,
-  show_legend = TRUE
+  show_legend = FALSE # legend drawn manually below for full position/frame control
 )
 
 # ---------------------------------------------------------------------------
-# Output size — adjust P1_WIDTH and P2_WIDTH (inches) to force panel widths
+# Output size — adjust widths (inches) per panel
 # ---------------------------------------------------------------------------
-P1_WIDTH <- 4 # inches — left panel (NDD / Dementia / AD / PD)
-P2_WIDTH <- 4 # inches — right panel (VD / ALS / HD)
+# Left column: p1 (NDD/Dementia/AD) stacked above p0 (VD), same width
+LEFT_WIDTH <- 4 # inches — left column shared by p1 and p0
+P2_WIDTH <- 4 # inches — right column (PD / ALS / HD)
+STRIP_HEIGHT <- 0.25 # inches — white strip between p1 and p0
+PLOT1_STRIP_GAP <- -0.4 # inches — gap between bottom of p1 and top of strip
+PLOT0_STRIP_GAP <- -0.4 # inches — gap between bottom of strip and top of p0
+
+# Legend position and appearance (coordinates relative to full canvas, in inches)
+LEGEND_X <- 5.2 # inches from left edge of canvas
+LEGEND_Y <- 0.6 # inches from bottom edge of canvas
+LEGEND_W <- 1.5 # inches — legend box width
+LEGEND_H <- 0.65 # inches — legend box height
+LEGEND_PAD <- 0.08 # inches — inner padding
+LEGEND_PTSIZE <- 0.32 # point size — match sizes= in forest()
+LEGEND_LWD <- 1.5 # line width — match ci_lwd
 
 # ---------------------------------------------------------------------------
-# Combine side by side and save
+# Combine: left column = p1 top / strip / p0 bottom; right column = p2
+# Layer order (top→bottom): p1, strip, p0
 # ---------------------------------------------------------------------------
 out_png <- file.path(out_dir, "Combined_MRR_MRD.png")
 
-p1 <- force_width(p1, P1_WIDTH)
+p0 <- force_width(p0, LEFT_WIDTH)
+p1 <- force_width(p1, LEFT_WIDTH)
 p2 <- force_width(p2, P2_WIDTH)
 
+h0 <- get_wh(p0, unit = "in")[2]
 h1 <- get_wh(p1, unit = "in")[2]
 h2 <- get_wh(p2, unit = "in")[2]
-total_w <- P1_WIDTH + P2_WIDTH
-total_h <- max(h1, h2)
+left_h <- h1 + PLOT1_STRIP_GAP + STRIP_HEIGHT + PLOT0_STRIP_GAP + h0
+total_w <- LEFT_WIDTH + P2_WIDTH
+total_h <- max(left_h, h2)
+
+# y positions (measured from top of canvas)
+y_p1_top <- total_h # p1 top edge
+y_strip_top <- total_h - h1 - PLOT1_STRIP_GAP # strip top edge
+y_p0_top <- total_h - h1 - PLOT1_STRIP_GAP - STRIP_HEIGHT - PLOT0_STRIP_GAP # p0 top edge
 
 png(out_png, res = 300, width = total_w, height = total_h, units = "in")
 grid.newpage()
 
+# p0: VD — drawn first (bottom layer)
 pushViewport(viewport(
-  x = 0, y = 1,
-  width = unit(P1_WIDTH, "in"),
+  x = 0, y = unit(y_p0_top, "in"),
+  width = unit(LEFT_WIDTH, "in"),
+  height = unit(h0, "in"),
+  just = c("left", "top")
+))
+grid.draw(p0)
+popViewport()
+
+# White strip — drawn above p0, covers p0's title row
+grid.rect(
+  x = unit(0, "in"), y = unit(y_strip_top, "in"),
+  width = unit(LEFT_WIDTH, "in"), height = unit(STRIP_HEIGHT, "in"),
+  just = c("left", "top"),
+  gp = gpar(fill = "white", col = NA)
+)
+
+# p1: NDD/Dementia/AD — drawn last (top layer)
+pushViewport(viewport(
+  x = 0, y = unit(y_p1_top, "in"),
+  width = unit(LEFT_WIDTH, "in"),
   height = unit(h1, "in"),
   just = c("left", "top")
 ))
 grid.draw(p1)
 popViewport()
 
+# p2: PD/ALS/HD — right column
 pushViewport(viewport(
-  x = unit(P1_WIDTH, "in"), y = 1,
+  x = unit(LEFT_WIDTH, "in"), y = 1,
   width = unit(P2_WIDTH, "in"),
   height = unit(h2, "in"),
   just = c("left", "top")
 ))
 grid.draw(p2)
 popViewport()
+
+# ---------------------------------------------------------------------------
+# Manual framed legend — adjust LEGEND_* parameters above
+# ---------------------------------------------------------------------------
+n_lags <- length(LAG_LABELS)
+row_h <- (LEGEND_H - 2 * LEGEND_PAD) / n_lags
+
+# Frame
+grid.rect(
+  x = unit(LEGEND_X, "in"), y = unit(LEGEND_Y, "in"),
+  width = unit(LEGEND_W, "in"), height = unit(LEGEND_H, "in"),
+  just = c("left", "bottom"),
+  gp = gpar(fill = "white", col = "black", lwd = 0.8)
+)
+
+for (i in seq_along(LAG_LABELS)) {
+  row_y <- LEGEND_Y + LEGEND_H - LEGEND_PAD - (i - 0.5) * row_h
+  seg_x0 <- LEGEND_X + LEGEND_PAD
+  seg_x1 <- LEGEND_X + LEGEND_PAD + 0.3
+  pt_x <- (seg_x0 + seg_x1) / 2
+  # Line
+  grid.segments(
+    x0 = unit(seg_x0, "in"), y0 = unit(row_y, "in"),
+    x1 = unit(seg_x1, "in"), y1 = unit(row_y, "in"),
+    gp = gpar(col = LAG_COLORS[i], lwd = LEGEND_LWD)
+  )
+  # Point
+  grid.points(
+    x = unit(pt_x, "in"), y = unit(row_y, "in"),
+    pch = 16, size = unit(LEGEND_PTSIZE, "char"),
+    gp = gpar(col = LAG_COLORS[i])
+  )
+  # Label
+  grid.text(
+    label = LAG_LABELS[i],
+    x = unit(seg_x1 + LEGEND_PAD, "in"), y = unit(row_y, "in"),
+    just = c("left", "center"),
+    gp = gpar(fontsize = 9)
+  )
+}
 
 dev.off()
 cat("Saved ->", out_png, "\n")
