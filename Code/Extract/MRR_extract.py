@@ -107,10 +107,6 @@ def parse_mrd_files(fnames_icd):
         raw = pd.read_csv(os.path.join(input_dir, fname))
         if "Model" in raw.columns:
             raw["Model"] = raw["Model"].astype(str).str.strip('"')
-        # New results are at the top — keep first occurrence of each lag row
-        dedup_cols = [c for c in ["EQI_Period", "AAMR_Period", "Lag"] if c in raw.columns]
-        if dedup_cols:
-            raw = raw.drop_duplicates(subset=dedup_cols, keep="first")
         rows = []
         for _, r in raw.iterrows():
             for q in ["Q2", "Q3", "Q4", "Q5"]:
@@ -143,6 +139,7 @@ def save_group(mrr_frames, mrd_file_pairs, disease_order, mrr_out, main_out, lab
         return
 
     mrr = pd.concat(mrr_frames, ignore_index=True)
+    mrr = mrr[mrr["Quintile"] != "Q1"]
     mrr["Disease"] = mrr["ICD_Code"].map(lambda x: icd_mapping.get(x, x))
 
     mrr_cols = ["ICD_Code", "Disease", "EQI_Period", "AAMR_Period",
@@ -183,7 +180,6 @@ for fname in sorted(f for f in os.listdir(input_dir) if f.endswith("_MRR.csv")):
     if icd_code in SKIP_CODES:
         continue
     df = pd.read_csv(os.path.join(input_dir, fname))
-    df = df.iloc[:12]          # keep only first 12 rows (new results: Q2-Q5 × 3 lags)
     if icd_code.startswith("C"):
         cancer_mrr_frames.append(df)
     else:

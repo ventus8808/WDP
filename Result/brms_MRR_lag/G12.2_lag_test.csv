@@ -1,4 +1,0 @@
-ICD_Code,comparison,diff_mean,diff_lower,diff_upper,P_a_gt_b
-G12.2,lag5_vs_lag10,0.0477,-0.1313,0.2378,0.6893
-G12.2,lag10_vs_lag15,0.2455,0.0734,0.4189,0.9978
-G12.2,lag15_vs_lag5,-0.2933,-0.459,-0.1244,0.0005
