@@ -1,0 +1,4 @@
+ICD_Code,AAMR_Period,Lag,Sensitivity_Model,Smoking_Rate,uninsured_rate_2005,physician_density_per100k,forest_coverage,site_number_mean
+C00_C97,2006_2010,5,+Monitoring,,,,,"1.38(0.26,2.48)*"
+"C00_C97","2011_2015",10,"+Monitoring","","","","","1.04(0.01,2.10)*"
+"C00_C97","2016_2020",15,"+Monitoring","","","","","0.11(-0.86,1.07)"

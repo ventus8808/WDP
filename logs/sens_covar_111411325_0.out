@@ -1,0 +1,6 @@
+[2026-04-12 18:18:54] [INFO] Project root: /public/home/acf4pijnzl/WDP
+[2026-04-12 18:18:54] [INFO] Task 0 → Cancer=G20_G30_G12.2_F01_F03 | ModelGroup=Baseline_Full
+[1] "EQI"                       "Smoking_Rate"             
+[3] "State_FIPS"                "uninsured_rate_2005"      
+[5] "physician_density_per100k" "forest_coverage"          
+[7] "site_number_mean"         

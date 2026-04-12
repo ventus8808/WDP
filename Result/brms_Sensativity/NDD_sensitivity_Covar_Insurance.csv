@@ -1,0 +1,4 @@
+ICD_Code,AAMR_Period,Lag,Sensitivity_Model,Smoking_Rate,uninsured_rate_2005,physician_density_per100k,forest_coverage,site_number_mean
+G20_G30_G12.2_F01_F03,2006_2010,5,+Insurance,,"-4.67(-5.65,-3.72)***",,,
+"G20_G30_G12.2_F01_F03","2011_2015",10,"+Insurance","","-6.61(-7.57,-5.60)***","","",""
+"G20_G30_G12.2_F01_F03","2016_2020",15,"+Insurance","","-7.39(-8.43,-6.41)***","","",""

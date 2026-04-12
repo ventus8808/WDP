@@ -1,0 +1,6 @@
+[2026-04-12 20:20:51] [INFO] Project root: /public/home/acf4pijnzl/WDP
+[2026-04-12 20:20:51] [INFO] Task 4 → Cancer=G20_G30_G12.2_F01_F03 | ModelGroup=Monitoring
+[1] "EQI"                       "Smoking_Rate"             
+[3] "State_FIPS"                "uninsured_rate_2005"      
+[5] "physician_density_per100k" "forest_coverage"          
+[7] "site_number_mean"         
