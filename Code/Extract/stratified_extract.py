@@ -128,20 +128,12 @@ def filter_second_occurrence(df):
     return pd.DataFrame(filtered_rows)
 
 
-# Function to format results with significance stars
+# Function to format results (strip significance stars)
 def format_result(q_val):
-    """Format Q values as estimate(CI_lower,CI_upper) with significance stars"""
+    """Format Q values as estimate(CI_lower,CI_upper), no significance stars."""
     if pd.isna(q_val) or q_val == 0.0:
         return "0.0"
-
-    # Parse the value - assuming format like "12.02 (9.82, 14.29)***"
-    val_str = str(q_val)
-
-    # If already formatted with parentheses, return as is
-    if "(" in val_str:
-        return val_str
-
-    # Otherwise just return the numeric value
+    val_str = str(q_val).rstrip("*")
     return val_str
 
 
@@ -195,14 +187,14 @@ def create_formatted_output(df, output_path):
 
 
 # Output formatted files
-cancer_output_path = os.path.join(output_dir, "brms_stratified_Cancer(2000-2005).csv")
+cancer_output_path = os.path.join(output_dir, "brms_stratified_Cancer_MRD(2000-2005).csv")
 create_formatted_output(cancer_df, cancer_output_path)
 
-ndd_output_path = os.path.join(output_dir, "brms_stratified_NDD(2000-2005).csv")
+ndd_output_path = os.path.join(output_dir, "brms_stratified_NDD_MRD(2000-2005).csv")
 create_formatted_output(ndd_df, ndd_output_path)
 
-print(f"Cancer stratified data saved to {cancer_output_path}")
-print(f"NDD stratified data saved to {ndd_output_path}")
+print(f"Cancer stratified MRD saved to {cancer_output_path}")
+print(f"NDD stratified MRD saved to {ndd_output_path}")
 
 # ============================================================================
 # RUCC Stratification (from brms directory)
@@ -749,3 +741,226 @@ if os.path.exists(ndd_typology_file):
     ndd_typology_df = filter_typology_data(typology_df, "G20_G30_G12.2_F01_F03")
     create_typology_formatted_output(ndd_typology_df, ndd_output_path)
     print(f"NDD Typology data appended to {ndd_output_path}")
+
+# ============================================================================
+# Stratified MRR — 2 combined output files (Cancer / NDD)
+# Sources: Result/brms_Stratified_Typo_LandUse_MRR/
+# Strata order: Sex → Race → RUCC → Census Region → Köppen → Typology
+# Format: mean(lower,upper) 2 dp, no asterisks, Q1 = "1.00", EQI 2000-2005 only
+# ============================================================================
+
+mrr_dir = os.path.join(base_dir, "Result", "brms_Stratified_Typo_LandUse_MRR")
+
+# Targets: (base ICD code, output file name)
+mrr_targets = [
+    ("C00_C97",                 "brms_stratified_Cancer_MRR(2000-2005).csv"),
+    ("G20_G30_G12.2_F01_F03",  "brms_stratified_NDD_MRR(2000-2005).csv"),
+]
+
+# Ordered strata sections: (display label, Model-column prefix in MRR CSV)
+# Each entry: (section_header, {model_value: display_label}, [ordered display labels])
+# Sex/race: stratum is in ICD_Code suffix, model is domain (matches MRD format)
+# e.g. ICD_Code="NDD_Asian", Model="Stratified_EQI"
+mrr_sex_race_icd_map = {
+    "Male":   "Sex(Male)",
+    "Female": "Sex(Female)",
+    "White":  "Race(White)",
+    "Black":  "Race(Black)",
+    "Asian":  "Race(Asian)",
+    "Indian": "Race(Indian)",
+}
+mrr_sex_race_order = [
+    "Sex(Male)", "Sex(Female)",
+    "Race(White)", "Race(Black)", "Race(Asian)", "Race(Indian)",
+]
+
+# Typology: stratum is in Model prefix (e.g. "Typology_Farming_EQI"), ICD_Code = base cancer
+mrr_typology_strata_prefixes = [
+    "Typology_Farming",
+    "Typology_Mining",
+    "Typology_Manufacturing",
+    "Typology_Government",
+    "Typology_Services",
+    "Typology_Nonspecialized",
+]
+mrr_typology_strata_labels = [
+    "County Economic Typology: Farming",
+    "County Economic Typology: Mining",
+    "County Economic Typology: Manufacturing",
+    "County Economic Typology: Government",
+    "County Economic Typology: Services",
+    "County Economic Typology: Nonspecialized",
+]
+mrr_typology_order = mrr_typology_strata_labels
+
+# Domain model display order (suffix in Model column after stratum prefix)
+mrr_domain_order = ["EQI", "Air", "Water", "Land", "Built", "Social"]
+
+
+def format_mrr_cell(row):
+    """Format MRR as mean(lower,upper) with 2 decimal places, no asterisks."""
+    try:
+        mean  = float(row["MRR_mean"])
+        lower = float(row["MRR_lower"])
+        upper = float(row["MRR_upper"])
+        return f"{mean:.2f}({lower:.2f},{upper:.2f})"
+    except (ValueError, TypeError):
+        return ""
+
+
+def load_mrr_file(filepath):
+    """Load long-format MRR CSV, filter EQI 2000-2005, format cells, pivot wide."""
+    if not os.path.exists(filepath):
+        return pd.DataFrame()
+    df = pd.read_csv(filepath)
+    df = df[df["EQI_Period"] == "2000_2005"].copy()
+    if df.empty:
+        return pd.DataFrame()
+    df["cell"] = df.apply(format_mrr_cell, axis=1)
+    pivot = df.pivot_table(
+        index=["ICD_Code", "EQI_Period", "AAMR_Period", "Lag", "Model"],
+        columns="Quintile",
+        values="cell",
+        aggfunc="first",
+    ).reset_index()
+    pivot.columns.name = None
+    for q in ["Q1", "Q2", "Q3", "Q4", "Q5"]:
+        if q not in pivot.columns:
+            pivot[q] = ""
+    pivot["Q1"] = "1.00"
+    return pivot
+
+
+def write_sex_race_mrr(pivot_df, base_icd, fh):
+    """
+    Write sex/race MRR section.
+    ICD_Code encodes stratum (e.g. NDD_Asian); Model encodes domain (Stratified_EQI, Stratified_Air…).
+    Groups by stratum (strata_order), then within each stratum rows by domain order × Lag.
+    """
+    if pivot_df.empty:
+        return
+
+    rows = []
+    for _, row in pivot_df.iterrows():
+        icd = row["ICD_Code"]
+        # Extract stratum suffix: everything after base_icd_ prefix
+        suffix = icd[len(base_icd) + 1:] if icd.startswith(base_icd + "_") else None
+        if suffix is None:
+            continue
+        strata_label = mrr_sex_race_icd_map.get(suffix)
+        if strata_label is None:
+            continue
+        # Extract domain from Model: "Stratified_EQI" → "EQI", "Stratified_Air" → "Air"
+        model_val = row["Model"]
+        domain = model_val[len("Stratified_"):] if model_val.startswith("Stratified_") else None
+        if domain not in mrr_domain_order:
+            continue
+        rows.append({
+            "Strata": strata_label,
+            "Domain": domain,
+            "Lag":    row["Lag"],
+            "Q1":     row.get("Q1", ""),
+            "Q2":     row.get("Q2", ""),
+            "Q3":     row.get("Q3", ""),
+            "Q4":     row.get("Q4", ""),
+            "Q5":     row.get("Q5", ""),
+        })
+
+    if not rows:
+        return
+
+    result_df = pd.DataFrame(rows)
+
+    def _strata_key(s):
+        return mrr_sex_race_order.index(s) if s in mrr_sex_race_order else len(mrr_sex_race_order)
+    def _domain_key(d):
+        return mrr_domain_order.index(d) if d in mrr_domain_order else len(mrr_domain_order)
+
+    result_df["_sk"] = result_df["Strata"].apply(_strata_key)
+    result_df["_dk"] = result_df["Domain"].apply(_domain_key)
+    result_df = result_df.sort_values(["_sk", "_dk", "Lag"])
+
+    for strata in mrr_sex_race_order:
+        sub = result_df[result_df["Strata"] == strata]
+        if sub.empty:
+            continue
+        fh.write(f"{strata}\n")
+        for _, r in sub.iterrows():
+            fh.write(
+                f"{r['Domain']}\t{r['Lag']}\t{r['Q1']}\t{r['Q2']}\t"
+                f"{r['Q3']}\t{r['Q4']}\t{r['Q5']}\n"
+            )
+
+
+def write_typology_mrr(pivot_df, fh):
+    """
+    Write Typology MRR section.
+    ICD_Code = base cancer; Model = "Typology_Farming_EQI", "Typology_Farming_Air" …
+    Groups by stratum, then domain order × Lag.
+    """
+    if pivot_df.empty:
+        return
+
+    rows = []
+    for _, row in pivot_df.iterrows():
+        model_val = row["Model"]
+        strata_label = None
+        domain = None
+        for prefix, label in zip(mrr_typology_strata_prefixes, mrr_typology_strata_labels):
+            if model_val.startswith(prefix + "_"):
+                domain = model_val[len(prefix) + 1:]  # e.g. "EQI", "Air"
+                strata_label = label
+                break
+        if strata_label is None or domain not in mrr_domain_order:
+            continue
+        rows.append({
+            "Strata": strata_label,
+            "Domain": domain,
+            "Lag":    row["Lag"],
+            "Q1":     row.get("Q1", ""),
+            "Q2":     row.get("Q2", ""),
+            "Q3":     row.get("Q3", ""),
+            "Q4":     row.get("Q4", ""),
+            "Q5":     row.get("Q5", ""),
+        })
+
+    if not rows:
+        return
+
+    result_df = pd.DataFrame(rows)
+
+    def _strata_key(s):
+        return mrr_typology_order.index(s) if s in mrr_typology_order else len(mrr_typology_order)
+    def _domain_key(d):
+        return mrr_domain_order.index(d) if d in mrr_domain_order else len(mrr_domain_order)
+
+    result_df["_sk"] = result_df["Strata"].apply(_strata_key)
+    result_df["_dk"] = result_df["Domain"].apply(_domain_key)
+    result_df = result_df.sort_values(["_sk", "_dk", "Lag"])
+
+    for strata in mrr_typology_order:
+        sub = result_df[result_df["Strata"] == strata]
+        if sub.empty:
+            continue
+        fh.write(f"{strata}\n")
+        for _, r in sub.iterrows():
+            fh.write(
+                f"{r['Domain']}\t{r['Lag']}\t{r['Q1']}\t{r['Q2']}\t"
+                f"{r['Q3']}\t{r['Q4']}\t{r['Q5']}\n"
+            )
+
+
+for cancer_icd, out_filename in mrr_targets:
+    out_path = os.path.join(output_dir, out_filename)
+    with open(out_path, "w") as fh:
+        fh.write("Model\tLag\tQ1\tQ2\tQ3\tQ4\tQ5\n")
+
+        # 1. Sex/race strata
+        strat_pivot = load_mrr_file(os.path.join(mrr_dir, f"{cancer_icd}_Stratified_MRR.csv"))
+        write_sex_race_mrr(strat_pivot, cancer_icd, fh)
+
+        # 2. Typology strata
+        typo_pivot = load_mrr_file(os.path.join(mrr_dir, f"{cancer_icd}_Typology_MRR.csv"))
+        write_typology_mrr(typo_pivot, fh)
+
+    print(f"MRR table written: {out_path}")

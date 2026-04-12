@@ -1,11 +1,17 @@
 #!/usr/bin/env Rscript
 # Combined MRR pipeline: Stratified (sex/race) + Typology + LandUse
-# For a given base ICD code, computes MRR (Q1-Q5 vs Lag5 Q1) for all stratification types.
+# For a given base ICD code, computes MRR (Q1-Q5 vs Lag5 Q1) for:
+#   - Overall EQI and all 5 EQI domains (Air/Water/Land/Built/Social)
+#   - Sex/race strata (from EQI_AAMR_Stratifed.csv)
+#   - Typology strata (from EQI_AAMR_Cluster_Climate_Typology_LandUse.csv)
+#
+# Output format mirrors MRD: ICD_Code carries the stratum for sex/race
+# (e.g. NDD_Asian), Model carries the domain (Stratified_EQI, Stratified_Air …)
+#
 # Outputs (all in --output-dir):
-#   {cancer}_Typology_MRR.csv   — MRR for Typology strata
-#   {cancer}_LandUse_MRR.csv    — MRR for LandUse strata
-#   {cancer}_Stratified_MRR.csv — MRR for sex/race strata (if available)
-#   {cancer}_lag_test.csv       — Pairwise lag comparison (Q5 draws, EQI0005 lags only)
+#   {cancer}_Stratified_MRR.csv — sex/race strata, all 6 models
+#   {cancer}_Typology_MRR.csv   — Typology strata, all 6 models
+#   {cancer}_lag_test.csv       — EQI0005 Q5 pairwise lag comparison
 
 suppressPackageStartupMessages({
   library(optparse)
@@ -77,14 +83,18 @@ scenario_list <- list(
   list(key="EQI0610_AAMR2016_2020", eqi="2006-2010", aamr="2016-2020", lag=10)
 )
 
+# Domain models: (model suffix, EQI factor prefix in design matrix)
+domain_models <- list(
+  list(suffix="Air",    prefix="EQI_Air_factor"),
+  list(suffix="Water",  prefix="EQI_Water_factor"),
+  list(suffix="Land",   prefix="EQI_Land_factor"),
+  list(suffix="Built",  prefix="EQI_Built_factor"),
+  list(suffix="Social", prefix="EQI_Social_factor")
+)
+
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
-sig_mark <- function(p) {
-  if (is.na(p)) return("")
-  if (p < 0.001) return("***"); if (p < 0.01) return("**"); if (p < 0.05) return("*"); ""
-}
-
 format_p <- function(p) {
   if (is.na(p)) return(NA_character_)
   if (p < 0.0001) return("p<0.0001")
@@ -105,9 +115,67 @@ build_design_overall <- function(d) {
   list(X=mm, names=colnames(mm), df=d)
 }
 
-# Compute MRR (Q1-Q5) relative to ref_draws (Lag5 Q1 of this stratum × EQI period).
+build_design_multi <- function(d) {
+  d <- d %>% mutate(
+    EQI_Air_factor    = factor(EQI_Air,    levels=1:5),
+    EQI_Water_factor  = factor(EQI_Water,  levels=1:5),
+    EQI_Land_factor   = factor(EQI_Land,   levels=1:5),
+    EQI_Built_factor  = factor(EQI_Built,  levels=1:5),
+    EQI_Social_factor = factor(EQI_Social, levels=1:5)
+  )
+  d <- d[complete.cases(d[, c("Smoking_Rate","EQI_Air_factor","EQI_Water_factor","EQI_Land_factor",
+                               "EQI_Built_factor","EQI_Social_factor",
+                               "AAMR_Lower","AAMR_Upper","cens","State_FIPS")]), ]
+  form <- ~ Smoking_Rate + EQI_Air_factor + EQI_Water_factor + EQI_Land_factor +
+             EQI_Built_factor + EQI_Social_factor
+  mm <- model.matrix(form, d,
+                     contrasts.arg = list(
+                       EQI_Air_factor    = contr.treatment(5),
+                       EQI_Water_factor  = contr.treatment(5),
+                       EQI_Land_factor   = contr.treatment(5),
+                       EQI_Built_factor  = contr.treatment(5),
+                       EQI_Social_factor = contr.treatment(5)))
+  colnames(mm) <- make.names(colnames(mm))
+  list(X=mm, names=colnames(mm), df=d)
+}
+
+# Fit Stan model; returns draws df (beta columns renamed) or NULL on failure.
+fit_model <- function(des, label) {
+  states  <- sort(unique(des$df$State_FIPS))
+  s_idx   <- match(des$df$State_FIPS, states)
+  data_list <- list(
+    N       = nrow(des$df),
+    S       = length(states),
+    state   = s_idx,
+    y_lower = des$df$AAMR_Lower,
+    y_upper = des$df$AAMR_Upper,
+    cens    = des$df$cens,
+    K       = ncol(des$X),
+    X       = des$X
+  )
+  init_fn <- function() list(beta=rep(0, data_list$K), z_u=rep(0, data_list$S), sigma=50, sigma_u=10)
+  fit <- try(mod$sample(
+    data            = data_list,
+    chains          = opt$chains,
+    iter_sampling   = opt$iter - opt$warmup,
+    iter_warmup     = opt$warmup,
+    adapt_delta     = opt$`adapt-delta`,
+    max_treedepth   = opt$`max-treedepth`,
+    parallel_chains = min(opt$chains, cores_used),
+    refresh         = 0,
+    seed            = opt$seed,
+    init            = rep(list(init_fn()), opt$chains)
+  ), silent=TRUE)
+  if (inherits(fit, "try-error")) { message("[Fail] ", label); return(NULL) }
+  draws <- as_draws_df(fit$draws("beta"))
+  colnames(draws) <- paste0("beta[", seq_len(ncol(draws)), "]")
+  draws
+}
+
+# Compute MRR for quintiles Q1-Q5 vs ref_draws (Lag5 Q1).
+# eqi_prefix: column name prefix in names_vec, e.g. "EQI_factor" or "EQI_Air_factor"
 compute_mrr <- function(draws, names_vec, layer_dt, cancer_label, eqi_out, aamr_out, lagv,
-                        ref_draws, model_label) {
+                        ref_draws, model_label, eqi_prefix="EQI_factor") {
   smoking_idx  <- match("Smoking_Rate", names_vec)
   mean_smoking <- mean(layer_dt$Smoking_Rate, na.rm=TRUE)
   mu_Q1_draws  <- draws[["beta[1]"]] + draws[[paste0("beta[", smoking_idx, "]")]] * mean_smoking
@@ -115,7 +183,7 @@ compute_mrr <- function(draws, names_vec, layer_dt, cancer_label, eqi_out, aamr_
     if (q == 1) {
       mu_Qq <- mu_Q1_draws
     } else {
-      q_idx <- match(paste0("EQI_factor", q), names_vec)
+      q_idx <- match(paste0(eqi_prefix, q), names_vec)
       if (is.na(q_idx)) return(NULL)
       mu_Qq <- mu_Q1_draws + draws[[paste0("beta[", q_idx, "]")]]
     }
@@ -140,7 +208,7 @@ compute_mrr <- function(draws, names_vec, layer_dt, cancer_label, eqi_out, aamr_
   bind_rows(Filter(Negate(is.null), mrr_rows))
 }
 
-# Pairwise lag test on Q5 beta draws (lag5 vs lag10, lag10 vs lag15, lag15 vs lag5).
+# Pairwise lag test on overall EQI Q5 beta draws (EQI0005 lags only).
 run_lag_test <- function(lag_q5_store, cancer_label, model_label, out_dir) {
   pairs <- list(c("5","10"), c("10","15"), c("15","5"))
   rows  <- lapply(pairs, function(p) {
@@ -166,17 +234,27 @@ run_lag_test <- function(lag_q5_store, cancer_label, model_label, out_dir) {
   }
 }
 
-# Run scenarios for a single stratum dataset, appending MRR rows to mrr_file.
-# cancer_label: ICD code as it appears in the data (may include suffix like C00_C97_Male)
-# model_prefix: prefix for the Model column (e.g. "Typology_Farming" or "Stratified_Male")
+# ---------------------------------------------------------------------------
+# Core per-stratum runner
+#
+# cancer_label  : ICD_Code written to output (e.g. "NDD_Asian", "C00_C97")
+# model_prefix  : prefix for the Model column:
+#                 sex/race → "Stratified"   → Model = "Stratified_EQI", "Stratified_Air" …
+#                 Typology → "Typology_Farming" → Model = "Typology_Farming_EQI" …
+# mrr_file      : output CSV path
+# ---------------------------------------------------------------------------
 run_stratum_mrr <- function(dt_sub, cancer_label, model_prefix, mrr_file, out_dir) {
-  lag5_ref        <- list()   # key: eqi_p
-  lag_q5_store    <- list()   # key: eqi_p → list keyed by lag value (EQI0005 only)
-
   req_cols <- c("COUNTY_FIPS","EQI_Period","Time_Period","Cancer_Type",
-                "AAMR_Lower","AAMR_Upper","Smoking_Rate","RUCC","EQI","State_FIPS")
+                "AAMR_Lower","AAMR_Upper","Smoking_Rate","RUCC",
+                "EQI","EQI_Air","EQI_Water","EQI_Land","EQI_Built","EQI_Social",
+                "State_FIPS")
   miss <- setdiff(req_cols, names(dt_sub))
-  if (length(miss)) { message("[Skip] Missing cols for ", cancer_label, ": ", paste(miss, collapse=",")); return(invisible(NULL)) }
+  if (length(miss)) {
+    message("[Skip] Missing cols for ", cancer_label, ": ", paste(miss, collapse=",")); return(invisible(NULL))
+  }
+
+  lag5_ref     <- list()   # key: eqi_p — overall EQI Q1 Lag5 draws (universal reference)
+  lag_q5_store <- list()   # key: lag value — EQI0005 Q5 draws for lag test
 
   for (sc in scenario_list) {
     scen_key <- sc$key; eqi_p <- sc$eqi; aamr_p <- sc$aamr; lagv <- sc$lag
@@ -187,78 +265,103 @@ run_stratum_mrr <- function(dt_sub, cancer_label, model_prefix, mrr_file, out_di
     eqi_out  <- gsub('-', '_', eqi_p)
     aamr_out <- gsub('-', '_', aamr_p)
 
-    des     <- build_design_overall(scen_dt)
-    states  <- sort(unique(des$df$State_FIPS))
-    s_idx   <- match(des$df$State_FIPS, states)
-    data_list <- list(
-      N       = nrow(des$df),
-      S       = length(states),
-      state   = s_idx,
-      y_lower = des$df$AAMR_Lower,
-      y_upper = des$df$AAMR_Upper,
-      cens    = des$df$cens,
-      K       = ncol(des$X),
-      X       = des$X
-    )
-    init_fn <- function() list(beta=rep(0, data_list$K), z_u=rep(0, data_list$S), sigma=50, sigma_u=10)
+    # ---- Overall EQI model ----
+    des_o  <- build_design_overall(scen_dt)
+    draws_o <- fit_model(des_o, paste(model_prefix, scen_key, "EQI"))
+    if (!is.null(draws_o)) {
+      # Cache Lag5 Q1 as universal reference for this EQI period
+      smoking_idx  <- match("Smoking_Rate", des_o$names)
+      mean_smoking <- mean(scen_dt$Smoking_Rate, na.rm=TRUE)
+      mu_Q1 <- draws_o[["beta[1]"]] + draws_o[[paste0("beta[", smoking_idx, "]")]] * mean_smoking
+      if (lagv == 5) lag5_ref[[eqi_p]] <- mu_Q1
 
-    fit <- try(mod$sample(
-      data            = data_list,
-      chains          = opt$chains,
-      iter_sampling   = opt$iter - opt$warmup,
-      iter_warmup     = opt$warmup,
-      adapt_delta     = opt$`adapt-delta`,
-      max_treedepth   = opt$`max-treedepth`,
-      parallel_chains = min(opt$chains, cores_used),
-      refresh         = 0,
-      seed            = opt$seed,
-      init            = rep(list(init_fn()), opt$chains)
-    ), silent=TRUE)
+      if (!is.null(lag5_ref[[eqi_p]])) {
+        mrr_df <- compute_mrr(draws_o, des_o$names, scen_dt, cancer_label, eqi_out, aamr_out,
+                              lagv, ref_draws=lag5_ref[[eqi_p]],
+                              model_label=paste0(model_prefix, "_EQI"),
+                              eqi_prefix="EQI_factor")
+        if (nrow(mrr_df) > 0) append_rows(mrr_file, mrr_df)
+        message("[OK] MRR ", model_prefix, "_EQI ", scen_key)
+      } else {
+        message("[WARN] lag5_ref not available for ", model_prefix, " eqi=", eqi_p, " lag=", lagv)
+      }
 
-    if (inherits(fit, "try-error")) {
-      message("[Fail] ", model_prefix, " ", scen_key); next
+      # Store EQI0005 Q5 draws for lag test
+      if (eqi_p == "2000-2005") {
+        q5_idx <- match("EQI_factor5", des_o$names)
+        if (!is.na(q5_idx))
+          lag_q5_store[[as.character(lagv)]] <- draws_o[[paste0("beta[", q5_idx, "]")]]
+      }
     }
 
-    draws <- as_draws_df(fit$draws("beta"))
-    colnames(draws) <- paste0("beta[", seq_len(ncol(draws)), "]")
-
-    # Cache Lag5 Q1 as universal MRR reference for this EQI period
-    smoking_idx  <- match("Smoking_Rate", des$names)
-    mean_smoking <- mean(scen_dt$Smoking_Rate, na.rm=TRUE)
-    mu_Q1        <- draws[["beta[1]"]] + draws[[paste0("beta[", smoking_idx, "]")]] * mean_smoking
-    if (lagv == 5) lag5_ref[[eqi_p]] <- mu_Q1
-
-    if (is.null(lag5_ref[[eqi_p]])) {
-      message("[WARN] lag5_ref not yet available for ", model_prefix, " eqi=", eqi_p, " lag=", lagv, " — skipping MRR"); next
-    }
-
-    # Compute MRR
-    mrr_df <- compute_mrr(draws, des$names, scen_dt, cancer_label, eqi_out, aamr_out, lagv,
-                          ref_draws=lag5_ref[[eqi_p]], model_label=model_prefix)
-    if (nrow(mrr_df) > 0) append_rows(mrr_file, mrr_df)
-    message("[OK] MRR ", model_prefix, " ", scen_key)
-
-    # Store Q5 draws for EQI0005 lag test only
-    if (eqi_p == "2000-2005") {
-      q5_idx <- match("EQI_factor5", des$names)
-      if (!is.na(q5_idx))
-        lag_q5_store[[as.character(lagv)]] <- draws[[paste0("beta[", q5_idx, "]")]]
+    # ---- Multi-domain (Air/Water/Land/Built/Social) models ----
+    if (!is.null(lag5_ref[[eqi_p]])) {
+      des_m  <- build_design_multi(scen_dt)
+      draws_m <- fit_model(des_m, paste(model_prefix, scen_key, "Multi"))
+      if (!is.null(draws_m)) {
+        for (dm in domain_models) {
+          mrr_df <- compute_mrr(draws_m, des_m$names, scen_dt, cancer_label, eqi_out, aamr_out,
+                                lagv, ref_draws=lag5_ref[[eqi_p]],
+                                model_label=paste0(model_prefix, "_", dm$suffix),
+                                eqi_prefix=dm$prefix)
+          if (nrow(mrr_df) > 0) append_rows(mrr_file, mrr_df)
+        }
+        message("[OK] MRR ", model_prefix, " domains ", scen_key)
+      }
     }
   }
 
-  # Pairwise lag test (EQI0005 Q5: lag5 vs lag10 vs lag15)
-  run_lag_test(lag_q5_store, cancer_label, model_prefix, out_dir)
+  # Pairwise lag test on overall EQI Q5 (EQI0005 only)
+  run_lag_test(lag_q5_store, cancer_label, paste0(model_prefix, "_EQI"), out_dir)
   invisible(NULL)
 }
 
 # ===========================================================================
-# Section 1: Typology & LandUse MRR
+# Section 1: Sex/race stratified MRR
+# ICD_Code = cancer_full (e.g. NDD_Asian); Model = Stratified_EQI / Stratified_Air …
 # ===========================================================================
-message("\n===== Section 1: Typology & LandUse — Base disease: ", base_cancer, " =====")
+message("\n===== Section 1: Stratified (sex/race) — Base disease: ", base_cancer, " =====")
+
+strat_path <- file.path(project_root, opt$`data-strat`)
+if (!file.exists(strat_path)) {
+  message("[WARN] Stratified data not found: ", strat_path, " — skipping section 1")
+} else {
+  dt_strat <- fread(strat_path)
+  if (!"State_FIPS" %in% names(dt_strat))
+    dt_strat[, State_FIPS := substr(sprintf("%05s", COUNTY_FIPS), 1, 2)]
+  dt_strat <- dt_strat[!is.na(AAMR_Lower) & !is.na(AAMR_Upper)]
+  dt_strat[, cens := ifelse(AAMR_Lower == AAMR_Upper, 0, 2)]
+  dt_strat <- dt_strat[RUCC %in% 1:4 | is.na(RUCC)]
+
+  # Discover all sex/race variants: e.g. C00_C97_Male, NDD_Female
+  all_types     <- unique(dt_strat$Cancer_Type)
+  strat_cancers <- all_types[startsWith(all_types, paste0(base_cancer, "_"))]
+
+  if (length(strat_cancers) == 0) {
+    message("[INFO] No sex/race strata found for ", base_cancer, " — skipping section 1")
+  } else {
+    message("Found strata: ", paste(strat_cancers, collapse=", "))
+    mrr_file_strat <- file.path(out_dir, paste0(base_cancer, "_Stratified_MRR.csv"))
+
+    for (cancer_full in strat_cancers) {
+      message("  Processing: ", cancer_full)
+      dt_sub <- dt_strat[Cancer_Type == cancer_full]
+      # model_prefix = "Stratified"; stratum is encoded in cancer_full (ICD_Code column)
+      run_stratum_mrr(dt_sub, cancer_full, "Stratified", mrr_file_strat, out_dir)
+    }
+    message("[Done] Stratified MRR for ", base_cancer)
+  }
+}
+
+# ===========================================================================
+# Section 2: Typology MRR
+# ICD_Code = base_cancer; Model = Typology_Farming_EQI / Typology_Farming_Air …
+# ===========================================================================
+message("\n===== Section 2: Typology — Base disease: ", base_cancer, " =====")
 
 typo_path <- file.path(project_root, opt$`data-typo`)
 if (!file.exists(typo_path)) {
-  message("[WARN] Typology/LandUse data not found: ", typo_path, " — skipping section 1")
+  message("[WARN] Typology/LandUse data not found: ", typo_path, " — skipping section 2")
 } else {
   dt_typo <- fread(typo_path)
   if (!"State_FIPS" %in% names(dt_typo))
@@ -268,85 +371,25 @@ if (!file.exists(typo_path)) {
   dt_typo <- dt_typo[RUCC %in% 1:4 | is.na(RUCC)]
 
   if (!base_cancer %in% unique(dt_typo$Cancer_Type)) {
-    message("[WARN] ", base_cancer, " not found in Typology/LandUse data — skipping section 1")
+    message("[WARN] ", base_cancer, " not found in Typology data — skipping section 2")
   } else {
-    dt_typo_cancer <- dt_typo[Cancer_Type == base_cancer]
+    if (!"econdep" %in% names(dt_typo)) {
+      message("[Skip] Typology — column 'econdep' not in data")
+    } else {
+      typo_values <- 1:6
+      typo_labels <- c("Farming","Mining","Manufacturing","Government","Services","Nonspecialized")
+      mrr_file_typo <- file.path(out_dir, paste0(base_cancer, "_Typology_MRR.csv"))
 
-    strat_configs <- list(
-      list(name="Typology", var="econdep",        values=1:6,
-           labels=c("Farming","Mining","Manufacturing","Government","Services","Nonspecialized")),
-      list(name="LandUse",  var="landuse_cluster", values=0:3,
-           labels=c("Natural","Water_Sensitive","Agricultural","Urban"))
-    )
-
-    for (cfg in strat_configs) {
-      strat_name   <- cfg$name
-      strat_var    <- cfg$var
-      strat_values <- cfg$values
-      strat_labels <- cfg$labels
-
-      req_var <- c(strat_var, "EQI_Period","Time_Period","Cancer_Type",
-                   "AAMR_Lower","AAMR_Upper","Smoking_Rate","RUCC","EQI","State_FIPS")
-      if (!strat_var %in% names(dt_typo_cancer)) {
-        message("[Skip] ", strat_name, " — column '", strat_var, "' not in data"); next
-      }
-
-      mrr_file <- file.path(out_dir, paste0(base_cancer, "_", strat_name, "_MRR.csv"))
-      message("--- Stratification: ", strat_name, " ---")
-
-      for (i in seq_along(strat_values)) {
-        sv    <- strat_values[i]
-        sl    <- strat_labels[i]
-        label <- paste0(strat_name, "_", sl)
-
-        dt_sub <- dt_typo_cancer[get(strat_var) == sv]
-        message("  Stratum: ", label, " (n=", nrow(dt_sub), ")")
+      for (i in seq_along(typo_values)) {
+        sv    <- typo_values[i]
+        label <- typo_labels[i]
+        dt_sub <- dt_typo[Cancer_Type == base_cancer & econdep == sv]
+        message("  Typology stratum: ", label, " (n=", nrow(dt_sub), ")")
         if (nrow(dt_sub) < opt$`min-n`) { message("  [Skip] too few rows"); next }
-
-        # Add Cancer_Type-compatible label: use base_cancer as the Cancer_Type in data
-        run_stratum_mrr(dt_sub, base_cancer, label, mrr_file, out_dir)
+        run_stratum_mrr(dt_sub, base_cancer, paste0("Typology_", label), mrr_file_typo, out_dir)
       }
-      message("[Done] ", strat_name, " for ", base_cancer)
+      message("[Done] Typology MRR for ", base_cancer)
     }
-  }
-}
-
-# ===========================================================================
-# Section 2: Stratified sex/race MRR
-# ===========================================================================
-message("\n===== Section 2: Stratified (sex/race) — Base disease: ", base_cancer, " =====")
-
-strat_path <- file.path(project_root, opt$`data-strat`)
-if (!file.exists(strat_path)) {
-  message("[WARN] Stratified data not found: ", strat_path, " — skipping section 2")
-} else {
-  dt_strat <- fread(strat_path)
-  if (!"State_FIPS" %in% names(dt_strat))
-    dt_strat[, State_FIPS := substr(sprintf("%05s", COUNTY_FIPS), 1, 2)]
-  dt_strat <- dt_strat[!is.na(AAMR_Lower) & !is.na(AAMR_Upper)]
-  dt_strat[, cens := ifelse(AAMR_Lower == AAMR_Upper, 0, 2)]
-  dt_strat <- dt_strat[RUCC %in% 1:4 | is.na(RUCC)]
-
-  # Find all sex/race variants of this base cancer (e.g. C00_C97_Male, C00_C97_Female)
-  all_types     <- unique(dt_strat$Cancer_Type)
-  strat_cancers <- all_types[startsWith(all_types, paste0(base_cancer, "_"))]
-
-  if (length(strat_cancers) == 0) {
-    message("[INFO] No sex/race strata found for ", base_cancer, " in stratified data — skipping section 2")
-  } else {
-    message("Found strata: ", paste(strat_cancers, collapse=", "))
-    mrr_file_strat <- file.path(out_dir, paste0(base_cancer, "_Stratified_MRR.csv"))
-
-    for (cancer_full in strat_cancers) {
-      # Extract stratum suffix (e.g. "Male" from "C00_C97_Male")
-      stratum_suffix <- sub(paste0("^", base_cancer, "_"), "", cancer_full)
-      model_prefix   <- paste0("Stratified_", stratum_suffix)
-      message("  Processing: ", cancer_full, " (", model_prefix, ")")
-
-      dt_sub <- dt_strat[Cancer_Type == cancer_full]
-      run_stratum_mrr(dt_sub, cancer_full, model_prefix, mrr_file_strat, out_dir)
-    }
-    message("[Done] Stratified MRR for ", base_cancer)
   }
 }
 
