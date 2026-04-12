@@ -28,6 +28,7 @@ TRIANGULATION_AAMR_DIR = PROJECT_ROOT / "Data/Original/CDC Triangulation/AAMR"
 # Output: merged long table
 OUTPUT_DIR = PROJECT_ROOT / "Data/Processed/df_EQI_AAMR_Triangulation"
 OUTPUT_FILE = OUTPUT_DIR / "EQI_AAMR_Cluster_Climate_Typology_LandUse.csv"
+SENSITIVITY_FILE = OUTPUT_DIR / "EQI_AAMR_Sensativity.csv"
 
 # EQI data
 EQI_DIR = PROJECT_ROOT / CFG["data_sources"]["epa_eqi"]["processed"]
@@ -61,6 +62,12 @@ TYPOLOGY_PATH = (
 LANDUSE_PATH = (
     PROJECT_ROOT / "Result/Cluster_Visualization_LandUse/LandUse_Clusters_All_K.csv"
 )
+
+# Sensitivity analysis covariates
+INSURANCE_PATH = PROJECT_ROOT / "Data/Processed/Insurance/Insurance.csv"
+DOCTOR_PATH = PROJECT_ROOT / "Data/Processed/Doctor/Doctor.csv"
+FOREST_PATH = PROJECT_ROOT / "Data/Processed/Environmental/Forest_Coverage.csv"
+MONITORING_PATH = PROJECT_ROOT / "Data/Processed/Monitoring/Monitoring.csv"
 
 # EQI columns to merge
 EQI_COLS = [
@@ -241,6 +248,46 @@ def _load_landuse() -> pd.DataFrame | None:
     return None
 
 
+def _load_insurance() -> pd.DataFrame | None:
+    """Load county uninsured rate data (SAHIE 2005)"""
+    if INSURANCE_PATH.exists():
+        df = pd.read_csv(INSURANCE_PATH, dtype={"COUNTY_FIPS": str})
+        df["COUNTY_FIPS"] = df["COUNTY_FIPS"].str.zfill(5)
+        return df
+    print(f"  ⚠️ Insurance data not found at {INSURANCE_PATH}")
+    return None
+
+
+def _load_doctor() -> pd.DataFrame | None:
+    """Load county physician density data (AHRF 2000-2005 mean)"""
+    if DOCTOR_PATH.exists():
+        df = pd.read_csv(DOCTOR_PATH, dtype={"COUNTY_FIPS": str})
+        df["COUNTY_FIPS"] = df["COUNTY_FIPS"].str.zfill(5)
+        return df
+    print(f"  ⚠️ Doctor data not found at {DOCTOR_PATH}")
+    return None
+
+
+def _load_forest() -> pd.DataFrame | None:
+    """Load county forest coverage data (NLCD 2000-2005 mean)"""
+    if FOREST_PATH.exists():
+        df = pd.read_csv(FOREST_PATH, dtype={"COUNTY_FIPS": str})
+        df["COUNTY_FIPS"] = df["COUNTY_FIPS"].str.zfill(5)
+        return df
+    print(f"  ⚠️ Forest coverage data not found at {FOREST_PATH}")
+    return None
+
+
+def _load_monitoring() -> pd.DataFrame | None:
+    """Load county EPA monitoring site count data (2000-2006 mean)"""
+    if MONITORING_PATH.exists():
+        df = pd.read_csv(MONITORING_PATH, dtype={"COUNTY_FIPS": str})
+        df["COUNTY_FIPS"] = df["COUNTY_FIPS"].str.zfill(5)
+        return df
+    print(f"  ⚠️ Monitoring data not found at {MONITORING_PATH}")
+    return None
+
+
 def _get_valid_lag_combinations(time_period: str) -> list[tuple[int, str, str]]:
     """
     Get valid (lag_years, eqi_code, eqi_period) combinations for a given AAMR time period.
@@ -400,14 +447,18 @@ def main():
 
     print(f"\nFound {len(aamr_files)} AAMR files")
 
-    # Load EQI, Smoking, Cluster, Climate, Typology, and LandUse data
-    print("\n📊 Loading EQI, Smoking, Cluster, Climate, Typology, and LandUse data...")
+    # Load EQI, Smoking, Cluster, Climate, Typology, LandUse, and sensitivity covariates
+    print("\n📊 Loading EQI, Smoking, Cluster, Climate, Typology, LandUse, and sensitivity covariates...")
     eqi_dict = _load_eqi_by_period()
     smoking_df = _load_smoking()
     cluster_df = _load_clusters()
     climate_df = _load_climate()
     typology_df = _load_typology()
     landuse_df = _load_landuse()
+    insurance_df = _load_insurance()
+    doctor_df = _load_doctor()
+    forest_df = _load_forest()
+    monitoring_df = _load_monitoring()
 
     if not eqi_dict:
         print("⚠️ No EQI data loaded. Continuing without EQI covariates.")
@@ -584,6 +635,32 @@ def main():
     print("Example Output (first 10 rows)")
     print("=" * 70)
     print(final.head(10).to_string(index=False))
+
+    # ---- Sensitivity output: EQI 2000-2005 only + healthcare/green space covariates ----
+    print("\n" + "=" * 70)
+    print("Building Sensitivity Table (EQI 2000-2005 only)")
+    print("=" * 70)
+
+    sensitivity = final[final["EQI_Period"] == "2000-2005"].copy()
+
+    for df_cov, label in [
+        (insurance_df, "insurance"),
+        (doctor_df, "doctor"),
+        (forest_df, "forest"),
+        (monitoring_df, "monitoring"),
+    ]:
+        if df_cov is not None:
+            sensitivity = sensitivity.merge(df_cov, on="COUNTY_FIPS", how="left")
+        else:
+            print(f"  ⚠️ {label} data unavailable, column(s) will be missing")
+
+    # Counties with no EPA monitors get 0 (genuinely no monitoring, not missing)
+    if "site_number_mean" in sensitivity.columns:
+        sensitivity["site_number_mean"] = sensitivity["site_number_mean"].fillna(0)
+
+    sensitivity.to_csv(SENSITIVITY_FILE, index=False)
+    print(f"Sensitivity rows:  {len(sensitivity):,}")
+    print(f"Output saved to:   {SENSITIVITY_FILE}")
 
     print("\n✓ EQI × Triangulation AAMR merge completed successfully!")
 
