@@ -70,18 +70,9 @@ if [ -z "${SLURM_ARRAY_TASK_ID-}" ] && [ -z "${MERGE_MODE-}" ]; then
     --parsable \
     "$0")
   log INFO "Array job ID: $ARRAY_JOB"
-
-  # Submit merge job that runs after all array tasks succeed
-  sbatch --dependency=afterok:"$ARRAY_JOB" \
-    --job-name=WDP_sens_merge \
-    --partition=kshctest \
-    --nodes=1 --ntasks=1 --cpus-per-task=2 --mem=6G --time=0-00:30:00 \
-    --output=logs/sens_merge_%j.out \
-    --error=logs/sens_merge_%j.err \
-    --export=ALL,ENV_NAME="$ENV_NAME",MERGE_MODE=1 \
-    "$0"
-  log INFO "Merge job submitted (runs after array completes)."
   log INFO "Monitor with: squeue -u \$USER"
+  log INFO "After all tasks complete, run the merge manually:"
+  log INFO "  Rscript Code/brms/merge_sensativity_covar.R --output-dir Result/brms_Sensativity"
   exit 0
 fi
 
