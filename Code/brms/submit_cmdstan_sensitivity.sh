@@ -7,7 +7,7 @@
 # A merge job runs automatically after all 10 tasks complete.
 #
 # Usage:
-#   bash Code/brms/submit_cmdstan_sensativity_covar.sh
+#   bash Code/brms/submit_cmdstan_sensitivity.sh
 
 #SBATCH --partition=kshctest
 #SBATCH --job-name=WDP_sens_covar
@@ -16,8 +16,8 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=0-12:00:00
-#SBATCH --output=logs/sens_covar_%A_%a.out
-#SBATCH --error=logs/sens_covar_%A_%a.err
+#SBATCH --output=sens_covar_%A_%a.out
+#SBATCH --error=sens_covar_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] $2"; }
@@ -38,7 +38,6 @@ if [ -z "$PROJECT_ROOT" ] || [ ! -f "$PROJECT_ROOT/config.yaml" ]; then
   log ERROR "Cannot determine project root (config.yaml not found)"; exit 1
 fi
 cd "$PROJECT_ROOT"
-mkdir -p logs
 log INFO "Project root: $PROJECT_ROOT"
 
 # ---- Activate conda ----
