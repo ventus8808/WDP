@@ -1,0 +1,37 @@
+ICD_Code,Outcome,AAMR_Period,Lag,Sensitivity_Model,uninsured_rate_2005,physician_density_per100k,forest_coverage,site_number_mean
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2006_2010,5,Baseline,,,,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2006_2010,5,Full,"-4.25(-5.25,-3.19)***","1.01(0.30,1.70)**","1.73(0.90,2.50)***","-0.01(-0.64,0.62)"
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2006_2010,5,+Insurance,"-4.67(-5.65,-3.72)***",,,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2006_2010,5,+Doctor,,"0.94(0.26,1.62)**",,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2006_2010,5,+Forest,,,"2.05(1.25,2.87)***",
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2006_2010,5,+Monitoring,,,,"0.12(-0.51,0.74)"
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2011_2015,10,Baseline,,,,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2011_2015,10,Full,"-6.13(-7.19,-5.04)***","0.54(-0.19,1.30)","1.82(1.02,2.65)***","0.02(-0.63,0.68)"
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2011_2015,10,+Insurance,"-6.61(-7.57,-5.60)***",,,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2011_2015,10,+Doctor,,"0.51(-0.21,1.25)",,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2011_2015,10,+Forest,,,"2.25(1.39,3.12)***",
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2011_2015,10,+Monitoring,,,,"0.08(-0.56,0.74)"
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2016_2020,15,Baseline,,,,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2016_2020,15,Full,"-6.93(-7.98,-5.83)***","0.70(-0.05,1.46)","0.45(-0.43,1.32)","-0.52(-1.18,0.15)"
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2016_2020,15,+Insurance,"-7.39(-8.43,-6.41)***",,,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2016_2020,15,+Doctor,,"0.57(-0.17,1.32)",,
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2016_2020,15,+Forest,,,"0.98(0.10,1.87)*",
+G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),2016_2020,15,+Monitoring,,,,"-0.34(-1.02,0.33)"
+C00_C97,All-site Cancer,2006_2010,5,Baseline,,,,
+C00_C97,All-site Cancer,2006_2010,5,Full,"-16.73(-18.37,-15.04)***","1.28(0.23,2.35)*","1.01(-0.29,2.27)","1.23(0.30,2.16)**"
+C00_C97,All-site Cancer,2006_2010,5,+Insurance,"-22.34(-23.83,-20.84)***",,,
+C00_C97,All-site Cancer,2006_2010,5,+Doctor,,"0.26(-0.97,1.42)",,
+C00_C97,All-site Cancer,2006_2010,5,+Forest,,,"3.56(2.07,5.12)***",
+C00_C97,All-site Cancer,2006_2010,5,+Monitoring,,,,"1.38(0.26,2.48)*"
+C00_C97,All-site Cancer,2011_2015,10,Baseline,,,,
+C00_C97,All-site Cancer,2011_2015,10,Full,"-15.13(-16.58,-13.75)***","1.08(0.18,1.99)*","1.59(0.46,2.79)**","0.98(0.17,1.81)*"
+C00_C97,All-site Cancer,2011_2015,10,+Insurance,"-20.85(-22.28,-19.38)***",,,
+C00_C97,All-site Cancer,2011_2015,10,+Doctor,,"-0.21(-1.28,0.91)",,
+C00_C97,All-site Cancer,2011_2015,10,+Forest,,,"4.20(2.86,5.56)***",
+C00_C97,All-site Cancer,2011_2015,10,+Monitoring,,,,"1.04(0.01,2.10)*"
+C00_C97,All-site Cancer,2016_2020,15,Baseline,,,,
+C00_C97,All-site Cancer,2016_2020,15,Full,"-14.91(-16.25,-13.56)***","0.71(-0.18,1.59)","-0.18(-1.27,0.90)","0.07(-0.73,0.89)"
+C00_C97,All-site Cancer,2016_2020,15,+Insurance,"-20.75(-22.15,-19.39)***",,,
+C00_C97,All-site Cancer,2016_2020,15,+Doctor,,"-0.90(-1.98,0.14)",,
+C00_C97,All-site Cancer,2016_2020,15,+Forest,,,"2.52(1.21,3.83)***",
+C00_C97,All-site Cancer,2016_2020,15,+Monitoring,,,,"0.11(-0.86,1.07)"
