@@ -149,7 +149,7 @@ append_rows <- function(path, df){ if(!file.exists(path)) write_csv(df,path) els
 build_design_sensitivity <- function(d, extra_covars=character(0)){
   d <- d %>% mutate(EQI_factor = factor(EQI, levels=1:5))
   keep_cols <- c("EQI_factor","AAMR_Lower","AAMR_Upper","cens","State_FIPS", extra_covars)
-  d <- d[complete.cases(d[, keep_cols, drop=FALSE]), ]
+  d <- d[complete.cases(d[, ..keep_cols]), ]
   rhs <- paste(c("EQI_factor", extra_covars), collapse=" + ")
   mm  <- model.matrix(as.formula(paste("~", rhs)), data=d,
                       contrasts.arg=list(EQI_factor=contr.treatment(5)))
