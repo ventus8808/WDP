@@ -56,14 +56,14 @@ set -u
 module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/cmdstan_Sensativity_Covar.R"
-MERGER="Code/brms/merge_sensativity_covar.R"
+RUNNER="Code/brms/cmdstan_sensitivity.R"
 if [ ! -f "$RUNNER" ]; then log ERROR "R script not found: $RUNNER"; exit 1; fi
 
-# ---- Controller mode: submit array + merge dependency ----
-if [ -z "${SLURM_ARRAY_TASK_ID-}" ] && [ -z "${MERGE_MODE-}" ]; then
+# ---- Controller mode: submit array ----
+if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   TOTAL_TASKS=$(( ${#CANCER_TYPES[@]} * N_MODELS ))   # 10
   log INFO "Submitting array of ${TOTAL_TASKS} tasks (${#CANCER_TYPES[@]} cancers × ${N_MODELS} model groups)"
+  log INFO "Each task writes its own output files — no merge step needed."
 
   ARRAY_JOB=$(sbatch --array=0-$((TOTAL_TASKS-1)) \
     --export=ALL,ENV_NAME="$ENV_NAME" \
@@ -71,16 +71,7 @@ if [ -z "${SLURM_ARRAY_TASK_ID-}" ] && [ -z "${MERGE_MODE-}" ]; then
     "$0")
   log INFO "Array job ID: $ARRAY_JOB"
   log INFO "Monitor with: squeue -u \$USER"
-  log INFO "After all tasks complete, run the merge manually:"
-  log INFO "  Rscript Code/brms/merge_sensativity_covar.R --output-dir Result/brms_Sensativity"
-  exit 0
-fi
-
-# ---- Merge mode ----
-if [ -n "${MERGE_MODE-}" ]; then
-  log INFO "Running merge step..."
-  Rscript "$MERGER" --output-dir "Result/brms_Sensativity"
-  log INFO "Merge complete."
+  log INFO "Output files: Result/brms_Sensativity/{NDD,Cancer}_sensitivity_{EQI,Covar}_{ModelGroup}.csv"
   exit 0
 fi
 
