@@ -1,0 +1,4 @@
+ICD_Code,Model,comparison,diff_mean,diff_lower,diff_upper,P_a_gt_b
+C00_C97_Asian,Stratified_Asian,lag5_vs_lag10,-4.1524,-7.5152,-0.7863,0.0075
+C00_C97_Asian,Stratified_Asian,lag10_vs_lag15,-4.4343,-7.9303,-0.9802,0.0050
+C00_C97_Asian,Stratified_Asian,lag15_vs_lag5,8.5868,5.1564,11.9441,1.0000

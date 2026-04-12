@@ -1,0 +1,4 @@
+ICD_Code,Model,comparison,diff_mean,diff_lower,diff_upper,P_a_gt_b
+C00_C97_Female,Stratified_Female,lag5_vs_lag10,5.1265,0.3452,9.7684,0.9828
+C00_C97_Female,Stratified_Female,lag10_vs_lag15,5.0244,0.2911,9.4467,0.9815
+C00_C97_Female,Stratified_Female,lag15_vs_lag5,-10.1509,-14.6855,-5.4975,p<0.0001
