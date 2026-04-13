@@ -1,0 +1,116 @@
+[2026-04-12 23:07:09] [INFO] - Project root: /public/home/acf4pijnzl/WDP
+[2026-04-12 23:07:09] [INFO] - Task 14 → cancer=C00_C97  section=Asian
+ [1] "EQI"          "EQI_Air"      "EQI_Water"    "EQI_Land"     "EQI_Built"   
+ [6] "EQI_Social"   "Smoking_Rate" "State_FIPS"   "AAMR_Lower"   "AAMR_Upper"  
+[11] "cens"         "RUCC"        
+Running MCMC with 4 parallel chains...
+
+Chain 4 finished in 146.5 seconds.
+Chain 3 finished in 170.3 seconds.
+Chain 2 finished in 173.5 seconds.
+Chain 1 finished in 192.4 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 170.7 seconds.
+Total execution time: 192.6 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 200.3 seconds.
+Chain 4 finished in 226.1 seconds.
+Chain 3 finished in 240.0 seconds.
+Chain 1 finished in 252.9 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 229.8 seconds.
+Total execution time: 252.9 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 113.9 seconds.
+Chain 4 finished in 120.1 seconds.
+Chain 2 finished in 121.1 seconds.
+Chain 3 finished in 126.7 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 120.4 seconds.
+Total execution time: 126.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 191.0 seconds.
+Chain 2 finished in 198.2 seconds.
+Chain 4 finished in 230.4 seconds.
+Chain 3 finished in 244.5 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 216.1 seconds.
+Total execution time: 244.6 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 108.0 seconds.
+Chain 4 finished in 123.2 seconds.
+Chain 1 finished in 128.9 seconds.
+Chain 3 finished in 132.8 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 123.2 seconds.
+Total execution time: 133.0 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 200.2 seconds.
+Chain 2 finished in 216.7 seconds.
+Chain 1 finished in 221.1 seconds.
+Chain 4 finished in 238.2 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 219.1 seconds.
+Total execution time: 238.3 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 101.2 seconds.
+Chain 4 finished in 112.2 seconds.
+Chain 3 finished in 121.4 seconds.
+Chain 1 finished in 125.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 115.1 seconds.
+Total execution time: 125.7 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 3 finished in 199.8 seconds.
+Chain 2 finished in 200.3 seconds.
+Chain 4 finished in 226.0 seconds.
+Chain 1 finished in 228.4 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 213.6 seconds.
+Total execution time: 228.6 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 1 finished in 155.2 seconds.
+Chain 3 finished in 155.5 seconds.
+Chain 2 finished in 182.7 seconds.
+Chain 4 finished in 184.3 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 169.4 seconds.
+Total execution time: 184.4 seconds.
+
+Running MCMC with 4 parallel chains...
+
+Chain 2 finished in 187.3 seconds.
+Chain 4 finished in 198.5 seconds.
+Chain 3 finished in 205.8 seconds.
+Chain 1 finished in 226.6 seconds.
+
+All 4 chains finished successfully.
+Mean chain execution time: 204.6 seconds.
+Total execution time: 226.7 seconds.
+
+[2026-04-12 23:40:29] [INFO] - Done: C00_C97 / Asian → Result/Stratified_MRR/

@@ -1,0 +1,22 @@
+Cores: 32 detected | 25 used
+
+===== Section: Male | Disease: C00_C97 =====
+  → C00_C97_Male
+[OK] Stratified_EQI EQI0005_lag05
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpnxWBPS/model-aa74d9614d4.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+[OK] Stratified domains EQI0005_lag05
+[OK] Stratified_EQI EQI0005_lag10
+[OK] Stratified domains EQI0005_lag10
+[OK] Stratified_EQI EQI0005_lag15
+[OK] Stratified domains EQI0005_lag15
+[OK] Stratified_EQI EQI0610_lag05
+[OK] Stratified domains EQI0610_lag05
+[OK] Stratified_EQI EQI0610_lag10
+[OK] Stratified domains EQI0610_lag10
+
+===== Done: Male | C00_C97 =====
+Output: /public/home/acf4pijnzl/WDP/Result/Stratified_MRR

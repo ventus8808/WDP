@@ -1,0 +1,4 @@
+ICD_Code,Model,comparison,diff_mean,diff_lower,diff_upper,P_a_gt_b
+C00_C97_Indian,Stratified_EQI,lag5_vs_lag10,5.6816,2.2578,9.253,1.0000
+C00_C97_Indian,Stratified_EQI,lag10_vs_lag15,-7.6034,-11.0598,-4.055,p<0.0001
+C00_C97_Indian,Stratified_EQI,lag15_vs_lag5,1.9217,-2.7732,6.4585,0.8090

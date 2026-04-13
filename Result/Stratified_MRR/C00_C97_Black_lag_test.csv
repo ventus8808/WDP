@@ -1,0 +1,4 @@
+ICD_Code,Model,comparison,diff_mean,diff_lower,diff_upper,P_a_gt_b
+C00_C97_Black,Stratified_EQI,lag5_vs_lag10,-1.0693,-9.7118,7.5272,0.4065
+C00_C97_Black,Stratified_EQI,lag10_vs_lag15,-2.7391,-10.6205,5.5717,0.2557
+C00_C97_Black,Stratified_EQI,lag15_vs_lag5,3.8084,-4.2664,12.0777,0.8130

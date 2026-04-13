@@ -1,0 +1,492 @@
+Cores: 32 detected | 25 used
+
+===== Section: Typology | Disease: G20_G30_G12.2_F01_F03 =====
+  → Typology_Farming (n=2200)
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Farming_EQI EQI0005_lag05
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Farming domains EQI0005_lag05
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Farming_EQI EQI0005_lag10
+[OK] Typology_Farming domains EQI0005_lag10
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Farming_EQI EQI0005_lag15
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+[OK] Typology_Farming domains EQI0005_lag15
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Farming_EQI EQI0610_lag05
+[OK] Typology_Farming domains EQI0610_lag05
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Farming_EQI EQI0610_lag10
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+[OK] Typology_Farming domains EQI0610_lag10
+  → Typology_Mining (n=640)
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+[OK] Typology_Mining_EQI EQI0005_lag05
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+[OK] Typology_Mining domains EQI0005_lag05
+[OK] Typology_Mining_EQI EQI0005_lag10
+[OK] Typology_Mining domains EQI0005_lag10
+[OK] Typology_Mining_EQI EQI0005_lag15
+[OK] Typology_Mining domains EQI0005_lag15
+[OK] Typology_Mining_EQI EQI0610_lag05
+[OK] Typology_Mining domains EQI0610_lag05
+[OK] Typology_Mining_EQI EQI0610_lag10
+[OK] Typology_Mining domains EQI0610_lag10
+  → Typology_Manufacturing (n=4518)
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Manufacturing_EQI EQI0005_lag05
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Manufacturing domains EQI0005_lag05
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Manufacturing_EQI EQI0005_lag10
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Manufacturing domains EQI0005_lag10
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Manufacturing_EQI EQI0005_lag15
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+[OK] Typology_Manufacturing domains EQI0005_lag15
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Manufacturing_EQI EQI0610_lag05
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Manufacturing domains EQI0610_lag05
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Manufacturing_EQI EQI0610_lag10
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+[OK] Typology_Manufacturing domains EQI0610_lag10
+  → Typology_Government (n=1903)
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Government_EQI EQI0005_lag05
+[OK] Typology_Government domains EQI0005_lag05
+[OK] Typology_Government_EQI EQI0005_lag10
+[OK] Typology_Government domains EQI0005_lag10
+[OK] Typology_Government_EQI EQI0005_lag15
+[OK] Typology_Government domains EQI0005_lag15
+[OK] Typology_Government_EQI EQI0610_lag05
+[OK] Typology_Government domains EQI0610_lag05
+[OK] Typology_Government_EQI EQI0610_lag10
+[OK] Typology_Government domains EQI0610_lag10
+  → Typology_Services (n=1700)
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Services_EQI EQI0005_lag05
+[OK] Typology_Services domains EQI0005_lag05
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+[OK] Typology_Services_EQI EQI0005_lag10
+[OK] Typology_Services domains EQI0005_lag10
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+[OK] Typology_Services_EQI EQI0005_lag15
+[OK] Typology_Services domains EQI0005_lag15
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+[OK] Typology_Services_EQI EQI0610_lag05
+[OK] Typology_Services domains EQI0610_lag05
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+[OK] Typology_Services_EQI EQI0610_lag10
+[OK] Typology_Services domains EQI0610_lag10
+  → Typology_Nonspecialized (n=4736)
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized_EQI EQI0005_lag05
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized domains EQI0005_lag05
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized_EQI EQI0005_lag10
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized domains EQI0005_lag10
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized_EQI EQI0005_lag15
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized domains EQI0005_lag15
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized_EQI EQI0610_lag05
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized domains EQI0610_lag05
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 3 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 3 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized_EQI EQI0610_lag10
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 1 
+Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 2 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 2 
+Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 4 Exception: normal_cdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpT0jNP3/model-636f7c41b317.stan', line 30, column 6 to column 53)
+Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+Chain 4 
+[OK] Typology_Nonspecialized domains EQI0610_lag10
+
+===== Done: Typology | G20_G30_G12.2_F01_F03 =====
+Output: /public/home/acf4pijnzl/WDP/Result/Stratified_MRR

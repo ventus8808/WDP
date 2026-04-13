@@ -1,0 +1,5 @@
+[2026-04-12 23:06:29] [INFO] - Project root: /public/home/acf4pijnzl/WDP
+[2026-04-12 23:06:29] [INFO] - Task 5 → cancer=G20_G30_G12.2_F01_F03  section=Indian
+ [1] "EQI"          "EQI_Air"      "EQI_Water"    "EQI_Land"     "EQI_Built"   
+ [6] "EQI_Social"   "Smoking_Rate" "State_FIPS"   "AAMR_Lower"   "AAMR_Upper"  
+[11] "cens"         "RUCC"        
