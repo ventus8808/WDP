@@ -1,8 +1,0 @@
-Detected cores: 32 | Using: 25
-Cancer: C00_C97  |  Model group: Baseline_Full
-
-===== Cancer | Group: Baseline_Full =====
-Error in .checkTypos(e, names_x) : 
-  j (the 2nd argument inside [...]) is a single symbol but column name 'keep_cols' is not found. If you intended to select columns using a variable in calling scope, please try DT[, ..keep_cols]. The .. prefix conveys one-level-up similar to a file system path.
-Calls: build_design_sensitivity ... <Anonymous> -> .checkTypos -> stopf -> raise_condition -> signal
-Execution halted

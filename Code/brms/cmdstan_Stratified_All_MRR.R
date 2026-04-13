@@ -328,10 +328,13 @@ message("\n===== Section: ", sec, " | Disease: ", base_cancer, " =====")
 # ICD_Code = {base_cancer}_{stratum}   Model = Stratified_EQI / Stratified_EQI_Air …
 # ===========================================================================
 if (needs_strat) {
-  cancer_full <- paste0(base_cancer, "_", sec)
+  # Stratified data uses short prefix "NDD" for the combined NDD ICD code
+  strat_prefix_map <- c("G20_G30_G12.2_F01_F03" = "NDD")
+  strat_prefix <- if (base_cancer %in% names(strat_prefix_map)) strat_prefix_map[[base_cancer]] else base_cancer
+  cancer_full <- paste0(strat_prefix, "_", sec)
   if (!cancer_full %in% unique(dt_strat$Cancer_Type))
     stop(cancer_full, " not found in stratified data")
-  mrr_out <- file.path(out_dir, paste0(cancer_full, "_MRR.csv"))
+  mrr_out <- file.path(out_dir, paste0(base_cancer, "_", sec, "_MRR.csv"))
   message("  → ", cancer_full)
   dt_sub  <- dt_strat[Cancer_Type == cancer_full]
   run_strat_mrr(dt_sub, cancer_full, "Stratified", mrr_out)

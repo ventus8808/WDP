@@ -1,7 +1,7 @@
 #!/bin/bash
 # Slurm array launcher for cmdstan_Stratified_All_MRR.R
-# 20 tasks (limit): one per (disease × stratification section)
-#
+# 10 tasks: NDD only, one per stratification section
+# bash Code/brms/submit_cmdstan_Stratified_All_MRR.sh
 # Task list (index: disease section → output file):
 #  0: NDD   Male          → G20_G30_G12.2_F01_F03_Male_MRR.csv
 #  1: NDD   Female        → G20_G30_G12.2_F01_F03_Female_MRR.csv
@@ -13,16 +13,6 @@
 #  7: NDD   RUCC          → G20_G30_G12.2_F01_F03_RUCC_MRR.csv
 #  8: NDD   Koppen        → G20_G30_G12.2_F01_F03_Koppen_MRR.csv
 #  9: NDD   CensusRegion  → G20_G30_G12.2_F01_F03_CensusRegion_MRR.csv
-# 10: Cancer Male         → C00_C97_Male_MRR.csv
-# 11: Cancer Female       → C00_C97_Female_MRR.csv
-# 12: Cancer White        → C00_C97_White_MRR.csv
-# 13: Cancer Black        → C00_C97_Black_MRR.csv
-# 14: Cancer Asian        → C00_C97_Asian_MRR.csv
-# 15: Cancer Indian       → C00_C97_Indian_MRR.csv
-# 16: Cancer Typology     → C00_C97_Typology_MRR.csv
-# 17: Cancer RUCC         → C00_C97_RUCC_MRR.csv
-# 18: Cancer Koppen       → C00_C97_Koppen_MRR.csv
-# 19: Cancer CensusRegion → C00_C97_CensusRegion_MRR.csv
 
 #SBATCH --partition=kshctest
 #SBATCH --job-name=WDP_Strat_MRR
@@ -49,16 +39,6 @@ TASKS=(
   "G20_G30_G12.2_F01_F03:RUCC"
   "G20_G30_G12.2_F01_F03:Koppen"
   "G20_G30_G12.2_F01_F03:CensusRegion"
-  "C00_C97:Male"
-  "C00_C97:Female"
-  "C00_C97:White"
-  "C00_C97:Black"
-  "C00_C97:Asian"
-  "C00_C97:Indian"
-  "C00_C97:Typology"
-  "C00_C97:RUCC"
-  "C00_C97:Koppen"
-  "C00_C97:CensusRegion"
 )
 
 # --- Locate project root ---
