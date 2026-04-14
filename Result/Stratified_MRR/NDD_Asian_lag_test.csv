@@ -1,0 +1,4 @@
+ICD_Code,Model,comparison,diff_mean,diff_lower,diff_upper,P_a_gt_b
+NDD_Asian,Stratified_EQI,lag5_vs_lag10,-3.5028,-4.484,-2.5443,p<0.0001
+NDD_Asian,Stratified_EQI,lag10_vs_lag15,-3.1371000000000002,-4.4708,-1.8391,p<0.0001
+NDD_Asian,Stratified_EQI,lag15_vs_lag5,6.6399,5.5148,7.7464,1.0000

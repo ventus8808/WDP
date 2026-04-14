@@ -1,0 +1,4 @@
+ICD_Code,Model,comparison,diff_mean,diff_lower,diff_upper,P_a_gt_b
+NDD_Male,Stratified_EQI,lag5_vs_lag10,-2.6718,-6.1186,0.8902,0.0640
+NDD_Male,Stratified_EQI,lag10_vs_lag15,4.4735,0.9746,7.836,0.9942
+NDD_Male,Stratified_EQI,lag15_vs_lag5,-1.8017,-5.3428,1.6808,0.1542
