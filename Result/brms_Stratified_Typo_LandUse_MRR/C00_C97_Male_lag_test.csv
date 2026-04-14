@@ -1,4 +1,0 @@
-ICD_Code,Model,comparison,diff_mean,diff_lower,diff_upper,P_a_gt_b
-C00_C97_Male,Stratified_Male,lag5_vs_lag10,1.9943,-4.436,8.4877,0.7335
-C00_C97_Male,Stratified_Male,lag10_vs_lag15,6.5085,0.8522,12.3093,0.9868
-C00_C97_Male,Stratified_Male,lag15_vs_lag5,-8.5028,-14.5791,-2.347,0.0027

@@ -48,11 +48,6 @@ os.makedirs(output_dir, exist_ok=True)
 
 SKIP_CODES = {"F03"}
 
-# For these ICD codes at Lag=15, Q1 is not the reference (≠1.0),
-# so express each quintile as ratio relative to Q1.
-# LAG15_RATIO_CODES = {"G20_G30_G12.2_F01_F03", "G30_F01_F03"}
-LAG15_RATIO_CODES = {}
-
 NDD_ORDER = [
     "G20_G30_G12.2_F01_F03",
     "G30_F01_F03",
@@ -144,28 +139,6 @@ def parse_mrd_files(fnames_icd):
     return pd.concat(frames, ignore_index=True) if frames else None
 
 
-def apply_lag15_ratio(mrr: pd.DataFrame) -> pd.DataFrame:
-    """For LAG15_RATIO_CODES at Lag=15, divide all quintiles' MRR_mean/lower/upper by Q1_MRR_mean."""
-    mask = mrr["ICD_Code"].isin(LAG15_RATIO_CODES) & (mrr["Lag"] == 15)
-    if not mask.any():
-        return mrr
-
-    mrr = mrr.copy()
-    for (icd, eqi, aamr), grp in mrr[mask].groupby(
-        ["ICD_Code", "EQI_Period", "AAMR_Period"]
-    ):
-        q1 = grp[grp["Quintile"] == "Q1"]
-        if q1.empty:
-            continue
-        q1_mean = q1["MRR_mean"].iloc[0]
-
-        idx = grp.index
-        mrr.loc[idx, "MRR_mean"] = mrr.loc[idx, "MRR_mean"] / q1_mean
-        mrr.loc[idx, "MRR_lower"] = mrr.loc[idx, "MRR_lower"] / q1_mean
-        mrr.loc[idx, "MRR_upper"] = mrr.loc[idx, "MRR_upper"] / q1_mean
-    return mrr
-
-
 def round_numerics(df: pd.DataFrame) -> pd.DataFrame:
     num_cols = df.select_dtypes(include="number").columns
     df[num_cols] = df[num_cols].round(2)
@@ -178,7 +151,6 @@ def save_group(mrr_frames, mrd_file_pairs, disease_order, mrr_out, main_out, lab
         return
 
     mrr = pd.concat(mrr_frames, ignore_index=True)
-    mrr = apply_lag15_ratio(mrr)
     mrr = mrr[mrr["Quintile"] != "Q1"]
     mrr["Disease"] = mrr["ICD_Code"].map(lambda x: icd_mapping.get(x, x))
 
@@ -203,10 +175,11 @@ def save_group(mrr_frames, mrd_file_pairs, disease_order, mrr_out, main_out, lab
     mrd = parse_mrd_files(mrd_file_pairs)
     if mrd is not None:
         merged = mrr.merge(
-            mrd[["ICD_Code", "Lag", "Quintile", "MRD_mean", "MRD_lower", "MRD_upper"]],
-            on=["ICD_Code", "Lag", "Quintile"],
+            mrd[["ICD_Code", "EQI_Period", "AAMR_Period", "Lag", "Quintile", "MRD_mean", "MRD_lower", "MRD_upper"]],
+            on=["ICD_Code", "EQI_Period", "AAMR_Period", "Lag", "Quintile"],
             how="left",
         )
+        merged = merged.drop_duplicates()
         merged = sort_df(merged, disease_order)
         merged = round_numerics(merged)
         merged.to_csv(main_out, index=False)

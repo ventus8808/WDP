@@ -39,8 +39,8 @@ DISEASE_MAP_2 <- list(
 QUINTILES <- c("Q2", "Q3", "Q4", "Q5")
 LAGS <- c(5, 10, 15)
 LAG_LABELS <- c("5-year lag", "10-year lag", "15-year lag")
-LAG_COLORS <- c("#1D3557", "#2A9D8F", "#6D597A")
-
+# LAG_COLORS <- c("#1D3557", "#2A9D8F", "#3E6B6D")
+LAG_COLORS <- c("#1D3557", "#2A9D8F", "#5E548E")
 # ---------------------------------------------------------------------------
 # Build display table for one disease map
 # ---------------------------------------------------------------------------
