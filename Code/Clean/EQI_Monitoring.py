@@ -43,3 +43,17 @@ OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 out.to_csv(OUTPUT, index=False)
 print(f"\nDone: {len(out)} counties → {OUTPUT}")
 print(out.head())
+
+# Print mean site number by RUCC stratum
+eqi = pd.read_csv(
+    "Data/Original/EPA EQI/00_05_EQI.csv",
+    usecols=["stfips", "cat_rucc"],
+    dtype={"stfips": str, "cat_rucc": str},
+)
+eqi["COUNTY_FIPS"] = eqi["stfips"].str.zfill(5)
+merged = out.merge(eqi[["COUNTY_FIPS", "cat_rucc"]], on="COUNTY_FIPS", how="inner")
+print("\nMean site number by RUCC stratum:")
+for rucc in sorted(merged["cat_rucc"].dropna().unique()):
+    mean_val = merged.loc[merged["cat_rucc"] == rucc, "site_number_mean"].mean()
+    n = merged["cat_rucc"].eq(rucc).sum()
+    print(f"  RUCC {rucc}: {mean_val:.2f} (n={n} counties)")

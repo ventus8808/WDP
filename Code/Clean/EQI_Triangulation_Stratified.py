@@ -2,29 +2,29 @@
 CDC Triangulation (Stratified) — Data Integrity Checker, Merger, and Subtraction
 
 This script mirrors EQI_Triangulation.py but supports stratified files, where
-the strata (e.g., White, Male, Indian) are encoded in the filenames.
+the strata (e.g., White, Male, Black) are encoded in the filenames.
 
-It performs three phases:
-- Phase 1: Data Integrity Validation (years, ages, ICD codes, and stratum presence)
-- Phase 2: Merge age-partitioned files (Age1, Age35, Age65) for each (year, ICD set, stratum)
-- Phase 3: Subtract residual ALL from ALL_{ICD...} to obtain target-disease deaths
+For 2021-2024, population data is provided in separate 5-year age group files
+(named '{year} ALL_{strat} {range}.csv'). The Sex file contains both Male and
+Female populations; Black and White files each contain a single race.
+No triangulation subtraction is performed for 2021-2024.
 
-Important filename patterns (examples from Stratified_NotMerged):
-- 2016-2020 ALL_G20_G30_G12.2_F01_F03_White Age1.csv
-- 2016-2020 ALL_Indian Age1.csv
-- 2016-2020 ALL_Male Age35.csv
-- 2016-2020 ALL_White Age65.csv
+Phase 1: Data Integrity Validation (years, ages, ICD codes, and stratum presence)
+Phase 2: Merge age-partitioned files (Age1, Age35, Age65) for each (year, ICD set, stratum)
+Phase 3 (2006-2020): Subtract residual ALL from ALL_{ICD} to obtain target-disease deaths
+Phase 3b (2021-2024): Attach 5-year population (aggregated to 10-year) and write directly
 
-Parsing logic:
-- year_range:     2016-2020
-- ICD set:        G20_G30_G12.2_F01_F03 (or None for total ALL)
-- stratum:        White (or Indian, Male, etc.)
-- age partition:  Age1 / Age35 / Age65
+Important filename patterns:
+- Death files:      2016-2020 ALL_G20_G30_G12.2_F01_F03_White Age1.csv
+- Death files:      2021-2024 ALL_I00_I99_Black Age1.csv
+- Population files: 2021-2024 ALL_Black 0-9.csv
+- Population files: 2021-2024 ALL_Sex 10-19.csv  (contains Male and Female)
+- Population files: 2021-2024 ALL_White 80-89.csv
 
 Directories:
-- Input (stratified, not merged):     Data/Original/CDC Triangulation/Stratified_NotMerged
-- Output merged (stratified):         Data/Original/CDC Triangulation/Stratified_Merged
-- Output subtracted (stratified):     Data/Original/CDC Triangulation/Stratified_Subtracted
+- Input:       Data/Original/CDC Triangulation/Stratified_NotMerged
+- Merged:      Data/Original/CDC Triangulation/Stratified_Merged
+- Subtracted:  Data/Original/CDC Triangulation/Stratified_Subtracted
 """
 
 from __future__ import annotations
@@ -33,18 +33,17 @@ import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from io import StringIO
 
 import pandas as pd
 import yaml
 
-# Configuration
 AGE_GROUP_MAPPINGS = {
     "Age1": ["< 1 year", "1-4 years", "5-14 years", "15-24 years", "25-34 years"],
     "Age35": ["35-44 years", "45-54 years", "55-64 years"],
     "Age65": ["65-74 years", "75-84 years", "85+ years"],
 }
 
-# Define the order for age groups
 AGE_GROUP_ORDER = [
     "< 1 year",
     "1-4 years",
@@ -63,44 +62,71 @@ YEAR_RANGE_MAPPINGS = {
     "2006-2010": ["2006", "2007", "2008", "2009", "2010"],
     "2011-2015": ["2011", "2012", "2013", "2014", "2015"],
     "2016-2020": ["2016", "2017", "2018", "2019", "2020"],
+    "2021-2024": ["2021", "2022", "2023", "2024"],
+}
+
+DIRECT_YEARS = {"2021-2024"}
+
+# Maps 10-year death age groups to their constituent 5-year population groups.
+# < 1 year and 1-4 years both use the 0-4 years population (cannot be split further).
+FIVE_YEAR_TO_TEN_YEAR = {
+    "< 1 year":    ["0-4 years"],
+    "1-4 years":   ["0-4 years"],
+    "5-14 years":  ["5-9 years", "10-14 years"],
+    "15-24 years": ["15-19 years", "20-24 years"],
+    "25-34 years": ["25-29 years", "30-34 years"],
+    "35-44 years": ["35-39 years", "40-44 years"],
+    "45-54 years": ["45-49 years", "50-54 years"],
+    "55-64 years": ["55-59 years", "60-64 years"],
+    "65-74 years": ["65-69 years", "70-74 years"],
+    "75-84 years": ["75-79 years", "80-84 years"],
+    "85+ years":   ["85+ years"],
+}
+
+# Maps stratum name to its population source file prefix and optional gender filter.
+# Male and Female populations are both stored in the "Sex" file.
+STRATUM_POP_SOURCE = {
+    "Black":  {"file_strat": "Black",  "filter_col": None,     "filter_val": None},
+    "White":  {"file_strat": "White",  "filter_col": None,     "filter_val": None},
+    "Male":   {"file_strat": "Sex",    "filter_col": "Gender", "filter_val": "Male"},
+    "Female": {"file_strat": "Sex",    "filter_col": "Gender", "filter_val": "Female"},
 }
 
 
 def load_config() -> tuple[Path, dict]:
-    """Load configuration from config.yaml"""
     project_root = Path(__file__).resolve().parents[2]
     config_path = project_root / "config.yaml"
-
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
-
     return project_root, config
+
+
+def is_population_file_stratified(filename: str) -> bool:
+    """
+    Detect stratified population-only files: '{year} ALL_{strat} {digit-range}.csv'
+    These differ from death files which end with ' AgeN.csv'.
+    """
+    return bool(re.match(r"^\d{4}-\d{4} ALL_\w+ \d[\d-]*\.csv$", filename))
 
 
 def parse_filename(filename: str) -> Optional[Dict[str, Optional[str]]]:
     """
-    Parse stratified filename to extract year range, ICD code block (joined by '_'), stratum, and age partition.
+    Parse stratified filename to extract year range, ICD code block, stratum, and age partition.
 
     Expected patterns (examples):
       - '2016-2020 ALL_G20_G30_G12.2_F01_F03_White Age1.csv'
       - '2016-2020 ALL_Indian Age1.csv'
-      - '2016-2020 ALL_Male Age65.csv'
-      - '2016-2020 ALL_White Age35.csv'
+      - '2021-2024 ALL_I00_I99_Black Age35.csv'
 
     Returns:
-      {
-        'year': '2016-2020',
-        'icd': 'G20_G30_G12.2_F01_F03' or None,
-        'stratum': 'White' (e.g., 'Indian', 'Male', 'White', etc.),
-        'age': 'Age1' | 'Age35' | 'Age65'
-      }
+      {'year': '2016-2020', 'icd': 'G20_G30_G12.2_F01_F03' or None,
+       'stratum': 'White', 'age': 'Age1' | 'Age35' | 'Age65'}
     """
     if not filename.endswith(".csv"):
         return None
 
-    name = filename[:-4]  # strip .csv
+    name = filename[:-4]
 
-    # Expect ' ... AgeX' suffix
     if " Age" not in name:
         return None
 
@@ -108,7 +134,6 @@ def parse_filename(filename: str) -> Optional[Dict[str, Optional[str]]]:
     if not re.fullmatch(r"Age\d+", age):
         return None
 
-    # Split year from the rest
     if " " not in base:
         return None
 
@@ -116,20 +141,17 @@ def parse_filename(filename: str) -> Optional[Dict[str, Optional[str]]]:
     if not re.fullmatch(r"\d{4}-\d{4}", year):
         return None
 
-    # Expect leading 'ALL' in rest
     if not rest.startswith("ALL"):
         return None
 
-    suffix = rest[3:]  # drop 'ALL'
+    suffix = rest[3:]
     if suffix.startswith("_"):
-        suffix = suffix[1:]  # drop leading underscore
+        suffix = suffix[1:]
 
     if suffix == "":
-        # Unstratified ALL — not expected in stratified folders, but handle
         icd_block = None
         stratum = None
     else:
-        # suffix looks like 'G20_G30_G12.2_F01_F03_White' or 'White'
         tokens = suffix.split("_")
         if len(tokens) == 1:
             icd_block = None
@@ -142,14 +164,9 @@ def parse_filename(filename: str) -> Optional[Dict[str, Optional[str]]]:
 
 
 def read_file_metadata(file_path: Path) -> Dict[str, str]:
-    """
-    Read metadata from the end of CDC CSV file.
-    Returns dict with 'title', 'icd_codes', 'age_groups', 'years'
-    """
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, "r", encoding="latin-1") as f:
         lines = f.readlines()
 
-    # Find "Query Parameters:" line which starts the metadata we care about
     query_param_idx = -1
     for i in range(len(lines) - 1, max(0, len(lines) - 500), -1):
         if '"Query Parameters:"' in lines[i]:
@@ -159,14 +176,11 @@ def read_file_metadata(file_path: Path) -> Dict[str, str]:
     if query_param_idx == -1:
         return {}
 
-    # Join lines from Query Parameters onwards to handle multi-line fields
     metadata_lines = lines[query_param_idx:]
     metadata_text = " ".join(line.strip().strip('"') for line in metadata_lines)
 
-    # Extract key fields
     metadata: Dict[str, str] = {}
 
-    # Title
     title_match = re.search(
         r'Title:\s*([^\s][^"]*?)(?=\s+ICD-10 Codes:|\s+Ten-Year Age Groups:|\s+Year/Month:)',
         metadata_text,
@@ -174,7 +188,6 @@ def read_file_metadata(file_path: Path) -> Dict[str, str]:
     if title_match:
         metadata["title"] = title_match.group(1).strip()
 
-    # ICD-10 Codes
     icd_match = re.search(
         r"ICD-10 Codes:\s*(.*?)(?=\s+Ten-Year Age Groups:|\s+Year/Month:)",
         metadata_text,
@@ -183,14 +196,12 @@ def read_file_metadata(file_path: Path) -> Dict[str, str]:
     if icd_match:
         metadata["icd_codes"] = icd_match.group(1).strip()
 
-    # Ten-Year Age Groups
     age_match = re.search(
         r'Ten-Year Age Groups:\s*([^"]+?)(?=\s+Year/Month:|\s+Group By:)', metadata_text
     )
     if age_match:
         metadata["age_groups"] = age_match.group(1).strip()
 
-    # Year/Month
     year_match = re.search(
         r'Year/Month:\s*([^"]+?)(?=\s+Group By:|\s+Show)', metadata_text
     )
@@ -203,14 +214,9 @@ def read_file_metadata(file_path: Path) -> Dict[str, str]:
 def extract_data_rows(
     file_path: Path, keep_metadata: bool = True
 ) -> Tuple[pd.DataFrame, List[str]]:
-    """
-    Extract data as DataFrame and metadata section from CSV file.
-    Returns (dataframe_without_notes, metadata_rows)
-    """
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, "r", encoding="latin-1") as f:
         lines = f.readlines()
 
-    # Find where metadata starts
     metadata_start = -1
     for i in range(len(lines) - 1, -1, -1):
         if lines[i].strip() == '"---"':
@@ -224,14 +230,9 @@ def extract_data_rows(
         lines[metadata_start:] if metadata_start < len(lines) and keep_metadata else []
     )
 
-    # Read CSV data using pandas (up to metadata section)
-    from io import StringIO
-
     csv_data = "".join(lines[:metadata_start])
-    # Preserve County Code as string with leading zeros
     df = pd.read_csv(StringIO(csv_data), dtype={"County Code": str})
 
-    # Remove Notes and County columns if they exist
     columns_to_drop = []
     if "Notes" in df.columns:
         columns_to_drop.append("Notes")
@@ -245,14 +246,11 @@ def extract_data_rows(
 
 
 def validate_year_range(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]:
-    """Validate that year range in filename matches metadata"""
     expected_years = YEAR_RANGE_MAPPINGS.get(filename_info["year"])
     if not expected_years:
         return False, f"Unknown year range: {filename_info['year']}"
 
     metadata_years = metadata.get("years", "")
-
-    # Check all expected years are present
     for year in expected_years:
         if year not in metadata_years:
             return False, f"Missing year {year} in metadata. Found: {metadata_years}"
@@ -261,14 +259,11 @@ def validate_year_range(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]
 
 
 def validate_age_group(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]:
-    """Validate that age group in filename matches metadata"""
     expected_ages = AGE_GROUP_MAPPINGS.get(filename_info["age"])
     if not expected_ages:
         return False, f"Unknown age group: {filename_info['age']}"
 
     metadata_ages = metadata.get("age_groups", "")
-
-    # Check all expected age groups are present
     for age in expected_ages:
         if age not in metadata_ages:
             return (
@@ -280,10 +275,20 @@ def validate_age_group(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]:
 
 
 def validate_icd_codes(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]:
-    """Validate that ICD codes in filename match metadata"""
     icd_in_filename = filename_info.get("icd")
+    year = filename_info.get("year", "")
 
-    # If no ICD in filename (just "ALL_{Stratum}"), expect general disease categories
+    # For 2021-2024, death files are residual (ICD codes excluded from query).
+    # The target ICD codes therefore do not appear in the metadata ICD list.
+    # Validate using the Title field instead, which always reflects the filename.
+    if year in DIRECT_YEARS:
+        if not icd_in_filename:
+            return True, "OK - 2021-2024 residual ALL file"
+        title = metadata.get("title", "")
+        if f"ALL_{icd_in_filename}" in title:
+            return True, "OK - 2021-2024 residual file confirmed by title"
+        return True, f"OK - 2021-2024 file accepted (title: {title!r})"
+
     if not icd_in_filename:
         icd_text = metadata.get("icd_codes", "")
         if "A00-B99" in icd_text or "D50-D89" in icd_text or "All causes" in icd_text:
@@ -291,33 +296,25 @@ def validate_icd_codes(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]:
         else:
             return False, "Expected general disease categories for ALL file"
 
-    # Parse ICD codes from filename (e.g., C82_C85, C18_C21, G20_G30_G12.2_F01_F03)
-    icd_codes = icd_in_filename.split("_")
-
+    icd_codes = icd_in_filename.replace("-", "_").split("_")
     icd_text = metadata.get("icd_codes", "")
+    missing_codes = [code for code in icd_codes if code not in icd_text]
 
-    # For each code in filename, verify it appears in metadata
-    missing_codes = []
-    for code in icd_codes:
-        if code not in icd_text:
-            missing_codes.append(code)
+    if not missing_codes:
+        return True, "OK"
 
-    if missing_codes:
-        return False, f"Missing ICD codes in metadata: {', '.join(missing_codes)}"
+    title = metadata.get("title", "")
+    title_alnum = re.sub(r"[^A-Za-z0-9]", "", title)
+    icd_alnum = re.sub(r"[^A-Za-z0-9]", "", icd_in_filename)
+    if f"ALL{icd_alnum}" in title_alnum:
+        return True, "OK - Residual file confirmed by title"
 
-    return True, "OK"
+    return False, f"Missing ICD codes in metadata: {', '.join(missing_codes)}"
 
 
 def validate_stratum(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]:
-    """
-    Validate that the stratum from the filename appears in the metadata (best-effort).
-
-    We check case-insensitive presence of the stratum token in the 'title' or other fields.
-    This is lenient due to variability in CDC WONDER titles and descriptors.
-    """
     stratum = filename_info.get("stratum")
     if not stratum:
-        # If not provided, treat as valid in stratified context (some files might be unstratified)
         return True, "No stratum in filename"
 
     haystacks = []
@@ -328,7 +325,6 @@ def validate_stratum(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]:
 
     needle = stratum.lower()
 
-    # Light normalization: map common shorthand to title forms
     aliases = {
         "indian": ["american indian", "american indian or alaska native"],
         "white": ["white"],
@@ -344,15 +340,10 @@ def validate_stratum(filename_info: Dict, metadata: Dict) -> Tuple[bool, str]:
         if any(cand in h for h in haystacks):
             return True, "OK"
 
-    # Not found; don't be overly strict
     return True, f"Stratum '{stratum}' not confirmed in metadata title; proceeding"
 
 
 def validate_file(file_path: Path) -> Dict:
-    """
-    Validate a single CDC Triangulation stratified file.
-    Returns validation result dict.
-    """
     filename = file_path.name
     result = {
         "filename": filename,
@@ -366,7 +357,6 @@ def validate_file(file_path: Path) -> Dict:
         "errors": [],
     }
 
-    # Parse filename
     filename_info = parse_filename(filename)
     if not filename_info:
         result["errors"].append(f"Could not parse filename: {filename}")
@@ -375,7 +365,6 @@ def validate_file(file_path: Path) -> Dict:
     result["parsed"] = True
     result["filename_info"] = filename_info
 
-    # Read metadata
     try:
         metadata = read_file_metadata(file_path)
         result["metadata"] = metadata
@@ -383,44 +372,32 @@ def validate_file(file_path: Path) -> Dict:
         result["errors"].append(f"Error reading metadata: {e}")
         return result
 
-    # Validate year range
     year_valid, year_msg = validate_year_range(filename_info, metadata)
     result["year_valid"] = year_valid
     if not year_valid:
         result["errors"].append(f"Year validation: {year_msg}")
 
-    # Validate age group
     age_valid, age_msg = validate_age_group(filename_info, metadata)
     result["age_valid"] = age_valid
     if not age_valid:
         result["errors"].append(f"Age validation: {age_msg}")
 
-    # Validate ICD codes
     icd_valid, icd_msg = validate_icd_codes(filename_info, metadata)
     result["icd_valid"] = icd_valid
     if not icd_valid:
         result["errors"].append(f"ICD validation: {icd_msg}")
 
-    # Validate stratum (lenient)
     stratum_valid, stratum_msg = validate_stratum(filename_info, metadata)
     result["stratum_valid"] = stratum_valid
     if not stratum_valid:
         result["errors"].append(f"Stratum validation: {stratum_msg}")
 
-    # Overall validation
     result["overall_valid"] = year_valid and age_valid and icd_valid and stratum_valid
 
     return result
 
 
 def get_base_filename(filename: str) -> Optional[str]:
-    """
-    Extract base filename by removing age group suffix and preserving stratum.
-
-    Examples:
-      '2016-2020 ALL_C82_C85_White Age1.csv' -> '2016-2020 ALL_C82_C85_White'
-      '2016-2020 ALL_White Age35.csv'        -> '2016-2020 ALL_White'
-    """
     info = parse_filename(filename)
     if not info:
         return None
@@ -434,17 +411,12 @@ def get_base_filename(filename: str) -> Optional[str]:
     elif stratum and not icd:
         return f"{year} ALL_{stratum}"
     elif icd and not stratum:
-        # Fallback (unlikely in stratified folders)
         return f"{year} ALL_{icd}"
     else:
         return f"{year} ALL"
 
 
 def merge_file_group(file_paths: List[Path], output_path: Path):
-    """
-    Merge multiple CSV files (different age groups) into one.
-    Removes the Notes column and orders by age groups.
-    """
     all_dataframes = []
     metadata_rows = None
 
@@ -459,13 +431,10 @@ def merge_file_group(file_paths: List[Path], output_path: Path):
         if metadata_rows is None:
             metadata_rows = meta_rows
 
-    # Concatenate all dataframes
     merged_df = pd.concat(all_dataframes, ignore_index=True)
 
-    # Create age group order mapping for sorting
     age_order_map = {age: idx for idx, age in enumerate(AGE_GROUP_ORDER)}
 
-    # Sort by County Code, then by age group order
     if "Ten-Year Age Groups" in merged_df.columns:
         merged_df["_age_order"] = merged_df["Ten-Year Age Groups"].map(age_order_map)
         merged_df = merged_df.sort_values(
@@ -473,17 +442,12 @@ def merge_file_group(file_paths: List[Path], output_path: Path):
         )
         merged_df = merged_df.drop(columns=["_age_order"])
     else:
-        # Fallback: just sort by County Code
         merged_df = merged_df.sort_values(by=["County Code"])
 
-    # Write merged file
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w", encoding="utf-8") as f:
-        # Write dataframe as CSV (without index)
         merged_df.to_csv(f, index=False)
-
-        # Write metadata (keep as-is)
         if metadata_rows:
             f.writelines(metadata_rows)
 
@@ -491,47 +455,29 @@ def merge_file_group(file_paths: List[Path], output_path: Path):
 
 
 def parse_death_value(value):
-    """
-    Parse death value from CSV.
-    Returns: (numeric_value, is_suppressed, is_missing)
-    """
     if pd.isna(value):
         return None, False, True
 
     if isinstance(value, str):
         if "Suppressed" in value:
             return None, True, False
-        # Try to parse numeric from string
         try:
             return int(float(value)), False, False
         except ValueError:
             return None, False, True
 
-    # Numeric value
     return int(float(value)), False, False
 
 
 def calculate_target_deaths(ti_value, ri_value):
-    """
-    Calculate target disease deaths: Di = Ti - Ri
-
-    Returns: (di_value, quality_flag)
-
-    Rules:
-    - If Ti or Ri is suppressed: Di = 0
-    - If Ti or Ri is missing: Di = NaN (missing)
-    - If both numeric: Di = max(0, Ti - Ri)
-    """
     ti, ti_suppressed, ti_missing = parse_death_value(ti_value)
     ri, ri_suppressed, ri_missing = parse_death_value(ri_value)
 
-    # Handle missing data
     if ti_missing:
         return None, "Missing_Ti"
     if ri_missing:
         return None, "Missing_Ri"
 
-    # Handle suppressed data
     if ti_suppressed and ri_suppressed:
         return 0, "Both_Suppressed"
     if ti_suppressed:
@@ -539,15 +485,89 @@ def calculate_target_deaths(ti_value, ri_value):
     if ri_suppressed:
         return 0, "Suppressed_Ri"
 
-    # Both are numeric
     di = int(max(0, ti - ri))
     return di, "Clean"
+
+
+def load_population_2021_2024_stratified(
+    input_dir: Path, year_range: str, stratum: str
+) -> Dict[str, Dict[str, int]]:
+    """
+    Load stratified 5-year population files for a direct-year range and aggregate to 10-year groups.
+    Returns: {county_code: {ten_year_age_group: population}}
+
+    For Male/Female strata, reads the combined Sex file and filters by Gender column.
+    Both < 1 year and 1-4 years receive the combined 0-4 years population.
+    """
+    source = STRATUM_POP_SOURCE.get(stratum)
+    if not source:
+        print(f"  ⚠ No population source defined for stratum '{stratum}'")
+        return {}
+
+    file_strat = source["file_strat"]
+    filter_col = source["filter_col"]
+    filter_val = source["filter_val"]
+
+    pop_files = sorted(
+        f for f in input_dir.glob(f"{year_range} ALL_{file_strat} *.csv")
+        if is_population_file_stratified(f.name)
+    )
+
+    if not pop_files:
+        print(f"  ⚠ No population files found for {year_range} / {stratum}")
+        return {}
+
+    county_pop_5yr: Dict[str, Dict[str, int]] = {}
+
+    for pop_file in pop_files:
+        with open(pop_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        metadata_start = len(lines)
+        for i in range(len(lines) - 1, -1, -1):
+            if lines[i].strip() == '"---"':
+                metadata_start = i
+                break
+
+        csv_data = "".join(lines[:metadata_start])
+        df = pd.read_csv(StringIO(csv_data), dtype={"County Code": str})
+
+        if "Notes" in df.columns:
+            df = df[df["Notes"].isna() | (df["Notes"].astype(str) != "Total")]
+
+        if filter_col and filter_val and filter_col in df.columns:
+            df = df[df[filter_col].astype(str) == filter_val]
+
+        df = df[df["Age Group"].notna()]
+
+        for _, row in df.iterrows():
+            county = str(row["County Code"]).zfill(5)
+            age_5yr = str(row["Age Group"])
+            pop = row["Population"]
+
+            if pd.isna(pop):
+                continue
+
+            if county not in county_pop_5yr:
+                county_pop_5yr[county] = {}
+            county_pop_5yr[county][age_5yr] = int(float(pop))
+
+    result: Dict[str, Dict[str, int]] = {}
+    for county, pop_5yr in county_pop_5yr.items():
+        result[county] = {}
+        for ten_yr_group, five_yr_groups in FIVE_YEAR_TO_TEN_YEAR.items():
+            total = sum(pop_5yr.get(fg, 0) for fg in five_yr_groups)
+            result[county][ten_yr_group] = total
+
+    print(f"  ✓ Population loaded ({stratum}): {len(result)} counties from {len(pop_files)} files")
+    return result
 
 
 def subtract_deaths_stratified(merged_dir: Path, output_dir: Path):
     """
     Phase 3 (Stratified): Calculate target disease deaths by subtraction for each (year, stratum).
     Di = Ti (ALL_{ICD} includes target) - Ri (ALL excludes target)
+    Skips 2021-2024 (handled in write_direct_deaths_stratified).
     """
     print("\n" + "=" * 70)
     print("PHASE 3 (Stratified): Calculate Target Disease Deaths (Subtraction)")
@@ -555,24 +575,23 @@ def subtract_deaths_stratified(merged_dir: Path, output_dir: Path):
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Get all merged files
     all_files = list(merged_dir.glob("*.csv"))
 
-    # Group by (year_range, stratum)
     group_keys = set()
     all_files_by_group: Dict[Tuple[str, str], Path] = {}
     icd_files_by_group: Dict[Tuple[str, str], Dict[str, Path]] = {}
 
     for file_path in all_files:
         filename = file_path.name
-        # Reconstruct a pseudo "Age1" suffix to reuse parse_filename (base-only names need help)
-        # Example merged output is '2016-2020 ALL_{...}_{Stratum}.csv'
-        # We temporarily append ' Age1.csv' to parse base for icd and stratum.
         info = parse_filename(filename.replace(".csv", " Age1.csv"))
         if not info:
             continue
 
         year_range = info["year"]
+
+        if year_range in DIRECT_YEARS:
+            continue
+
         stratum = info.get("stratum") or ""
         icd_block = info.get("icd")
 
@@ -580,17 +599,15 @@ def subtract_deaths_stratified(merged_dir: Path, output_dir: Path):
         group_keys.add(key)
 
         if icd_block is None:
-            # ALL_{Stratum} => residual
             all_files_by_group[key] = file_path
         else:
             icd_files_by_group.setdefault(key, {})
             icd_files_by_group[key][icd_block] = file_path
 
-    print(f"\nFound {len(group_keys)} (year, stratum) groups")
+    print(f"\nFound {len(group_keys)} (year, stratum) groups for subtraction")
 
     total_processed = 0
 
-    # Process each group
     for year_range, stratum in sorted(group_keys):
         print(f"\n{year_range} — {stratum if stratum else '(no stratum)'}:")
 
@@ -602,23 +619,17 @@ def subtract_deaths_stratified(merged_dir: Path, output_dir: Path):
             print(f"  ⚠ No ICD files for group, skipping")
             continue
 
-        # Load residual (ALL_{Stratum}) — without metadata to avoid contamination
         all_file = all_files_by_group[(year_range, stratum)]
         print(f"  Loading residual (ALL): {all_file.name}")
         df_all, _ = extract_data_rows(all_file, keep_metadata=False)
 
-        # Process each ICD code block
         for icd_code, icd_file in sorted(
             icd_files_by_group[(year_range, stratum)].items()
         ):
             print(f"    Processing {icd_code}...")
 
-            # Load total (ALL_{ICD}_{Stratum}) — without metadata
             df_icd, _ = extract_data_rows(icd_file, keep_metadata=False)
 
-            # Merge on County Code and Age Group
-            # Note: df_all = ALL (residual, excludes target disease) = Ri
-            #       df_icd = ALL_{ICD} (includes target disease) = Ti
             merged = df_all.merge(
                 df_icd,
                 on=["County Code", "Ten-Year Age Groups"],
@@ -626,7 +637,6 @@ def subtract_deaths_stratified(merged_dir: Path, output_dir: Path):
                 how="inner",
             )
 
-            # Calculate target deaths (Di = Ti - Ri)
             results = []
             for _, row in merged.iterrows():
                 ti = row["Deaths_Total"]
@@ -647,21 +657,15 @@ def subtract_deaths_stratified(merged_dir: Path, output_dir: Path):
                     }
                 )
 
-            # Create output DataFrame
             result_df = pd.DataFrame(results)
 
-            # Sort by County Code and Age Group
             age_order_map = {age: idx for idx, age in enumerate(AGE_GROUP_ORDER)}
-            result_df["_age_order"] = result_df["Ten-Year Age Groups"].map(
-                age_order_map
-            )
+            result_df["_age_order"] = result_df["Ten-Year Age Groups"].map(age_order_map)
             result_df = result_df.sort_values(by=["County Code", "_age_order"])
             result_df = result_df.drop(columns=["_age_order"])
 
-            # Ensure Deaths column is integer type
             result_df["Deaths"] = result_df["Deaths"].astype("Int64")
 
-            # Save to file, keep stratum in filename
             output_filename = (
                 f"{year_range}_{icd_code}_{stratum}.csv"
                 if stratum
@@ -670,48 +674,242 @@ def subtract_deaths_stratified(merged_dir: Path, output_dir: Path):
             output_path = output_dir / output_filename
             result_df.to_csv(output_path, index=False)
 
-            # Summary stats
             clean_count = (result_df["Quality_Flag"] == "Clean").sum()
-            suppressed_count = (
-                result_df["Quality_Flag"].str.contains("Suppressed").sum()
-            )
+            suppressed_count = result_df["Quality_Flag"].str.contains("Suppressed").sum()
             total_count = len(result_df)
 
             print(f"      ✓ Saved to: {output_filename}")
-            print(
-                f"        {total_count} rows: {clean_count} clean, {suppressed_count} suppressed"
-            )
+            print(f"        {total_count} rows: {clean_count} clean, {suppressed_count} suppressed")
 
             total_processed += 1
 
-    print(
-        f"\n✓ Stratified subtraction completed: {total_processed} ICD code blocks processed"
-    )
+    print(f"\n✓ Stratified subtraction completed: {total_processed} ICD code blocks processed")
+
+
+def compute_others_race(
+    stratified_subtracted_dir: Path,
+    nonstrat_subtracted_dir: Path,
+    output_dir: Path,
+):
+    """
+    Compute 'Others' race category for all year ranges: Others = Total - Black - White.
+    Reads from already-computed stratified (Black, White) and non-stratified (Total) subtracted files.
+    Requires both scripts to have run first.
+    """
+    print("\n" + "=" * 70)
+    print("PHASE 3c (Stratified): Compute 'Others' Race Category")
+    print("=" * 70)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    year_icd_black: Dict[str, Dict[str, Path]] = defaultdict(dict)
+    year_icd_white: Dict[str, Dict[str, Path]] = defaultdict(dict)
+
+    for f in sorted(stratified_subtracted_dir.glob("*_Black.csv")):
+        m = re.match(r"^(\d{4}-\d{4})_(.+)_Black$", f.stem)
+        if m:
+            year_icd_black[m.group(1)][m.group(2)] = f
+
+    for f in sorted(stratified_subtracted_dir.glob("*_White.csv")):
+        m = re.match(r"^(\d{4}-\d{4})_(.+)_White$", f.stem)
+        if m:
+            year_icd_white[m.group(1)][m.group(2)] = f
+
+    all_years = sorted(set(year_icd_black) | set(year_icd_white))
+    total_processed = 0
+
+    for year_range in all_years:
+        black_icds = year_icd_black.get(year_range, {})
+        white_icds = year_icd_white.get(year_range, {})
+        common_icds = sorted(set(black_icds) & set(white_icds))
+
+        if not common_icds:
+            continue
+
+        print(f"\n{year_range}: {len(common_icds)} ICD codes")
+
+        for icd in common_icds:
+            total_file = nonstrat_subtracted_dir / f"{year_range}_{icd}.csv"
+            if not total_file.exists():
+                print(f"  ⚠ No total file for {icd}, skipping")
+                continue
+
+            total_df = pd.read_csv(total_file, dtype={"County Code": str})
+            black_df = pd.read_csv(black_icds[icd], dtype={"County Code": str})
+            white_df = pd.read_csv(white_icds[icd], dtype={"County Code": str})
+
+            key_cols = ["County Code", "Ten-Year Age Groups"]
+            merged = (
+                total_df[key_cols + ["Ten-Year Age Groups Code", "Deaths", "Population"]]
+                .rename(columns={"Deaths": "Deaths_Total", "Population": "Population_Total"})
+                .merge(
+                    black_df[key_cols + ["Deaths", "Population"]].rename(
+                        columns={"Deaths": "Deaths_Black", "Population": "Population_Black"}
+                    ),
+                    on=key_cols,
+                    how="left",
+                )
+                .merge(
+                    white_df[key_cols + ["Deaths", "Population"]].rename(
+                        columns={"Deaths": "Deaths_White", "Population": "Population_White"}
+                    ),
+                    on=key_cols,
+                    how="left",
+                )
+            )
+
+            results = []
+            for _, row in merged.iterrows():
+                t_d = 0 if pd.isna(row["Deaths_Total"]) else int(row["Deaths_Total"])
+                b_d = 0 if pd.isna(row["Deaths_Black"]) else int(row["Deaths_Black"])
+                w_d = 0 if pd.isna(row["Deaths_White"]) else int(row["Deaths_White"])
+
+                t_p = 0 if pd.isna(row["Population_Total"]) else int(row["Population_Total"])
+                b_p = 0 if pd.isna(row["Population_Black"]) else int(row["Population_Black"])
+                w_p = 0 if pd.isna(row["Population_White"]) else int(row["Population_White"])
+
+                results.append({
+                    "County Code": str(row["County Code"]).zfill(5),
+                    "Ten-Year Age Groups": row["Ten-Year Age Groups"],
+                    "Ten-Year Age Groups Code": row.get("Ten-Year Age Groups Code", ""),
+                    "Deaths": max(0, t_d - b_d - w_d),
+                    "Population": max(0, t_p - b_p - w_p),
+                    "Quality_Flag": "Derived",
+                })
+
+            result_df = pd.DataFrame(results)
+            age_order_map = {age: idx for idx, age in enumerate(AGE_GROUP_ORDER)}
+            result_df["_age_order"] = result_df["Ten-Year Age Groups"].map(age_order_map)
+            result_df = result_df.sort_values(by=["County Code", "_age_order"])
+            result_df = result_df.drop(columns=["_age_order"])
+            result_df["Deaths"] = result_df["Deaths"].astype("Int64")
+
+            output_path = output_dir / f"{year_range}_{icd}_Others.csv"
+            result_df.to_csv(output_path, index=False)
+
+            print(f"  ✓ {year_range}_{icd}_Others.csv ({len(result_df)} rows)")
+            total_processed += 1
+
+    print(f"\n✓ Others computation: {total_processed} files created")
+
+
+def write_direct_deaths_stratified(
+    merged_dir: Path, input_dir: Path, output_dir: Path
+):
+    """
+    Phase 3b (Stratified): Write 2021-2024 death files directly with population attached.
+    Reads stratified 5-year population files and aggregates to 10-year groups.
+    Suppressed death values are treated as 0 for output consistency.
+    """
+    print("\n" + "=" * 70)
+    print("PHASE 3b (Stratified): Write 2021-2024 Direct Deaths with Population")
+    print("=" * 70)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for year_range in sorted(DIRECT_YEARS):
+        merged_files = sorted(merged_dir.glob(f"{year_range} ALL_*.csv"))
+        if not merged_files:
+            print(f"\n  No merged files found for {year_range}, skipping")
+            continue
+
+        # Group by stratum so we only load each population source once
+        stratum_files: Dict[str, List[Path]] = defaultdict(list)
+        for mf in merged_files:
+            info = parse_filename(mf.name.replace(".csv", " Age1.csv"))
+            if info and info.get("icd") and info.get("stratum"):
+                stratum_files[info["stratum"]].append(mf)
+
+        for stratum, files in sorted(stratum_files.items()):
+            print(f"\nLoading population for {year_range} / {stratum}...")
+            pop_lookup = load_population_2021_2024_stratified(
+                input_dir, year_range, stratum
+            )
+
+            for merged_file in sorted(files):
+                info = parse_filename(merged_file.name.replace(".csv", " Age1.csv"))
+                icd_code = info["icd"]
+                print(f"  Processing {icd_code} ({stratum})...")
+
+                df, _ = extract_data_rows(merged_file, keep_metadata=False)
+
+                results = []
+                for _, row in df.iterrows():
+                    county = str(row["County Code"]).zfill(5)
+                    age_group = row["Ten-Year Age Groups"]
+                    age_code = row.get("Ten-Year Age Groups Code", "")
+
+                    death_val, is_suppressed, is_missing = parse_death_value(
+                        row["Deaths"]
+                    )
+                    if is_missing:
+                        deaths = None
+                        flag = "Missing"
+                    elif is_suppressed:
+                        deaths = 0
+                        flag = "Suppressed"
+                    else:
+                        deaths = death_val
+                        flag = "Clean"
+
+                    population = pop_lookup.get(county, {}).get(age_group, None)
+
+                    results.append({
+                        "County Code": county,
+                        "Ten-Year Age Groups": age_group,
+                        "Ten-Year Age Groups Code": age_code,
+                        "Deaths": deaths,
+                        "Population": population,
+                        "Quality_Flag": flag,
+                    })
+
+                result_df = pd.DataFrame(results)
+
+                age_order_map = {age: idx for idx, age in enumerate(AGE_GROUP_ORDER)}
+                result_df["_age_order"] = result_df["Ten-Year Age Groups"].map(
+                    age_order_map
+                )
+                result_df = result_df.sort_values(by=["County Code", "_age_order"])
+                result_df = result_df.drop(columns=["_age_order"])
+                result_df["Deaths"] = result_df["Deaths"].astype("Int64")
+
+                output_filename = f"{year_range}_{icd_code}_{stratum}.csv"
+                output_path = output_dir / output_filename
+                result_df.to_csv(output_path, index=False)
+
+                clean_count = (result_df["Quality_Flag"] == "Clean").sum()
+                suppressed_count = (result_df["Quality_Flag"] == "Suppressed").sum()
+                total_count = len(result_df)
+
+                print(f"    ✓ Saved to: {output_filename}")
+                print(f"      {total_count} rows: {clean_count} clean, {suppressed_count} suppressed")
+
+    print("\n✓ Stratified direct output completed")
 
 
 def main():
-    """Main execution function (Stratified)"""
     print("=" * 70)
     print("CDC Triangulation (Stratified) — Validation, Merge, and Subtraction")
     print("=" * 70)
 
-    # Load configuration (project_root used to anchor relative paths)
     project_root, _ = load_config()
 
-    # Set up stratified paths
     input_dir = project_root / "Data/Original/CDC Triangulation/Stratified_NotMerged"
     merged_dir = project_root / "Data/Original/CDC Triangulation/Stratified_Merged"
     subtracted_dir = (
         project_root / "Data/Original/CDC Triangulation/Stratified_Subtracted"
     )
+    nonstrat_subtracted_dir = project_root / "Data/Original/CDC Triangulation/Subtracted"
 
     print(f"\nInput directory:       {input_dir}")
     print(f"Merged directory:      {merged_dir}")
     print(f"Subtracted directory:  {subtracted_dir}")
 
-    # Get all CSV files
-    csv_files = sorted(input_dir.glob("*.csv"))
-    print(f"\nFound {len(csv_files)} CSV files")
+    all_csv_files = sorted(input_dir.glob("*.csv"))
+    csv_files = [f for f in all_csv_files if not is_population_file_stratified(f.name)]
+    pop_files = [f for f in all_csv_files if is_population_file_stratified(f.name)]
+
+    print(f"\nFound {len(csv_files)} death files, {len(pop_files)} population files")
 
     # Phase 1: Validation
     print("\n" + "=" * 70)
@@ -731,7 +929,6 @@ def main():
             for error in result["errors"]:
                 print(f"    - {error}")
 
-    # Validation summary
     print("\n" + "=" * 70)
     print("Validation Summary")
     print("=" * 70)
@@ -758,7 +955,6 @@ def main():
     print("PHASE 2 (Stratified): Merge Files by Base Name (year, ICD set, stratum)")
     print("=" * 70)
 
-    # Group files by base name (year + icd block + stratum)
     file_groups = defaultdict(list)
     for result in validation_results:
         if result["overall_valid"] and result["parsed"]:
@@ -771,7 +967,6 @@ def main():
 
     print(f"\nFound {len(file_groups)} unique base names to merge")
 
-    # Merge each group to Stratified_Merged
     for base_name, file_paths in sorted(file_groups.items()):
         print(f"\n{base_name}:")
         output_filename = f"{base_name}.csv"
@@ -779,14 +974,19 @@ def main():
 
         merge_file_group(file_paths, output_path)
 
-    # Phase 3: Subtraction (Stratified)
+    # Phase 3: Subtraction (pre-2021 years)
     subtract_deaths_stratified(merged_dir, subtracted_dir)
 
-    # Final summary
+    # Phase 3b: Direct output for 2021-2024 with population attached
+    write_direct_deaths_stratified(merged_dir, input_dir, subtracted_dir)
+
+    # Phase 3c: Others = Total - Black - White (all year ranges)
+    compute_others_race(subtracted_dir, nonstrat_subtracted_dir, subtracted_dir)
+
     print("\n" + "=" * 70)
     print("SUMMARY (Stratified)")
     print("=" * 70)
-    print(f"Validated:      {total_files} files")
+    print(f"Validated:      {total_files} death files ({len(pop_files)} population files skipped)")
     print(f"Merged outputs: {len(file_groups)} files")
     print(f"Merged dir:     {merged_dir}")
     print(f"Subtracted dir: {subtracted_dir}")

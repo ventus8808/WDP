@@ -1,0 +1,385 @@
+Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata,Total_Deaths,Total_Population,AAMR,AAMR_SE,AAMR_Lower,AAMR_Upper,AAMRSE
+2006-2010,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Dry,269032,169761951,157.2789,0.3044,156.6852,157.8744,157.28 ± 0.30
+2006-2010,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Temperate,1790493,962061770,178.3828,0.1341,178.1216,178.6443,178.38 ± 0.13
+2006-2010,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Continental,751259,380838258,178.3841,0.2072,177.9809,178.7879,178.38 ± 0.21
+2006-2010,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,National,2810784,1512661979,176.1299,0.1056,175.9241,176.336,176.13 ± 0.11
+2006-2010,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Dry,25847,169761951,15.1269,0.0944,14.9431,15.3125,15.13 ± 0.09
+2006-2010,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Temperate,167536,962061770,16.7043,0.041,16.6244,16.7845,16.70 ± 0.04
+2006-2010,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Continental,70262,380838258,16.5787,0.063,16.4563,16.7018,16.58 ± 0.06
+2006-2010,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,National,263645,1512661979,16.5107,0.0323,16.4478,16.5739,16.51 ± 0.03
+2006-2010,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Dry,10101,169761951,5.8069,0.058,5.6942,5.9212,5.81 ± 0.06
+2006-2010,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Temperate,59818,962061770,5.8268,0.024,5.7802,5.8737,5.83 ± 0.02
+2006-2010,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Continental,20900,380838258,4.9075,0.0342,4.8411,4.9744,4.91 ± 0.03
+2006-2010,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,National,90819,1512661979,5.5849,0.0187,5.5486,5.6213,5.58 ± 0.02
+2006-2010,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Dry,17403,169761951,10.1385,0.0771,9.9884,10.2903,10.14 ± 0.08
+2006-2010,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Temperate,109568,962061770,10.9002,0.0331,10.8357,10.9649,10.90 ± 0.03
+2006-2010,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Continental,47267,380838258,11.1806,0.0518,11.0801,11.2819,11.18 ± 0.05
+2006-2010,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,National,174238,1512661979,10.8897,0.0262,10.8386,10.9409,10.89 ± 0.03
+2006-2010,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Dry,67954,169761951,39.7116,0.1529,39.4136,40.0113,39.71 ± 0.15
+2006-2010,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Temperate,511138,962061770,50.8666,0.0716,50.7272,51.0062,50.87 ± 0.07
+2006-2010,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Continental,208144,380838258,49.7216,0.1096,49.5083,49.9357,49.72 ± 0.11
+2006-2010,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,National,787236,1512661979,49.3533,0.0559,49.2444,49.4625,49.35 ± 0.06
+2006-2010,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Dry,19680,169761951,11.4188,0.0818,11.2598,11.5795,11.42 ± 0.08
+2006-2010,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Temperate,130850,962061770,12.9097,0.0359,12.8399,12.9799,12.91 ± 0.04
+2006-2010,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Continental,53752,380838258,12.6722,0.0551,12.5653,12.7798,12.67 ± 0.06
+2006-2010,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,National,204282,1512661979,12.6924,0.0283,12.6375,12.7476,12.69 ± 0.03
+2006-2010,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Dry,7074,169761951,4.1051,0.049,4.01,4.2019,4.11 ± 0.05
+2006-2010,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Temperate,45666,962061770,4.5227,0.0213,4.4813,4.5643,4.52 ± 0.02
+2006-2010,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Continental,19709,380838258,4.6604,0.0334,4.5956,4.7259,4.66 ± 0.03
+2006-2010,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,National,72449,1512661979,4.513,0.0169,4.4802,4.5459,4.51 ± 0.02
+2006-2010,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Dry,15089,169761951,9.0014,0.0734,8.8583,9.1462,9.00 ± 0.07
+2006-2010,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Temperate,88676,962061770,9.0467,0.0305,8.9872,9.1064,9.05 ± 0.03
+2006-2010,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Continental,37951,380838258,8.9374,0.0461,8.8477,9.0278,8.94 ± 0.05
+2006-2010,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,National,141716,1512661979,9.0137,0.024,8.9668,9.0608,9.01 ± 0.02
+2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Dry,6446,169761951,3.7388,0.0468,3.6481,3.8313,3.74 ± 0.05
+2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Temperate,39973,962061770,3.9552,0.0199,3.9165,3.9941,3.96 ± 0.02
+2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Continental,17328,380838258,4.0953,0.0313,4.0345,4.1567,4.10 ± 0.03
+2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,National,63747,1512661979,3.9682,0.0158,3.9375,3.9992,3.97 ± 0.02
+2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Dry,10173,169761951,6.0087,0.0598,5.8925,6.1266,6.01 ± 0.06
+2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Temperate,63148,962061770,6.3727,0.0255,6.3231,6.4226,6.37 ± 0.03
+2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Continental,28302,380838258,6.7398,0.0403,6.6615,6.8188,6.74 ± 0.04
+2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,National,101623,1512661979,6.4346,0.0203,6.3951,6.4743,6.43 ± 0.02
+2006-2010,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Dry,11095,169761951,6.5643,0.0625,6.4427,6.6876,6.56 ± 0.06
+2006-2010,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Temperate,68529,962061770,6.9429,0.0267,6.891,6.9951,6.94 ± 0.03
+2006-2010,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Continental,30521,380838258,7.3275,0.0422,7.2455,7.4101,7.33 ± 0.04
+2006-2010,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,National,110145,1512661979,7.0062,0.0212,6.9648,7.0477,7.01 ± 0.02
+2006-2010,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Dry,4357,169761951,2.6127,0.0396,2.5357,2.6914,2.61 ± 0.04
+2006-2010,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Temperate,29809,962061770,3.0361,0.0176,3.0017,3.0707,3.04 ± 0.02
+2006-2010,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Continental,11795,380838258,2.6569,0.0246,2.6092,2.7053,2.66 ± 0.02
+2006-2010,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,National,45961,1512661979,2.8859,0.0135,2.8595,2.9124,2.89 ± 0.01
+2006-2010,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Dry,36729,169761951,21.9964,0.1149,21.772,22.2225,22.00 ± 0.11
+2006-2010,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Temperate,242368,962061770,24.6341,0.0501,24.5361,24.7323,24.63 ± 0.05
+2006-2010,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Continental,122365,380838258,27.2945,0.0784,27.1418,27.4479,27.29 ± 0.08
+2006-2010,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,National,401462,1512661979,25.1091,0.0397,25.0315,25.1869,25.11 ± 0.04
+2006-2010,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Dry,385,169761951,0.2203,0.0113,0.1988,0.2434,0.22 ± 0.01
+2006-2010,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Temperate,2603,962061770,0.2536,0.005,0.244,0.2636,0.25 ± 0.01
+2006-2010,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Continental,1404,380838258,0.3365,0.0091,0.3191,0.3546,0.34 ± 0.01
+2006-2010,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,National,4392,1512661979,0.2714,0.0041,0.2634,0.2796,0.27 ± 0.00
+2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Dry,2998,169761951,1.7404,0.0319,1.6787,1.8039,1.74 ± 0.03
+2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Temperate,18767,962061770,1.8595,0.0137,1.833,1.8863,1.86 ± 0.01
+2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Continental,9318,380838258,2.2352,0.0233,2.1901,2.2811,2.24 ± 0.02
+2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,National,31083,1512661979,1.9453,0.0111,1.9237,1.9671,1.95 ± 0.01
+2006-2010,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Dry,11214,169761951,6.7891,0.0642,6.664,6.916,6.79 ± 0.06
+2006-2010,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Temperate,61442,962061770,6.3879,0.0258,6.3375,6.4387,6.39 ± 0.03
+2006-2010,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Continental,28918,380838258,6.8107,0.0403,6.7325,6.8897,6.81 ± 0.04
+2006-2010,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,National,101574,1512661979,6.5467,0.0206,6.5065,6.5871,6.55 ± 0.02
+2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Dry,96198,169761951,57.6865,0.1861,57.3226,58.0522,57.69 ± 0.19
+2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Temperate,599377,962061770,61.1291,0.0791,60.9745,61.2841,61.13 ± 0.08
+2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Continental,275363,380838258,62.166,0.1191,61.934,62.3986,62.17 ± 0.12
+2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,National,970938,1512661979,61.059,0.0621,60.9376,61.1805,61.06 ± 0.06
+2006-2010,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Dry,40900,169761951,24.5479,0.1215,24.3106,24.787,24.55 ± 0.12
+2006-2010,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Temperate,246991,962061770,25.2115,0.0508,25.1122,25.3112,25.21 ± 0.05
+2006-2010,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Continental,102967,380838258,23.1686,0.0726,23.0273,23.3106,23.17 ± 0.07
+2006-2010,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,National,390858,1512661979,24.5719,0.0394,24.495,24.6491,24.57 ± 0.04
+2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Dry,81986,169761951,49.157,0.1718,48.8211,49.4946,49.16 ± 0.17
+2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Temperate,519168,962061770,52.8817,0.0735,52.7379,53.0257,52.88 ± 0.07
+2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Continental,237127,380838258,53.1201,0.1096,52.9065,53.3343,53.12 ± 0.11
+2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,National,838281,1512661979,52.5669,0.0575,52.4544,52.6796,52.57 ± 0.06
+2006-2010,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Dry,386034,169761950,228.3085,0.3684,227.5889,229.0299,228.31 ± 0.37
+2006-2010,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Temperate,2554664,962061770,257.0976,0.1615,256.7824,257.413,257.10 ± 0.16
+2006-2010,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Continental,1048242,380838258,242.0874,0.238,241.6242,242.5513,242.09 ± 0.24
+2006-2010,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,National,3988940,1512661978,250.0934,0.1257,249.8481,250.339,250.09 ± 0.13
+2006-2010,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Dry,386034,169761950,228.3085,0.3684,227.5889,229.0299,228.31 ± 0.37
+2006-2010,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Temperate,2554664,962061770,257.0976,0.1615,256.7824,257.413,257.10 ± 0.16
+2006-2010,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Continental,1048242,380838258,242.0874,0.238,241.6242,242.5513,242.09 ± 0.24
+2006-2010,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,National,3988940,1512661978,250.0934,0.1257,249.8481,250.339,250.09 ± 0.13
+2006-2010,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Dry,30636,169761945,17.9934,0.1031,17.7924,18.196,17.99 ± 0.10
+2006-2010,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Temperate,196140,962061770,19.5908,0.0444,19.5042,19.6777,19.59 ± 0.04
+2006-2010,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Continental,70669,380838258,16.2284,0.0615,16.109,16.3485,16.23 ± 0.06
+2006-2010,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,National,297445,1512661973,18.526,0.0341,18.4595,18.5927,18.53 ± 0.03
+2006-2010,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Dry,196460,169761945,115.9506,0.2623,115.4384,116.4645,115.95 ± 0.26
+2006-2010,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Temperate,1277879,962061770,128.2522,0.1139,128.03,128.4748,128.25 ± 0.11
+2006-2010,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Continental,516634,380838258,119.4277,0.1672,119.1023,119.7538,119.43 ± 0.17
+2006-2010,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,National,1990973,1512661973,124.5701,0.0887,124.3971,124.7433,124.57 ± 0.09
+2006-2010,I50,I50,HF,Köppen-Geiger Climate Zone,Dry,23293,169761945,13.8805,0.0911,13.7028,14.0599,13.88 ± 0.09
+2006-2010,I50,I50,HF,Köppen-Geiger Climate Zone,Temperate,180318,962061770,18.2433,0.0431,18.1592,18.3277,18.24 ± 0.04
+2006-2010,I50,I50,HF,Köppen-Geiger Climate Zone,Continental,82824,380838258,18.7198,0.0654,18.5925,18.8477,18.72 ± 0.07
+2006-2010,I50,I50,HF,Köppen-Geiger Climate Zone,National,286435,1512661973,17.9373,0.0336,17.8716,18.0031,17.94 ± 0.03
+2006-2010,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Dry,64047,169761945,38.0717,0.1508,37.7774,38.3677,38.07 ± 0.15
+2006-2010,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Temperate,424126,962061770,42.9732,0.0662,42.8439,43.1027,42.97 ± 0.07
+2006-2010,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Continental,173154,380838258,40.0112,0.0968,39.8229,40.2001,40.01 ± 0.10
+2006-2010,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,National,661327,1512661973,41.6849,0.0514,41.5845,41.7855,41.68 ± 0.05
+2006-2010,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Dry,4488,169761945,2.6522,0.0399,2.5751,2.7309,2.65 ± 0.04
+2006-2010,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Temperate,19007,962061770,1.9158,0.014,1.8887,1.9432,1.92 ± 0.01
+2006-2010,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Continental,8096,380838258,2.0604,0.0232,2.0158,2.1058,2.06 ± 0.02
+2006-2010,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,National,31591,1512661973,2.0312,0.0115,2.0089,2.0537,2.03 ± 0.01
+2006-2010,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Dry,22984,169761945,13.5645,0.09,13.3897,13.741,13.56 ± 0.09
+2006-2010,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Temperate,110892,962061770,11.2664,0.0341,11.2002,11.333,11.27 ± 0.03
+2006-2010,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Continental,41855,380838258,10.7372,0.0531,10.6346,10.8406,10.74 ± 0.05
+2006-2010,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,National,175731,1512661973,11.3759,0.0273,11.3228,11.4293,11.38 ± 0.03
+2006-2010,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Dry,18465,169761945,10.894,0.0806,10.7374,11.0523,10.89 ± 0.08
+2006-2010,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Temperate,91629,962061770,9.3247,0.031,9.2644,9.3853,9.32 ± 0.03
+2006-2010,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Continental,33689,380838258,8.6588,0.0477,8.5666,8.7518,8.66 ± 0.05
+2006-2010,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,National,143783,1512661973,9.3217,0.0248,9.2735,9.37,9.32 ± 0.02
+2006-2010,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Dry,31,169761945,0.0183,0.0033,0.0125,0.026,0.02 ± 0.00
+2006-2010,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Temperate,256,962061770,0.0259,0.0016,0.0228,0.0293,0.03 ± 0.00
+2006-2010,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Continental,70,380838258,0.018,0.0022,0.014,0.0227,0.02 ± 0.00
+2006-2010,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,National,357,1512661973,0.0231,0.0012,0.0207,0.0256,0.02 ± 0.00
+2011-2015,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Dry,288221,181302973,145.8699,0.2741,145.3379,146.4035,145.87 ± 0.27
+2011-2015,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Temperate,1860802,1007091410,164.7184,0.1222,164.4818,164.9552,164.72 ± 0.12
+2011-2015,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Continental,763760,386837266,166.3461,0.1931,165.9733,166.7196,166.35 ± 0.19
+2011-2015,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,National,2912783,1575231649,163.0716,0.0967,162.8844,163.259,163.07 ± 0.10
+2011-2015,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Dry,26993,181302973,13.6868,0.0841,13.524,13.8511,13.69 ± 0.08
+2011-2015,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Temperate,166153,1007091410,14.7347,0.0366,14.6639,14.8057,14.73 ± 0.04
+2011-2015,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Continental,67191,386837266,14.6252,0.0573,14.5149,14.7362,14.63 ± 0.06
+2011-2015,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,National,260337,1575231649,14.5964,0.029,14.5403,14.6525,14.60 ± 0.03
+2011-2015,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Dry,13401,181302973,6.6273,0.0578,6.5156,6.7405,6.63 ± 0.06
+2011-2015,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Temperate,78533,1007091410,6.7143,0.0243,6.6675,6.7615,6.71 ± 0.02
+2011-2015,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Continental,26188,386837266,5.5805,0.035,5.5132,5.6486,5.58 ± 0.04
+2011-2015,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,National,118122,1575231649,6.4148,0.0189,6.3782,6.4515,6.41 ± 0.02
+2011-2015,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Dry,19991,181302973,10.0472,0.0717,9.9084,10.1875,10.05 ± 0.07
+2011-2015,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Temperate,124440,1007091410,10.9584,0.0314,10.8976,11.0194,10.96 ± 0.03
+2011-2015,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Continental,51665,386837266,11.1634,0.0498,11.0673,11.26,11.16 ± 0.05
+2011-2015,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,National,196096,1575231649,10.9092,0.0249,10.861,10.9576,10.91 ± 0.02
+2011-2015,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Dry,67425,181302973,33.9973,0.132,33.7412,34.2549,34.00 ± 0.13
+2011-2015,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Temperate,503110,1007091410,44.2533,0.0631,44.1311,44.3757,44.25 ± 0.06
+2011-2015,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Continental,204828,386837266,44.5724,0.0998,44.3796,44.7659,44.57 ± 0.10
+2011-2015,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,National,775363,1575231649,43.1972,0.0496,43.1011,43.2934,43.20 ± 0.05
+2011-2015,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Dry,20836,181302973,10.5967,0.0742,10.4533,10.7416,10.60 ± 0.07
+2011-2015,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Temperate,133330,1007091410,11.8112,0.0328,11.7479,11.8747,11.81 ± 0.03
+2011-2015,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Continental,52413,386837266,11.4421,0.0509,11.3443,11.5405,11.44 ± 0.05
+2011-2015,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,National,206579,1575231649,11.5857,0.0259,11.5358,11.6358,11.59 ± 0.03
+2011-2015,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Dry,7531,181302973,3.8041,0.0443,3.7187,3.891,3.80 ± 0.04
+2011-2015,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Temperate,44691,1007091410,3.9461,0.0189,3.9096,3.9828,3.95 ± 0.02
+2011-2015,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Continental,18577,386837266,4.0479,0.0301,3.9899,4.1065,4.05 ± 0.03
+2011-2015,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,National,70799,1575231649,3.9565,0.0151,3.9274,3.9858,3.96 ± 0.02
+2011-2015,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Dry,15715,181302973,8.0051,0.0643,7.8804,8.1313,8.01 ± 0.06
+2011-2015,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Temperate,87317,1007091410,7.8618,0.0268,7.8097,7.9141,7.86 ± 0.03
+2011-2015,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Continental,36328,386837266,7.8588,0.0417,7.7782,7.94,7.86 ± 0.04
+2011-2015,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,National,139360,1575231649,7.8777,0.0213,7.8364,7.9191,7.88 ± 0.02
+2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Dry,7264,181302973,3.6394,0.0431,3.5562,3.724,3.64 ± 0.04
+2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Temperate,43435,1007091410,3.8223,0.0186,3.7864,3.8584,3.82 ± 0.02
+2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Continental,18247,386837266,3.9401,0.0296,3.8831,3.9977,3.94 ± 0.03
+2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,National,68946,1575231649,3.8322,0.0148,3.8037,3.8609,3.83 ± 0.01
+2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Dry,10226,181302973,5.2467,0.0523,5.1455,5.3494,5.25 ± 0.05
+2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Temperate,62815,1007091410,5.6605,0.0228,5.6163,5.7049,5.66 ± 0.02
+2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Continental,27809,386837266,6.1232,0.0372,6.0515,6.1956,6.12 ± 0.04
+2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,National,100850,1575231649,5.7356,0.0183,5.7003,5.7711,5.74 ± 0.02
+2011-2015,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Dry,11796,181302973,6.0862,0.0565,5.9768,6.197,6.09 ± 0.06
+2011-2015,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Temperate,71972,1007091410,6.5528,0.0247,6.5051,6.6009,6.55 ± 0.02
+2011-2015,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Continental,30985,386837266,6.8704,0.0396,6.7942,6.9474,6.87 ± 0.04
+2011-2015,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,National,114753,1575231649,6.5863,0.0197,6.5482,6.6245,6.59 ± 0.02
+2011-2015,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Dry,6387,181302973,3.2138,0.0404,3.1355,3.2936,3.21 ± 0.04
+2011-2015,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Temperate,41728,1007091410,3.739,0.0184,3.7032,3.775,3.74 ± 0.02
+2011-2015,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Continental,16578,386837266,3.429,0.0269,3.377,3.4816,3.43 ± 0.03
+2011-2015,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,National,64693,1575231649,3.5972,0.0142,3.5695,3.625,3.60 ± 0.01
+2011-2015,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Dry,47411,181302973,23.8522,0.11,23.638,24.0679,23.85 ± 0.11
+2011-2015,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Temperate,363251,1007091410,32.4933,0.0542,32.3878,32.5992,32.49 ± 0.05
+2011-2015,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Continental,179573,386837266,36.7469,0.0877,36.5771,36.9172,36.75 ± 0.09
+2011-2015,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,National,590235,1575231649,32.6953,0.0429,32.612,32.7789,32.70 ± 0.04
+2011-2015,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Dry,434,181302973,0.2253,0.011,0.2046,0.2475,0.23 ± 0.01
+2011-2015,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Temperate,3040,1007091410,0.2719,0.005,0.2623,0.2817,0.27 ± 0.01
+2011-2015,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Continental,1572,386837266,0.3511,0.0091,0.334,0.3689,0.35 ± 0.01
+2011-2015,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,National,5046,1575231649,0.2868,0.0041,0.2789,0.2948,0.29 ± 0.00
+2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Dry,3572,181302973,1.7984,0.0304,1.7399,1.8584,1.80 ± 0.03
+2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Temperate,21814,1007091410,1.919,0.0132,1.8936,1.9447,1.92 ± 0.01
+2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Continental,10205,386837266,2.2382,0.0225,2.195,2.2821,2.24 ± 0.02
+2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,National,35591,1575231649,1.9871,0.0107,1.9665,2.0078,1.99 ± 0.01
+2011-2015,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Dry,14138,181302973,7.3444,0.0621,7.2238,7.4665,7.34 ± 0.06
+2011-2015,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Temperate,76619,1007091410,7.1163,0.0259,7.066,7.1668,7.12 ± 0.03
+2011-2015,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Continental,34298,386837266,7.5382,0.0412,7.4586,7.6184,7.54 ± 0.04
+2011-2015,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,National,125055,1575231649,7.2532,0.0207,7.2131,7.2935,7.25 ± 0.02
+2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Dry,121554,181302973,61.5258,0.1773,61.1804,61.8726,61.53 ± 0.18
+2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Temperate,796604,1007091410,71.6502,0.0808,71.493,71.8078,71.65 ± 0.08
+2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Continental,353719,386837266,73.3628,0.1248,73.1212,73.6049,73.36 ± 0.12
+2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,National,1271877,1575231649,70.9993,0.0634,70.8759,71.1228,71.00 ± 0.06
+2011-2015,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Dry,50046,181302973,25.3169,0.1137,25.0956,25.5397,25.32 ± 0.11
+2011-2015,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Temperate,293192,1007091410,26.3826,0.049,26.2872,26.4783,26.38 ± 0.05
+2011-2015,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Continental,113065,386837266,23.4105,0.0705,23.2742,23.5473,23.41 ± 0.07
+2011-2015,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,National,456303,1575231649,25.4665,0.038,25.3926,25.5405,25.47 ± 0.04
+2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Dry,103844,181302973,52.383,0.1633,52.0648,52.7026,52.38 ± 0.16
+2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Temperate,698171,1007091410,62.6149,0.0754,62.4681,62.762,62.61 ± 0.08
+2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Continental,309216,386837266,63.5863,0.1157,63.3624,63.8108,63.59 ± 0.12
+2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,National,1111231,1575231649,61.759,0.059,61.6442,61.8739,61.76 ± 0.06
+2011-2015,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Dry,400699,181302973,202.6424,0.3225,202.0155,203.2708,202.64 ± 0.32
+2011-2015,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Temperate,2554739,1007091410,227.8292,0.1439,227.5499,228.1088,227.83 ± 0.14
+2011-2015,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Continental,1036120,386837266,219.8361,0.2191,219.413,220.2598,219.84 ± 0.22
+2011-2015,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,National,3991558,1575231649,223.0757,0.1128,222.8569,223.2947,223.08 ± 0.11
+2011-2015,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Dry,400699,181302973,202.6424,0.3225,202.0155,203.2708,202.64 ± 0.32
+2011-2015,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Temperate,2554739,1007091410,227.8292,0.1439,227.5499,228.1088,227.83 ± 0.14
+2011-2015,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Continental,1036120,386837266,219.8361,0.2191,219.413,220.2598,219.84 ± 0.22
+2011-2015,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,National,3991558,1575231649,223.0757,0.1128,222.8569,223.2947,223.08 ± 0.11
+2011-2015,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Dry,39575,181302973,19.9644,0.1012,19.7682,20.1621,19.96 ± 0.10
+2011-2015,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Temperate,233466,1007091410,20.691,0.0433,20.6071,20.7751,20.69 ± 0.04
+2011-2015,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Continental,81454,386837266,17.2164,0.0613,17.0983,17.335,17.22 ± 0.06
+2011-2015,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,National,354495,1575231649,19.7159,0.0335,19.651,19.7809,19.72 ± 0.03
+2011-2015,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Dry,190274,181302973,95.9034,0.2214,95.473,96.3353,95.90 ± 0.22
+2011-2015,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Temperate,1172973,1007091410,104.1199,0.0971,103.9315,104.3085,104.12 ± 0.10
+2011-2015,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Continental,475175,386837266,100.8275,0.1483,100.541,101.1146,100.83 ± 0.15
+2011-2015,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,National,1838422,1575231649,102.3765,0.0763,102.2285,102.5246,102.38 ± 0.08
+2011-2015,I50,I50,HF,Köppen-Geiger Climate Zone,Dry,25752,181302973,12.947,0.0811,12.7893,13.1061,12.95 ± 0.08
+2011-2015,I50,I50,HF,Köppen-Geiger Climate Zone,Temperate,207607,1007091410,18.5146,0.0409,18.4351,18.5944,18.51 ± 0.04
+2011-2015,I50,I50,HF,Köppen-Geiger Climate Zone,Continental,92803,386837266,19.1982,0.0638,19.0749,19.3221,19.20 ± 0.06
+2011-2015,I50,I50,HF,Köppen-Geiger Climate Zone,National,326162,1575231649,18.1043,0.032,18.0423,18.1666,18.10 ± 0.03
+2011-2015,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Dry,66525,181302973,33.8541,0.1322,33.5974,34.1124,33.85 ± 0.13
+2011-2015,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Temperate,423756,1007091410,38.1136,0.0591,37.9989,38.2285,38.11 ± 0.06
+2011-2015,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Continental,165641,386837266,35.2836,0.0879,35.1139,35.4539,35.28 ± 0.09
+2011-2015,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,National,655922,1575231649,36.9226,0.046,36.8333,37.0121,36.92 ± 0.05
+2011-2015,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Dry,4803,181302973,2.598,0.038,2.525,2.6725,2.60 ± 0.04
+2011-2015,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Temperate,19901,1007091410,1.8872,0.0136,1.8611,1.9136,1.89 ± 0.01
+2011-2015,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Continental,8533,386837266,2.1205,0.0235,2.0757,2.166,2.12 ± 0.02
+2011-2015,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,National,33237,1575231649,2.0221,0.0113,2.0004,2.044,2.02 ± 0.01
+2011-2015,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Dry,26908,181302973,14.6523,0.0904,14.4777,14.8284,14.65 ± 0.09
+2011-2015,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Temperate,128248,1007091410,12.2925,0.0348,12.2253,12.36,12.29 ± 0.03
+2011-2015,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Continental,48701,386837266,12.2121,0.0565,12.1039,12.3211,12.21 ± 0.06
+2011-2015,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,National,203857,1575231649,12.5298,0.0282,12.4755,12.5843,12.53 ± 0.03
+2011-2015,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Dry,22056,181302973,12.0274,0.0819,11.8692,12.1872,12.03 ± 0.08
+2011-2015,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Temperate,108123,1007091410,10.3838,0.032,10.322,10.4459,10.38 ± 0.03
+2011-2015,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Continental,40097,386837266,10.0746,0.0514,9.9762,10.1737,10.07 ± 0.05
+2011-2015,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,National,170276,1575231649,10.4867,0.0258,10.4369,10.5366,10.49 ± 0.03
+2011-2015,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Dry,49,181302973,0.0269,0.0039,0.0199,0.0356,0.03 ± 0.00
+2011-2015,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Temperate,224,1007091410,0.0215,0.0015,0.0187,0.0245,0.02 ± 0.00
+2011-2015,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Continental,71,386837266,0.017,0.0021,0.0133,0.0215,0.02 ± 0.00
+2011-2015,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,National,344,1575231649,0.021,0.0012,0.0189,0.0234,0.02 ± 0.00
+2016-2020,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Dry,305384,191470880,134.2333,0.2458,133.7576,134.7103,134.23 ± 0.25
+2016-2020,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Temperate,1909754,1044904352,150.1695,0.1103,149.9566,150.3827,150.17 ± 0.11
+2016-2020,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,Continental,766051,390721373,152.7986,0.1779,152.4567,153.1412,152.80 ± 0.18
+2016-2020,C00_C97,All-site Cancer,Cancer,Köppen-Geiger Climate Zone,National,2981189,1627096605,149.0313,0.0876,148.8621,149.2005,149.03 ± 0.09
+2016-2020,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Dry,28808,191470880,12.7663,0.0762,12.6193,12.9146,12.77 ± 0.08
+2016-2020,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Temperate,169762,1044904352,13.4919,0.0333,13.4278,13.5562,13.49 ± 0.03
+2016-2020,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,Continental,65736,390721373,13.2672,0.0529,13.1659,13.369,13.27 ± 0.05
+2016-2020,C18_C21,Colorectal Cancer,Colorectal,Köppen-Geiger Climate Zone,National,264306,1627096605,13.3566,0.0264,13.3057,13.4076,13.36 ± 0.03
+2016-2020,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Dry,16222,191470880,6.9594,0.0553,6.8527,7.0673,6.96 ± 0.06
+2016-2020,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Temperate,90407,1044904352,6.8751,0.0232,6.8304,6.9201,6.88 ± 0.02
+2016-2020,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,Continental,30000,390721373,5.8545,0.0344,5.7885,5.9212,5.85 ± 0.03
+2016-2020,C22,Liver Cancer,Liver,Köppen-Geiger Climate Zone,National,136629,1627096605,6.6288,0.0182,6.5937,6.6641,6.63 ± 0.02
+2016-2020,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Dry,23375,191470880,10.1627,0.0672,10.0328,10.2938,10.16 ± 0.07
+2016-2020,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Temperate,141300,1044904352,10.9959,0.0297,10.9387,11.0534,11.00 ± 0.03
+2016-2020,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,Continental,58511,390721373,11.5532,0.0486,11.4598,11.6472,11.55 ± 0.05
+2016-2020,C25,Pancreatic Cancer,Pancreatic,Köppen-Geiger Climate Zone,National,223186,1627096605,11.0398,0.0237,10.9941,11.0857,11.04 ± 0.02
+2016-2020,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Dry,62249,191470880,26.9767,0.1091,26.7652,27.1894,26.98 ± 0.11
+2016-2020,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Temperate,460270,1044904352,35.5926,0.0532,35.4898,35.6955,35.59 ± 0.05
+2016-2020,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,Continental,186294,390721373,36.6239,0.0862,36.4578,36.7906,36.62 ± 0.09
+2016-2020,C34,Lung Cancer,Lung,Köppen-Geiger Climate Zone,National,708813,1627096605,34.8699,0.042,34.7888,34.9512,34.87 ± 0.04
+2016-2020,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Dry,22572,191470880,10.1224,0.0685,9.9907,10.2553,10.12 ± 0.07
+2016-2020,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Temperate,137393,1044904352,11.015,0.0303,10.9569,11.0734,11.02 ± 0.03
+2016-2020,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,Continental,51729,390721373,10.5627,0.0476,10.4719,10.6541,10.56 ± 0.05
+2016-2020,C50,Breast Cancer,Breast,Köppen-Geiger Climate Zone,National,211694,1627096605,10.8022,0.0239,10.7562,10.8483,10.80 ± 0.02
+2016-2020,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Dry,7488,191470880,3.2998,0.0387,3.2255,3.3754,3.30 ± 0.04
+2016-2020,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Temperate,43871,1044904352,3.4537,0.0168,3.4214,3.4861,3.45 ± 0.02
+2016-2020,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,Continental,17387,390721373,3.4797,0.0269,3.4281,3.5318,3.48 ± 0.03
+2016-2020,C56,Ovary Cancer,Ovarian,Köppen-Geiger Climate Zone,National,68746,1627096605,3.4424,0.0134,3.4167,3.4682,3.44 ± 0.01
+2016-2020,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Dry,18214,191470880,7.9572,0.0593,7.8421,8.0736,7.96 ± 0.06
+2016-2020,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Temperate,97836,1044904352,7.7315,0.0249,7.6832,7.7801,7.73 ± 0.02
+2016-2020,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,Continental,39824,390721373,7.845,0.0398,7.7681,7.9224,7.84 ± 0.04
+2016-2020,C61,Prostate Cancer,Prostate,Köppen-Geiger Climate Zone,National,155874,1627096605,7.7883,0.0199,7.7497,7.8271,7.79 ± 0.02
+2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Dry,7861,191470880,3.4515,0.0394,3.3757,3.5287,3.45 ± 0.04
+2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Temperate,44543,1044904352,3.4951,0.0168,3.4627,3.5277,3.50 ± 0.02
+2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,Continental,17620,390721373,3.5054,0.0269,3.4539,3.5576,3.51 ± 0.03
+2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,Köppen-Geiger Climate Zone,National,70024,1627096605,3.493,0.0134,3.4671,3.5189,3.49 ± 0.01
+2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Dry,10532,191470880,4.6658,0.0459,4.5771,4.7558,4.67 ± 0.05
+2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Temperate,63385,1044904352,5.0651,0.0204,5.0257,5.1047,5.07 ± 0.02
+2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,Continental,27150,390721373,5.4751,0.0338,5.4101,5.5406,5.48 ± 0.03
+2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,Köppen-Geiger Climate Zone,National,101067,1627096605,5.1229,0.0163,5.0913,5.1545,5.12 ± 0.02
+2016-2020,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Dry,12130,191470880,5.4658,0.0502,5.3689,5.5639,5.47 ± 0.05
+2016-2020,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Temperate,73213,1044904352,5.9357,0.0223,5.8928,5.9789,5.94 ± 0.02
+2016-2020,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,Continental,30236,390721373,6.1649,0.0361,6.0956,6.2348,6.16 ± 0.04
+2016-2020,C91_C95,Leukemia,Leukemia,Köppen-Geiger Climate Zone,National,115579,1627096605,5.9422,0.0177,5.908,5.9766,5.94 ± 0.02
+2016-2020,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Dry,8332,191470880,3.6313,0.0399,3.5538,3.7102,3.63 ± 0.04
+2016-2020,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Temperate,52952,1044904352,4.2283,0.0185,4.1924,4.2645,4.23 ± 0.02
+2016-2020,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,Continental,23780,390721373,4.6081,0.0301,4.5497,4.667,4.61 ± 0.03
+2016-2020,F01,Vascular Dementia (VD),VD,Köppen-Geiger Climate Zone,National,85064,1627096605,4.2575,0.0147,4.2289,4.2862,4.26 ± 0.01
+2016-2020,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Dry,33842,191470880,14.7467,0.0804,14.59,14.9047,14.75 ± 0.08
+2016-2020,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Temperate,294629,1044904352,23.5497,0.0436,23.4648,23.6349,23.55 ± 0.04
+2016-2020,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,Continental,174677,390721373,33.6498,0.0812,33.4922,33.808,33.65 ± 0.08
+2016-2020,F03,Unspecified Dementia (UD),UD,Köppen-Geiger Climate Zone,National,503148,1627096605,25.1592,0.0356,25.0897,25.2288,25.16 ± 0.04
+2016-2020,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Dry,498,191470880,0.2275,0.0104,0.2079,0.2484,0.23 ± 0.01
+2016-2020,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Temperate,3417,1044904352,0.2796,0.0049,0.2703,0.2891,0.28 ± 0.00
+2016-2020,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,Continental,1708,390721373,0.3677,0.0092,0.3505,0.3855,0.37 ± 0.01
+2016-2020,G10,Huntington's Disease (HD),HD,Köppen-Geiger Climate Zone,National,5623,1627096605,0.2949,0.004,0.2873,0.3027,0.29 ± 0.00
+2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Dry,3516,191470880,1.5315,0.0262,1.4812,1.5829,1.53 ± 0.03
+2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Temperate,21508,1044904352,1.6681,0.0116,1.6459,1.6905,1.67 ± 0.01
+2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,Continental,9648,390721373,1.9193,0.02,1.8812,1.958,1.92 ± 0.02
+2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,Köppen-Geiger Climate Zone,National,34672,1627096605,1.715,0.0094,1.697,1.7331,1.71 ± 0.01
+2016-2020,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Dry,18739,191470880,8.3643,0.0614,8.2449,8.4849,8.36 ± 0.06
+2016-2020,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Temperate,106288,1044904352,8.6912,0.0268,8.639,8.7436,8.69 ± 0.03
+2016-2020,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,Continental,44425,390721373,8.9924,0.0431,8.909,9.0765,8.99 ± 0.04
+2016-2020,G20,Parkinson's Disease (PD),PD,Köppen-Geiger Climate Zone,National,169452,1627096605,8.7316,0.0214,8.69,8.7732,8.73 ± 0.02
+2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Dry,133276,191470880,58.4186,0.1607,58.1054,58.7331,58.42 ± 0.16
+2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Temperate,875012,1044904352,70.2417,0.0755,70.0946,70.389,70.24 ± 0.08
+2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,Continental,397964,390721373,77.4415,0.1239,77.2011,77.6825,77.44 ± 0.12
+2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,Köppen-Geiger Climate Zone,National,1406252,1627096605,70.7558,0.06,70.6389,70.8729,70.76 ± 0.06
+2016-2020,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Dry,68847,191470880,30.1448,0.1153,29.92,30.3708,30.14 ± 0.12
+2016-2020,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Temperate,399635,1044904352,32.1043,0.051,32.0048,32.204,32.10 ± 0.05
+2016-2020,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,Continental,145434,390721373,28.2719,0.0748,28.1268,28.4175,28.27 ± 0.07
+2016-2020,G30,Alzheimer's Disease (AD),AD,Köppen-Geiger Climate Zone,National,613916,1627096605,30.8926,0.0396,30.8154,30.97,30.89 ± 0.04
+2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Dry,111021,191470880,48.5228,0.1462,48.2378,48.8091,48.52 ± 0.15
+2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Temperate,747216,1044904352,59.8824,0.0696,59.7467,60.0183,59.88 ± 0.07
+2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,Continental,343891,390721373,66.5298,0.1144,66.3076,66.7525,66.53 ± 0.11
+2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,Köppen-Geiger Climate Zone,National,1202128,1627096605,60.3093,0.0553,60.2016,60.4172,60.31 ± 0.06
+2016-2020,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Dry,462309,191470880,203.2522,0.3016,202.6667,203.8389,203.25 ± 0.30
+2016-2020,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Temperate,2798327,1044904352,222.6817,0.1347,222.4209,222.9428,222.68 ± 0.13
+2016-2020,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,Continental,1087058,390721373,214.5939,0.2091,214.1906,214.9976,214.59 ± 0.21
+2016-2020,I00-I99,I00-I99,I00_I99,Köppen-Geiger Climate Zone,National,4347694,1627096605,218.5273,0.1061,218.3219,218.7328,218.53 ± 0.11
+2016-2020,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Dry,462309,191470880,203.2522,0.3016,202.6667,203.8389,203.25 ± 0.30
+2016-2020,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Temperate,2798327,1044904352,222.6817,0.1347,222.4209,222.9428,222.68 ± 0.13
+2016-2020,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Continental,1087058,390721373,214.5939,0.2091,214.1906,214.9976,214.59 ± 0.21
+2016-2020,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,National,4347694,1627096605,218.5273,0.1061,218.3219,218.7328,218.53 ± 0.11
+2016-2020,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Dry,56407,191470880,24.8656,0.1058,24.6609,25.0717,24.87 ± 0.11
+2016-2020,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Temperate,324384,1044904352,25.8336,0.046,25.7447,25.9226,25.83 ± 0.05
+2016-2020,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Continental,106683,390721373,21.0949,0.0658,20.9685,21.2219,21.09 ± 0.07
+2016-2020,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,National,487474,1627096605,24.542,0.0356,24.4731,24.611,24.54 ± 0.04
+2016-2020,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Dry,205453,191470880,89.8065,0.1999,89.4186,90.1957,89.81 ± 0.20
+2016-2020,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Temperate,1172381,1044904352,92.5997,0.0865,92.4321,92.7674,92.60 ± 0.09
+2016-2020,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Continental,451980,390721373,89.0345,0.1345,88.7752,89.2945,89.03 ± 0.13
+2016-2020,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,National,1829814,1627096605,91.4051,0.0684,91.2727,91.5377,91.41 ± 0.07
+2016-2020,I50,I50,HF,Köppen-Geiger Climate Zone,Dry,32556,191470880,14.2354,0.0794,14.0812,14.3909,14.24 ± 0.08
+2016-2020,I50,I50,HF,Köppen-Geiger Climate Zone,Temperate,266862,1044904352,21.217,0.0414,21.1366,21.2977,21.22 ± 0.04
+2016-2020,I50,I50,HF,Köppen-Geiger Climate Zone,Continental,113361,390721373,21.992,0.066,21.8642,22.1204,21.99 ± 0.07
+2016-2020,I50,I50,HF,Köppen-Geiger Climate Zone,National,412779,1627096605,20.6363,0.0324,20.5734,20.6994,20.64 ± 0.03
+2016-2020,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Dry,84726,191470880,37.3287,0.1293,37.0778,37.581,37.33 ± 0.13
+2016-2020,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Temperate,483155,1044904352,38.6724,0.0562,38.5634,38.7816,38.67 ± 0.06
+2016-2020,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Continental,174705,390721373,34.5488,0.0838,34.387,34.7112,34.55 ± 0.08
+2016-2020,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,National,742586,1627096605,37.4871,0.044,37.4019,37.5725,37.49 ± 0.04
+2016-2020,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Dry,4324,191470880,2.1657,0.0336,2.1016,2.2312,2.17 ± 0.03
+2016-2020,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Temperate,18334,1044904352,1.6554,0.0125,1.6315,1.6795,1.66 ± 0.01
+2016-2020,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Continental,8158,390721373,1.996,0.0228,1.953,2.0398,2.00 ± 0.02
+2016-2020,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,National,30816,1627096605,1.7943,0.0105,1.7744,1.8145,1.79 ± 0.01
+2016-2020,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Dry,30894,191470880,15.7339,0.0911,15.5589,15.9103,15.73 ± 0.09
+2016-2020,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Temperate,143342,1044904352,13.1823,0.0355,13.1142,13.2508,13.18 ± 0.04
+2016-2020,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Continental,54528,390721373,13.513,0.0595,13.3998,13.6269,13.51 ± 0.06
+2016-2020,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,National,228764,1627096605,13.5513,0.029,13.4958,13.6069,13.55 ± 0.03
+2016-2020,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Dry,26532,191470880,13.5485,0.0846,13.386,13.7126,13.55 ± 0.08
+2016-2020,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Temperate,124848,1044904352,11.5127,0.0332,11.4489,11.5767,11.51 ± 0.03
+2016-2020,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Continental,46315,390721373,11.5034,0.0549,11.3988,11.6086,11.50 ± 0.05
+2016-2020,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,National,197695,1627096605,11.7422,0.027,11.6905,11.7941,11.74 ± 0.03
+2016-2020,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Dry,38,191470880,0.0197,0.0033,0.0139,0.027,0.02 ± 0.00
+2016-2020,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Temperate,160,1044904352,0.0143,0.0012,0.0122,0.0167,0.01 ± 0.00
+2016-2020,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Continental,55,390721373,0.0136,0.0019,0.0102,0.0177,0.01 ± 0.00
+2016-2020,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,National,253,1627096605,0.0147,0.0009,0.013,0.0167,0.01 ± 0.00
+2021-2024,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Dry,401661,157721433,227.9396,0.3713,227.2352,228.6456,227.94 ± 0.37
+2021-2024,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Temperate,2386571,846675127,251.9152,0.1677,251.5957,252.235,251.92 ± 0.17
+2021-2024,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,Continental,903471,308877698,243.6364,0.2646,243.1343,244.1393,243.64 ± 0.26
+2021-2024,I00_I99,I00_I99,CVD,Köppen-Geiger Climate Zone,National,3691703,1313274258,247.1784,0.1325,246.9264,247.4307,247.18 ± 0.13
+2021-2024,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Dry,202371,157721433,129.5837,0.297,129.0198,130.1496,129.58 ± 0.30
+2021-2024,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Temperate,1086738,846675127,128.0434,0.1261,127.8028,128.2844,128.04 ± 0.13
+2021-2024,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,Continental,377031,308877698,117.4456,0.1978,117.071,117.821,117.45 ± 0.20
+2021-2024,I10_I15,I10_I15,HD,Köppen-Geiger Climate Zone,National,1666140,1313274258,125.737,0.1002,125.5461,125.9281,125.74 ± 0.10
+2021-2024,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Dry,305964,157721433,188.3562,0.3522,187.6894,189.0248,188.36 ± 0.35
+2021-2024,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Temperate,1659360,846675127,188.526,0.1508,188.2393,188.8131,188.53 ± 0.15
+2021-2024,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,Continental,610842,308877698,181.0035,0.2403,180.5498,181.458,181.00 ± 0.24
+2021-2024,I20_I25,I20_I25,IHD,Köppen-Geiger Climate Zone,National,2576166,1313274258,186.7918,0.1201,186.5637,187.02,186.79 ± 0.12
+2021-2024,I50,I50,HF,Köppen-Geiger Climate Zone,Dry,27910,157721433,15.3454,0.0939,15.1659,15.5265,15.35 ± 0.09
+2021-2024,I50,I50,HF,Köppen-Geiger Climate Zone,Temperate,231468,846675127,23.7717,0.0503,23.675,23.8687,23.77 ± 0.05
+2021-2024,I50,I50,HF,Köppen-Geiger Climate Zone,Continental,94150,308877698,24.3252,0.0807,24.1701,24.4811,24.33 ± 0.08
+2021-2024,I50,I50,HF,Köppen-Geiger Climate Zone,National,353528,1313274258,22.9313,0.0393,22.8558,23.0071,22.93 ± 0.04
+2021-2024,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Dry,217121,157721433,136.8414,0.3026,136.2664,137.4182,136.84 ± 0.30
+2021-2024,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Temperate,1168741,846675127,135.4563,0.1286,135.2108,135.7021,135.46 ± 0.13
+2021-2024,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,Continental,411013,308877698,125.4363,0.2023,125.0531,125.8204,125.44 ± 0.20
+2021-2024,I60_I69,I60_I69,Stroke,Köppen-Geiger Climate Zone,National,1796875,1313274258,133.2675,0.1022,133.0727,133.4625,133.27 ± 0.10
+2021-2024,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Dry,3237,157721433,2.2381,0.0404,2.1616,2.3165,2.24 ± 0.04
+2021-2024,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Temperate,13620,846675127,1.7255,0.0151,1.6967,1.7547,1.73 ± 0.02
+2021-2024,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,Continental,6159,308877698,2.1558,0.0281,2.1023,2.2104,2.16 ± 0.03
+2021-2024,X60_X69,X60_X69,NVS,Köppen-Geiger Climate Zone,National,23016,1313274258,1.886,0.0127,1.8617,1.9105,1.89 ± 0.01
+2021-2024,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Dry,26599,157721433,18.1757,0.1141,17.9579,18.3955,18.18 ± 0.11
+2021-2024,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Temperate,120842,846675127,15.1392,0.0444,15.0539,15.2248,15.14 ± 0.04
+2021-2024,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,Continental,45277,308877698,15.6833,0.0754,15.5391,15.8284,15.68 ± 0.08
+2021-2024,X60_X84_Y87.0,X60_X84_Y87.0,Suicide,Köppen-Geiger Climate Zone,National,192718,1313274258,15.619,0.0363,15.5494,15.6889,15.62 ± 0.04
+2021-2024,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Dry,23098,157721433,15.75,0.106,15.5475,15.9544,15.75 ± 0.11
+2021-2024,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Temperate,105965,846675127,13.2516,0.0415,13.1719,13.3316,13.25 ± 0.04
+2021-2024,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,Continental,38682,308877698,13.3743,0.0695,13.2414,13.5083,13.37 ± 0.07
+2021-2024,X70_X84,X70_X84,VS,Köppen-Geiger Climate Zone,National,167745,1313274258,13.5701,0.0338,13.5053,13.6352,13.57 ± 0.03
+2021-2024,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Dry,264,157721433,0.1877,0.0118,0.1657,0.2117,0.19 ± 0.01
+2021-2024,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Temperate,1257,846675127,0.1621,0.0047,0.1532,0.1713,0.16 ± 0.00
+2021-2024,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,Continental,436,308877698,0.1531,0.0075,0.1391,0.1682,0.15 ± 0.01
+2021-2024,Y87.0,Y87.0,SI,Köppen-Geiger Climate Zone,National,1957,1313274258,0.1629,0.0038,0.1558,0.1703,0.16 ± 0.00

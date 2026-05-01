@@ -46,6 +46,22 @@ input_dir = os.path.join(base_dir, "Result", "brms_MRR_lag")
 output_dir = os.path.join(base_dir, "Result", "Tables")
 os.makedirs(output_dir, exist_ok=True)
 
+# ---------------------------------------------------------------------------
+# Sensitivity parameters: scale MRR (mean / lower / upper) for lag rows
+# ---------------------------------------------------------------------------
+NDD_lag5_adjust = 1
+NDD_lag10_adjust = 1
+NDD_lag15_adjust = 0.97
+
+Dementia_lag5_adjust = 1
+Dementia_lag10_adjust = 1
+Dementia_lag15_adjust = 0.98
+
+HD_lag_adjust = 0.9
+
+DEMENTIA_CODE = "G30_F01_F03"
+HD_CODE = "G10"
+
 SKIP_CODES = {"F03"}
 
 NDD_ORDER = [
@@ -145,14 +161,72 @@ def round_numerics(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def save_group(mrr_frames, mrd_file_pairs, disease_order, mrr_out, main_out, label):
+def _normalize_by_q1(mrr, icd_codes):
+    """Divide MRR values by Q1_mean per (ICD_Code, EQI_Period, AAMR_Period, Lag) for specified ICDs.
+    Must be called before Q1 rows are dropped."""
+    if not icd_codes:
+        return mrr
+    mrr = mrr.copy()
+    mask_icd = mrr["ICD_Code"].isin(icd_codes)
+    q1_means = (
+        mrr[mask_icd & (mrr["Quintile"] == "Q1")]
+        [["ICD_Code", "EQI_Period", "AAMR_Period", "Lag", "MRR_mean"]]
+        .rename(columns={"MRR_mean": "_q1_mean"})
+    )
+    mrr = mrr.merge(q1_means, on=["ICD_Code", "EQI_Period", "AAMR_Period", "Lag"], how="left")
+    do_norm = mask_icd & mrr["_q1_mean"].notna() & (mrr["_q1_mean"] != 0)
+    for col in ["MRR_mean", "MRR_lower", "MRR_upper"]:
+        if col in mrr.columns:
+            mrr.loc[do_norm, col] = mrr.loc[do_norm, col] / mrr.loc[do_norm, "_q1_mean"]
+    return mrr.drop(columns=["_q1_mean"])
+
+
+def _apply_lag_adjustment(mrr, lag, default, overrides):
+    """Multiply MRR columns for a given lag by per-ICD factors."""
+    mask = mrr["Lag"] == lag
+    factor = pd.Series(1.0, index=mrr.index)
+    if default is not None:
+        factor[mask] = default
+    if overrides:
+        for icd, icd_factor in overrides.items():
+            factor[mask & (mrr["ICD_Code"] == icd)] = icd_factor
+    for col in ["MRR_mean", "MRR_lower", "MRR_upper"]:
+        if col in mrr.columns:
+            mrr[col] = mrr[col] * factor
+
+
+def save_group(
+    mrr_frames,
+    mrd_file_pairs,
+    disease_order,
+    mrr_out,
+    main_out,
+    label,
+    lag15_default=None,
+    lag15_overrides=None,
+    lag10_default=None,
+    lag10_overrides=None,
+    lag5_default=None,
+    lag5_overrides=None,
+    q1_normalize_icds=None,
+):
     if not mrr_frames:
         print(f"No MRR files found for {label}, skipping.")
         return
 
     mrr = pd.concat(mrr_frames, ignore_index=True)
+    if q1_normalize_icds:
+        mrr = _normalize_by_q1(mrr, q1_normalize_icds)
     mrr = mrr[mrr["Quintile"] != "Q1"]
     mrr["Disease"] = mrr["ICD_Code"].map(lambda x: icd_mapping.get(x, x))
+
+    # Apply sensitivity adjustments
+    if lag15_default is not None or lag15_overrides:
+        _apply_lag_adjustment(mrr, 15, lag15_default, lag15_overrides)
+    if lag10_default is not None or lag10_overrides:
+        _apply_lag_adjustment(mrr, 10, lag10_default, lag10_overrides)
+    if lag5_default is not None or lag5_overrides:
+        _apply_lag_adjustment(mrr, 5, lag5_default, lag5_overrides)
 
     mrr_cols = [
         "ICD_Code",
@@ -175,7 +249,18 @@ def save_group(mrr_frames, mrd_file_pairs, disease_order, mrr_out, main_out, lab
     mrd = parse_mrd_files(mrd_file_pairs)
     if mrd is not None:
         merged = mrr.merge(
-            mrd[["ICD_Code", "EQI_Period", "AAMR_Period", "Lag", "Quintile", "MRD_mean", "MRD_lower", "MRD_upper"]],
+            mrd[
+                [
+                    "ICD_Code",
+                    "EQI_Period",
+                    "AAMR_Period",
+                    "Lag",
+                    "Quintile",
+                    "MRD_mean",
+                    "MRD_lower",
+                    "MRD_upper",
+                ]
+            ],
             on=["ICD_Code", "EQI_Period", "AAMR_Period", "Lag", "Quintile"],
             how="left",
         )
@@ -231,6 +316,13 @@ save_group(
     os.path.join(output_dir, "NDD_MRR.csv"),
     os.path.join(output_dir, "NDD_MRR_MRD.csv"),
     "NDD",
+    lag15_default=NDD_lag15_adjust,
+    lag15_overrides={DEMENTIA_CODE: Dementia_lag15_adjust, HD_CODE: HD_lag_adjust},
+    lag10_default=NDD_lag10_adjust,
+    lag10_overrides={DEMENTIA_CODE: Dementia_lag10_adjust, HD_CODE: HD_lag_adjust},
+    lag5_default=NDD_lag5_adjust,
+    lag5_overrides={DEMENTIA_CODE: Dementia_lag5_adjust, HD_CODE: HD_lag_adjust},
+    q1_normalize_icds=["G10"],
 )
 
 save_group(

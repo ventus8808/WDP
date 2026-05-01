@@ -375,6 +375,230 @@ pymc_analysis:
     test_categories: ["TEST"]
     batch_size: 5
 
+# ── 疾病分类配置 ──────────────────────────────────────────────────────────────
+#
+# 两层结构：每种疾病分类（cvd / suicide / ndd / cancer）下有 overall 和 subtypes。
+# 每个条目的字段说明：
+#   fullname  : 疾病全称（用于展示）
+#   shortname : 缩写（用于表格列名、图例等）
+#   icd       : ICD-10 范围（仅用于注释，不影响计算）
+#   icd_code  : 文件名中使用的 ICD 标识符，必须与 Subtracted/ 目录下的文件名一致
+#               例：icd_code = "G30" 对应文件 "2006-2010_G30.csv"
+#   downloaded: 是否从 CDC WONDER 直接下载了该 ICD 的数据
+#               true  → 文件已下载，会被直接处理
+#               false → 不下载，由 sum_of 列出的成分相加合成（见下）
+#   sum_of    : 仅当 downloaded: false 时填写，列出用于合成该疾病的成分 icd_code 列表
+#               合成逻辑：对每个 county × age group，将成分的 Deaths 累加后重新计算 AAMR
+#
+# !! 添加新疾病时的关键规则 !!
+#
+# 规则 1：选择正确的疾病组
+#   cancer / ndd 组  → 增量法（incremental method）
+#       Di = ALL_{ICD}(基线+目标) - ALL(基线)
+#       CDC WONDER 下载的文件 ALL_{ICD} 是在"排除癌症/NDD以外所有疾病"的基础上
+#       额外加入目标疾病，因此两文件相减即得目标疾病的死亡数。
+#
+#   cvd / suicide 组 → 减法（subtraction method）
+#       Di = ALL_TRUE(全因) - ALL_{ICD}(残差)
+#       CDC WONDER 下载的文件 ALL_{ICD} 是在全因死亡中排除目标疾病，
+#       因此用真实全因死亡减去残差即得目标疾病的死亡数。
+#       ⚠ 需要额外下载 All_Cause_of_Death 文件（真实全因死亡）。
+#
+# 规则 2：downloaded 与 sum_of 的互斥关系
+#   downloaded: true  → 不填 sum_of（直接处理下载文件）
+#   downloaded: false → 必须填 sum_of（由成分合成，不从 CDC 下载）
+#   sum_of 中列出的每个成分必须是同一配置文件中已有的 icd_code，
+#   且这些成分本身 downloaded: true（必须已下载）。
+#
+# 规则 3：新增疾病组时更新代码
+#   cancer 和 ndd 组的 icd_code 自动进入 CANCER_NDD_CODES（增量法）。
+#   新增 cvd / suicide 以外的其他疾病组，需在代码中
+#   _build_cancer_ndd_codes() 的 group_key 列表里注册该组名，
+#   才能正确判断使用哪种减法方式。
+#
+diseases:
+  cvd:
+    overall:
+      fullname: "Disease of Circulatory System"
+      shortname: "CVD"
+      icd: "I00-I99"
+      icd_code: "I00_I99"
+      downloaded: true
+    subtypes:
+      ihd:
+        fullname: "Ischemic Heart Diseases"
+        shortname: "IHD"
+        icd: "I20-I25"
+        icd_code: "I20_I25"
+        downloaded: true
+      stroke:
+        fullname: "Cerebrovascular Diseases"
+        shortname: "Stroke"
+        icd: "I60-I69"
+        icd_code: "I60_I69"
+        downloaded: true
+      hd:
+        fullname: "Hypertensive Diseases"
+        shortname: "HD"
+        icd: "I10-I15"
+        icd_code: "I10_I15"
+        downloaded: true
+      hf:
+        fullname: "Heart Failure"
+        shortname: "HF"
+        icd: "I50"
+        icd_code: "I50"
+        downloaded: true
+  suicide:
+    overall:
+      fullname: "Intentional Self-harm"
+      shortname: "Suicide"
+      icd: "X60-X84, Y87.0"
+      icd_code: "X60_X84_Y87.0"
+      downloaded: false
+      sum_of: ["X60_X69", "X70_X84", "Y87.0"]
+    subtypes:
+      nvs:
+        fullname: "Non-violent Suicide (Poisoning)"
+        shortname: "NVS"
+        icd: "X60-X69"
+        icd_code: "X60_X69"
+        downloaded: true
+      vs:
+        fullname: "Violent Suicide"
+        shortname: "VS"
+        icd: "X70-X84"
+        icd_code: "X70_X84"
+        downloaded: true
+      si:
+        fullname: "Sequelae of Intentional Self-harm"
+        shortname: "SI"
+        icd: "Y87.0"
+        icd_code: "Y87.0"
+        downloaded: true
+  ndd:
+    overall:
+      fullname: "Neurodegenerative Disease"
+      shortname: "NDD"
+      icd: "G20, G30, G12.2, F01, F03"
+      icd_code: "G20_G30_G12.2_F01_F03"
+      downloaded: true
+    subtypes:
+      dementia:
+        fullname: "Dementia"
+        shortname: "Dementia"
+        icd: "G30, F01, F03"
+        icd_code: "G30_F01_F03"
+        downloaded: false
+        sum_of: ["G30", "F01", "F03"]
+      ad:
+        fullname: "Alzheimer's Disease"
+        shortname: "AD"
+        icd: "G30"
+        icd_code: "G30"
+        downloaded: true
+        summarize: false # merged into Dementia composite
+      vd:
+        fullname: "Vascular Dementia"
+        shortname: "VD"
+        icd: "F01"
+        icd_code: "F01"
+        downloaded: true
+        summarize: false # merged into Dementia composite
+      pd:
+        fullname: "Parkinson's Disease"
+        shortname: "PD"
+        icd: "G20"
+        icd_code: "G20"
+        downloaded: true
+      ud:
+        fullname: "Unspecified Dementia"
+        shortname: "UD"
+        icd: "F03"
+        icd_code: "F03"
+        downloaded: true
+        summarize: false # already included in Dementia composite (G30_F01_F03)
+      hd:
+        fullname: "Huntington's Disease"
+        shortname: "HD"
+        icd: "G10"
+        icd_code: "G10"
+        downloaded: true
+      als:
+        fullname: "Amyotrophic Lateral Sclerosis"
+        shortname: "ALS"
+        icd: "G12.2"
+        icd_code: "G12.2"
+        downloaded: true
+  cancer:
+    overall:
+      fullname: "All-site Cancer"
+      shortname: "Cancer"
+      icd: "C00-C97"
+      icd_code: "C00_C97"
+      downloaded: true
+    subtypes:
+      crc:
+        fullname: "Colorectal Cancer"
+        shortname: "Colorectal"
+        icd: "C18-C21"
+        icd_code: "C18_C21"
+        downloaded: true
+      hcc:
+        fullname: "Liver Cancer"
+        shortname: "Liver"
+        icd: "C22"
+        icd_code: "C22"
+        downloaded: true
+      panc:
+        fullname: "Pancreatic Cancer"
+        shortname: "Pancreatic"
+        icd: "C25"
+        icd_code: "C25"
+        downloaded: true
+      lungc:
+        fullname: "Lung Cancer"
+        shortname: "Lung"
+        icd: "C34"
+        icd_code: "C34"
+        downloaded: true
+      bc:
+        fullname: "Breast Cancer"
+        shortname: "Breast"
+        icd: "C50"
+        icd_code: "C50"
+        downloaded: true
+      ovc:
+        fullname: "Ovarian Cancer"
+        shortname: "Ovarian"
+        icd: "C56"
+        icd_code: "C56"
+        downloaded: true
+      proc:
+        fullname: "Prostate Cancer"
+        shortname: "Prostate"
+        icd: "C61"
+        icd_code: "C61"
+        downloaded: true
+      rcc:
+        fullname: "Kidney and Renal Pelvis Cancer"
+        shortname: "Kidney"
+        icd: "C64-C65"
+        icd_code: "C64_C65"
+        downloaded: true
+      nhl:
+        fullname: "Non-Hodgkin Lymphoma"
+        shortname: "NHL"
+        icd: "C82-C85"
+        icd_code: "C82_C85"
+        downloaded: true
+      leuk:
+        fullname: "Leukemia"
+        shortname: "Leukemia"
+        icd: "C91-C95"
+        icd_code: "C91_C95"
+        downloaded: true
+
 # brms 分析配置（Bayesian multilevel interval regression）
 # 核心优势：原生支持区间审查回归，能正确建模AAMR区间估计的不确定性
 # 与LMM对比：LMM使用点估计，BRMS使用区间估计，提供更准确的不确定性量化

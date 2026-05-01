@@ -22,30 +22,6 @@ from scipy.stats import gamma
 from typing import Any
 
 
-# ── Run control ──────────────────────────────────────────────────────────────
-# Set to 0 to skip cancer/NDD AAMR calculation (results already computed).
-RUN_CANCER_NDD = 0
-
-# Populated from config in main(); cancer and NDD icd_codes (incremental method group).
-CANCER_NDD_CODES: set = set()
-
-
-def _build_cancer_ndd_codes(config: dict) -> set:
-    """Collect all cancer and NDD icd_codes from diseases config (incremental method group)."""
-    diseases = config.get("diseases", {})
-    codes: set = set()
-    for group_key in ("cancer", "ndd"):
-        group = diseases.get(group_key, {})
-        overall = group.get("overall", {})
-        if overall.get("icd_code"):
-            codes.add(overall["icd_code"])
-        for subtype in group.get("subtypes", {}).values():
-            code = subtype.get("icd_code")
-            if code:
-                codes.add(code)
-    return codes
-
-
 # 2000 US Standard Population weights
 AGE_WEIGHTS = {
     "< 1 year": 0.013818,
@@ -314,8 +290,12 @@ def process_subtracted_file(file_path: Path) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Synthesis of sum_of diseases (config-driven)
+# Dementia synthesis (G30 + F01 + F03)
 # ---------------------------------------------------------------------------
+
+_DEMENTIA_CODES = ["G30", "F01", "F03"]
+_DEMENTIA_ICD = "G30_F01_F03"
+_DEMENTIA_PERIODS = ["2006-2010", "2011-2015", "2016-2020"]
 
 
 def _compute_aamr_from_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -344,6 +324,60 @@ def _compute_aamr_from_df(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(results).sort_values("COUNTY_FIPS")
 
 
+def synthesize_dementia(input_dir: Path, output_dir: Path) -> None:
+    """
+    Synthesize Dementia (G30_F01_F03) AAMR by summing deaths across G30, F01, F03.
+
+    For each time period, sums Deaths per county × age group (Population is shared
+    across ICD codes for the same county-age cell), then recalculates AAMR using the
+    same direct standardization (Fay-Feuer) method as individual diseases.
+    """
+    print(f"\n{'=' * 70}")
+    print("Synthesizing Dementia (G30+F01+F03) AAMR")
+    print(f"{'=' * 70}\n")
+
+    for period in _DEMENTIA_PERIODS:
+        component_dfs = []
+        pop_ref = None
+        missing = []
+
+        for code in _DEMENTIA_CODES:
+            fp = input_dir / f"{period}_{code}.csv"
+            if not fp.exists():
+                missing.append(code)
+                continue
+            t = pd.read_csv(fp, dtype={"County Code": str})
+            t = t[t["County Code"].notna() & (t["Population"] != "Missing")].copy()
+            t["Deaths"] = pd.to_numeric(t["Deaths"], errors="coerce").fillna(0)
+            t["Population"] = pd.to_numeric(t["Population"], errors="coerce").fillna(0)
+            if pop_ref is None:
+                pop_ref = t[["County Code", "Ten-Year Age Groups", "Population"]].copy()
+            component_dfs.append(t[["County Code", "Ten-Year Age Groups", "Deaths"]])
+
+        if missing:
+            print(f"  ⚠ Missing component file(s) for {period}: {missing}, skipping")
+            continue
+
+        combined = pd.concat(component_dfs, ignore_index=True)
+        death_sum = combined.groupby(
+            ["County Code", "Ten-Year Age Groups"], as_index=False
+        )["Deaths"].sum()
+        merged = death_sum.merge(
+            pop_ref, on=["County Code", "Ten-Year Age Groups"], how="left"
+        )
+
+        print(f"  Processing: {period}_{_DEMENTIA_ICD}.csv (synthesized)")
+        result_df = _compute_aamr_from_df(merged)
+        print(f"    ✓ Processed {len(result_df)} counties")
+        print(
+            f"      AAMR range: {result_df['AAMR'].min():.2f} - {result_df['AAMR'].max():.2f}"
+        )
+
+        out_path = output_dir / f"{period}_{_DEMENTIA_ICD}.csv"
+        result_df.to_csv(out_path, index=False)
+        print(f"    ✓ Saved to: {out_path.name}\n")
+
+
 def main():
     """Main execution function"""
     print("=" * 70)
@@ -351,10 +385,7 @@ def main():
     print("=" * 70)
 
     # Load configuration
-    project_root, config = load_config()
-
-    global CANCER_NDD_CODES
-    CANCER_NDD_CODES = _build_cancer_ndd_codes(config)
+    project_root = load_config()[0]
 
     # Set up paths
     input_dir = project_root / "Data/Original/CDC Triangulation/Subtracted"
@@ -375,7 +406,6 @@ def main():
         return
 
     print(f"\nFound {len(subtracted_files)} subtracted files")
-    print(f"RUN_CANCER_NDD = {RUN_CANCER_NDD}")
 
     # Process each file
     print("\n" + "=" * 70)
@@ -383,17 +413,12 @@ def main():
     print("=" * 70 + "\n")
 
     processed_count = 0
-    skipped_count = 0
 
     for file_path in sorted(subtracted_files):
         year_range, icd_code = parse_filename(file_path.name)
 
         if not year_range or not icd_code:
             print(f"  ⚠ Could not parse filename: {file_path.name}, skipping")
-            continue
-
-        if icd_code in CANCER_NDD_CODES and not RUN_CANCER_NDD:
-            skipped_count += 1
             continue
 
         # Process file
@@ -408,12 +433,14 @@ def main():
 
         processed_count += 1
 
+    # Synthesize Dementia (G30+F01+F03) AAMR
+    synthesize_dementia(input_dir, output_dir)
+
     # Final summary
     print("=" * 70)
     print("SUMMARY")
     print("=" * 70)
     print(f"Processed:     {processed_count} files")
-    print(f"Skipped:       {skipped_count} cancer/NDD files (RUN_CANCER_NDD={RUN_CANCER_NDD})")
     print(f"Output dir:    {output_dir}")
     print("\n✓ AAMR calculation completed successfully!")
 
