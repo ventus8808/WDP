@@ -392,31 +392,181 @@ pymc_analysis:
 #
 # !! 添加新疾病时的关键规则 !!
 #
-# 规则 1：选择正确的疾病组
-#   cancer / ndd 组  → 增量法（incremental method）
-#       Di = ALL_{ICD}(基线+目标) - ALL(基线)
-#       CDC WONDER 下载的文件 ALL_{ICD} 是在"排除癌症/NDD以外所有疾病"的基础上
-#       额外加入目标疾病，因此两文件相减即得目标疾病的死亡数。
+# 规则 1：所有疾病组均使用相同的减法方式（subtraction method）
+#   Di = ALL_TRUE(全因) - ALL_{ICD}(残差)
+#   CDC WONDER 下载的文件 ALL_{ICD} 是在全因死亡中排除目标疾病后的残差，
+#   用真实全因死亡（All_Cause_of_Death 文件）减去残差即得目标疾病死亡数。
+#   ⚠ 需要额外下载每个时期的 All_Cause_of_Death 文件。
 #
-#   cvd / suicide 组 → 减法（subtraction method）
-#       Di = ALL_TRUE(全因) - ALL_{ICD}(残差)
-#       CDC WONDER 下载的文件 ALL_{ICD} 是在全因死亡中排除目标疾病，
-#       因此用真实全因死亡减去残差即得目标疾病的死亡数。
-#       ⚠ 需要额外下载 All_Cause_of_Death 文件（真实全因死亡）。
+# 规则 2：downloaded / sum_of / summarize 字段说明
+#   downloaded: true  → 文件已从 CDC WONDER 下载，直接参与减法计算，不填 sum_of
+#   downloaded: false → 不下载，由 sum_of 列出的成分相加合成，必须填 sum_of
+#                       sum_of 成分必须在 Subtracted/ 目录中先于本条目存在
+#                       （成分先执行减法，再执行合成；config 中顺序即执行顺序）
+#   summarize: false  → 该条目仅作为其他合成条目的成分，不单独出现在汇总表中
 #
-# 规则 2：downloaded 与 sum_of 的互斥关系
-#   downloaded: true  → 不填 sum_of（直接处理下载文件）
-#   downloaded: false → 必须填 sum_of（由成分合成，不从 CDC 下载）
-#   sum_of 中列出的每个成分必须是同一配置文件中已有的 icd_code，
-#   且这些成分本身 downloaded: true（必须已下载）。
-#
-# 规则 3：新增疾病组时更新代码
-#   cancer 和 ndd 组的 icd_code 自动进入 CANCER_NDD_CODES（增量法）。
-#   新增 cvd / suicide 以外的其他疾病组，需在代码中
-#   _build_cancer_ndd_codes() 的 group_key 列表里注册该组名，
-#   才能正确判断使用哪种减法方式。
+# 规则 3：新增疾病组
+#   直接在 diseases 下新增组；代码通过 _build_icd_to_group() 自动读取全部组。
+#   如需跳过某组，在脚本顶部的 SKIP_GROUPS 中将该组名设为 0。
 #
 diseases:
+  liver:
+    overall:
+      fullname: "Chronic Liver Disease"
+      shortname: "CLD"
+      icd: "K70-K76+C22"
+      icd_code: "K70_K76_C22"
+      downloaded: false
+      sum_of: ["K70_K76", "C22"]
+    subtypes:
+      non_cancer_liver:
+        fullname: "Non-Cancer Liver Disease"
+        shortname: "Non-cancer CLD"
+        icd: "K70-K76"
+        icd_code: "K70_K76"
+        downloaded: true
+        show: false
+      alcoholic:
+        fullname: "Alcoholic liver disease"
+        shortname: "Alcoholic"
+        icd: "K70"
+        icd_code: "K70"
+        downloaded: true
+      k71:
+        fullname: "Toxic liver disease"
+        shortname: "K71"
+        icd: "K71"
+        icd_code: "K71"
+        downloaded: true
+        summarize: false # component of toxic_chronic composite
+        show: false
+      k73:
+        fullname: "Chronic hepatitis, NEC"
+        shortname: "K73"
+        icd: "K73"
+        icd_code: "K73"
+        downloaded: true
+        summarize: false # component of toxic_chronic composite
+        show: false
+      k74:
+        fullname: "Fibrosis and cirrhosis of liver"
+        shortname: "K74"
+        icd: "K74"
+        icd_code: "K74"
+        downloaded: true
+        summarize: false # component of toxic_chronic composite
+        show: false
+      toxic_chronic:
+        fullname: "Toxic and chronic liver disease"
+        shortname: "Toxic & chronic"
+        icd: "K71,K73,K74"
+        icd_code: "K71_K73_K74"
+        downloaded: false
+        sum_of: ["K71", "K73", "K74"]
+      non_alcoholic:
+        fullname: "Non-alcoholic liver disease"
+        shortname: "Non-alcoholic"
+        icd: "K76"
+        icd_code: "K76"
+        downloaded: true
+      hepatorenal_syndrome:
+        fullname: "Hepatorenal syndrome"
+        shortname: "HRS"
+        icd: "K76.7"
+        icd_code: "K76.7"
+        downloaded: true
+        show: false
+      liver_cancer:
+        fullname: "Liver cancer"
+        shortname: "Liver cancer"
+        icd: "C22"
+        icd_code: "C22"
+        downloaded: true
+
+  respiratory:
+    overall:
+      fullname: "Chronic Respiratory System Disease"
+      shortname: "CRD"
+      icd: "J40-J47+J60-J70+J84+D86+C34"
+      icd_code: "J40_J47_J60_J70_J84_D86_C34"
+      downloaded: false
+      sum_of: ["J40_J47_J60_J70_J84_D86", "C34"]
+    subtypes:
+      crd_no_lung:
+        fullname: "Non-cancer Chronic Respiratory Disease"
+        shortname: "Non-cancer CRD"
+        icd: "J40-J47+J60-J70+J84+D86"
+        icd_code: "J40_J47_J60_J70_J84_D86"
+        downloaded: true
+        summarize: false # component of CRD overall; not reported separately
+      copd:
+        fullname: "Chronic Obstructive Pulmonary Disease"
+        shortname: "COPD"
+        icd: "J43-J44"
+        icd_code: "J43_J44"
+        downloaded: true
+      asthma:
+        fullname: "Asthma"
+        shortname: "Asthma"
+        icd: "J45"
+        icd_code: "J45"
+        downloaded: true
+        show: false
+      ild:
+        fullname: "Interstitial Lung Disease"
+        shortname: "ILD"
+        icd: "J84+D86"
+        icd_code: "J84_D86"
+        downloaded: true
+      pneumoconiosis:
+        fullname: "Pneumoconiosis"
+        shortname: "Pneumoconiosis"
+        icd: "J60-J66"
+        icd_code: "J60_J66"
+        downloaded: true
+        show: false
+      lung_cancer:
+        fullname: "Lung cancer"
+        shortname: "Lung cancer"
+        icd: "C34"
+        icd_code: "C34"
+        downloaded: true
+  kidney:
+    overall:
+      fullname: "Chronic Kidney Disease"
+      shortname: "CKD"
+      icd: "N00-N29, C64-C65"
+      icd_code: "N00_N29_C64_C65"
+      downloaded: false
+      sum_of: ["N00_N29", "C64_C65"]
+    subtypes:
+      non_cancer_kidney_disease:
+        fullname: "Non-Cancer Kidney Disease"
+        shortname: "Non-cancer CKD"
+        icd: "N00-N29"
+        icd_code: "N00_N29"
+        downloaded: true
+        show: false
+      renal_failure:
+        fullname: "Renal Failure"
+        shortname: "RF"
+        icd: "N18-N19"
+        icd_code: "N18_N19"
+        downloaded: true
+      gti:
+        fullname: "Glomerular and renal tubulo-interstitial"
+        shortname: "GRTI"
+        icd: "N00-N15"
+        icd_code: "N00_N15"
+        downloaded: true
+        show: false
+      rcc:
+        fullname: "Kidney and Renal Pelvis Cancer"
+        shortname: "Kidney cancer"
+        icd: "C64-C65"
+        icd_code: "C64_C65"
+        downloaded: true
+
   cvd:
     overall:
       fullname: "Disease of Circulatory System"
@@ -482,7 +632,8 @@ diseases:
       shortname: "NDD"
       icd: "G20, G30, G12.2, F01, F03"
       icd_code: "G20_G30_G12.2_F01_F03"
-      downloaded: true
+      downloaded: False
+      sum_of: ["G30_F01_F03", "G20", "G10", "G12.2"]
     subtypes:
       dementia:
         fullname: "Dementia"
@@ -490,34 +641,12 @@ diseases:
         icd: "G30, F01, F03"
         icd_code: "G30_F01_F03"
         downloaded: false
-        sum_of: ["G30", "F01", "F03"]
-      ad:
-        fullname: "Alzheimer's Disease"
-        shortname: "AD"
-        icd: "G30"
-        icd_code: "G30"
-        downloaded: true
-        summarize: false # merged into Dementia composite
-      vd:
-        fullname: "Vascular Dementia"
-        shortname: "VD"
-        icd: "F01"
-        icd_code: "F01"
-        downloaded: true
-        summarize: false # merged into Dementia composite
       pd:
         fullname: "Parkinson's Disease"
         shortname: "PD"
         icd: "G20"
         icd_code: "G20"
         downloaded: true
-      ud:
-        fullname: "Unspecified Dementia"
-        shortname: "UD"
-        icd: "F03"
-        icd_code: "F03"
-        downloaded: true
-        summarize: false # already included in Dementia composite (G30_F01_F03)
       hd:
         fullname: "Huntington's Disease"
         shortname: "HD"
@@ -550,6 +679,7 @@ diseases:
         icd: "C22"
         icd_code: "C22"
         downloaded: true
+        show: false
       panc:
         fullname: "Pancreatic Cancer"
         shortname: "Pancreatic"
@@ -574,6 +704,7 @@ diseases:
         icd: "C56"
         icd_code: "C56"
         downloaded: true
+        show: false
       proc:
         fullname: "Prostate Cancer"
         shortname: "Prostate"
@@ -586,18 +717,21 @@ diseases:
         icd: "C64-C65"
         icd_code: "C64_C65"
         downloaded: true
+        show: false
       nhl:
         fullname: "Non-Hodgkin Lymphoma"
         shortname: "NHL"
         icd: "C82-C85"
         icd_code: "C82_C85"
         downloaded: true
+        show: false
       leuk:
         fullname: "Leukemia"
         shortname: "Leukemia"
         icd: "C91-C95"
         icd_code: "C91_C95"
         downloaded: true
+        show: false
 
 # brms 分析配置（Bayesian multilevel interval regression）
 # 核心优势：原生支持区间审查回归，能正确建模AAMR区间估计的不确定性
@@ -749,7 +883,7 @@ brms_analysis:
         "C81_C96", # Lymphoid/Hematologic
       ]
 
-    # EQI时期和AAMR时期的组合 - 与LMM all_scenarios对齐
+    # EQI时期和AAMR时期的组合
     scenario_combinations:
       - eqi_period: "0005"
         aamr_period: "2006-2010"
@@ -763,10 +897,22 @@ brms_analysis:
         aamr_period: "2011-2015"
         lag_years: 5
         scenario_name: "EQI0610_AAMR2011_2015"
+      - eqi_period: "0005"
+        aamr_period: "2016-2020"
+        lag_years: 15
+        scenario_name: "EQI0005_AAMR2016_2020"
       - eqi_period: "0610"
         aamr_period: "2016-2020"
         lag_years: 10
         scenario_name: "EQI0610_AAMR2016_2020"
+      - eqi_period: "0005"
+        aamr_period: "2021-2024"
+        lag_years: 20
+        scenario_name: "EQI0005_AAMR2021_2024"
+      - eqi_period: "0610"
+        aamr_period: "2021-2024"
+        lag_years: 15
+        scenario_name: "EQI0610_AAMR2021_2024"
 
     # 模型类型定义 - 两种不同的模型结构
     model_types:

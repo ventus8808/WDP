@@ -80,31 +80,29 @@ YEAR_RANGE_MAPPINGS = {
 DIRECT_YEARS = {"2021-2024"}
 
 # ── Run control ──────────────────────────────────────────────────────────────
-# Set to 0 to skip cancer/NDD subtraction (results already computed).
-# CVD and suicide (non-cancer/NDD) always run.
-RUN_CANCER_NDD = 0
+# Set a disease group to 0 to skip it entirely. Any other value (or absent key) runs it.
+# All groups run by default. Uncomment lines below to skip:
+SKIP_GROUPS: dict = {
+    # "cancer": 0,
+    # "ndd": 0,
+}
 
-# ICD codes that use the incremental method (populated from config in main()):
-#   Di = ALL_{ICD}(baseline + target) - ALL(baseline)
-# All other codes use the subtraction method:
-#   Di = ALL_TRUE(total) - ALL_{ICD}(residual)
-CANCER_NDD_CODES: set = set()
+# Maps icd_code → disease group key; populated from config in main().
+ICD_TO_GROUP: dict = {}
 
 
-def _build_cancer_ndd_codes(config: dict) -> set:
-    """Collect all cancer and NDD icd_codes from diseases config (incremental method group)."""
-    diseases = config.get("diseases", {})
-    codes: set = set()
-    for group_key in ("cancer", "ndd"):
-        group = diseases.get(group_key, {})
-        overall = group.get("overall", {})
+def _build_icd_to_group(config: dict) -> dict:
+    """Build {icd_code: group_key} from diseases config for group-based skip checks."""
+    mapping: dict = {}
+    for group_key, group_cfg in config.get("diseases", {}).items():
+        overall = group_cfg.get("overall", {})
         if overall.get("icd_code"):
-            codes.add(overall["icd_code"])
-        for subtype in group.get("subtypes", {}).values():
+            mapping[overall["icd_code"]] = group_key
+        for subtype in group_cfg.get("subtypes", {}).values():
             code = subtype.get("icd_code")
             if code:
-                codes.add(code)
-    return codes
+                mapping[code] = group_key
+    return mapping
 
 
 def _get_sum_of_specs(config: dict) -> list:
@@ -129,14 +127,13 @@ def _get_sum_of_specs(config: dict) -> list:
     return specs
 
 
-def synthesize_sum_of_subtracted(output_dir: Path, config: dict, run_cancer_ndd: bool):
+def synthesize_sum_of_subtracted(output_dir: Path, config: dict):
     """
     Phase 5: Create composite disease files in Subtracted/ by summing component files.
 
     For each config entry with downloaded:false and sum_of, reads the component
     subtracted CSVs, sums Deaths per County Code × age group, and writes a new file.
-    Cancer/NDD composites (e.g. Dementia = G30+F01+F03) are only created when
-    run_cancer_ndd=True; all others (e.g. Suicide = X60_X69+X70_X84+Y87.0) always run.
+    Groups with SKIP_GROUPS[group_key] == 0 are skipped.
     Suppressed deaths (Quality_Flag=Suppressed, Deaths=0) contribute 0 to the sum.
     Missing deaths (Deaths=NA) are treated as 0 for summation purposes.
     Existing output files are skipped.
@@ -158,15 +155,13 @@ def synthesize_sum_of_subtracted(output_dir: Path, config: dict, run_cancer_ndd:
     })
     print(f"Detected periods: {periods}")
 
-    cancer_ndd_codes = _build_cancer_ndd_codes(config)
-
     for spec in specs:
         composite_code = spec["icd_code"]
         components = spec["sum_of"]
-        is_cancer_ndd = composite_code in cancer_ndd_codes
+        group_key = spec.get("group_key", "")
 
-        if is_cancer_ndd and not run_cancer_ndd:
-            print(f"\nSkipping {composite_code} (cancer/NDD composite, run_cancer_ndd=False)")
+        if SKIP_GROUPS.get(group_key) == 0:
+            print(f"\nSkipping {composite_code} (group '{group_key}' disabled in SKIP_GROUPS)")
             continue
 
         print(f"\nSynthesizing {composite_code} from {components}...")
@@ -274,7 +269,7 @@ def read_file_metadata(file_path: Path) -> Dict[str, str]:
 
     query_param_idx = -1
     for i in range(len(lines) - 1, max(0, len(lines) - 500), -1):
-        if '"Query Parameters:"' in lines[i]:
+        if 'Query Parameters:' in lines[i]:
             query_param_idx = i
             break
 
@@ -641,13 +636,14 @@ def load_population_2021_2024(
     return result
 
 
-def subtract_deaths(merged_dir: Path, output_dir: Path, run_cancer_ndd: bool = True):
+def subtract_deaths(merged_dir: Path, output_dir: Path):
     """
     Phase 3: Calculate target disease deaths by subtraction (pre-2021 years only).
 
-    Two methods depending on disease group:
-    - Cancer/NDD (incremental):   Di = ALL_{ICD}(baseline+target) - ALL(baseline)
-    - CVD/suicide (subtraction):  Di = ALL_TRUE(total) - ALL_{ICD}(residual)
+    All disease groups use the same method:
+    - Subtraction: Di = ALL_TRUE(total) - ALL_{ICD}(residual)
+
+    Groups with SKIP_GROUPS[group_key] == 0 are skipped entirely.
     """
     print("\n" + "=" * 70)
     print("PHASE 3: Calculate Target Disease Deaths (Subtraction)")
@@ -659,13 +655,11 @@ def subtract_deaths(merged_dir: Path, output_dir: Path, run_cancer_ndd: bool = T
 
     year_ranges = set()
     icd_files: Dict[str, Dict[str, Path]] = {}
-    all_files_dict: Dict[str, Path] = {}
     true_allcause_dict: Dict[str, Path] = {}
 
     for file_path in all_files:
         filename = file_path.name
 
-        # True all-cause files (for CVD/suicide subtraction method)
         if re.match(r"^\d{4}-\d{4} All_Cause_of_Death\.csv$", filename):
             year_match = re.match(r"^(\d{4}-\d{4})", filename)
             if year_match:
@@ -682,9 +676,7 @@ def subtract_deaths(merged_dir: Path, output_dir: Path, run_cancer_ndd: bool = T
 
         year_ranges.add(year_range)
 
-        if filename_info["icd"] is None:
-            all_files_dict[year_range] = file_path
-        else:
+        if filename_info["icd"] is not None:
             icd_code = filename_info["icd"]
             if year_range not in icd_files:
                 icd_files[year_range] = {}
@@ -698,61 +690,39 @@ def subtract_deaths(merged_dir: Path, output_dir: Path, run_cancer_ndd: bool = T
     for year_range in sorted(year_ranges):
         print(f"\n{year_range}:")
 
-        if year_range not in all_files_dict:
-            print(f"  ⚠ Missing ALL (incremental baseline) file for {year_range}, skipping")
-            continue
-
         if year_range not in icd_files:
             print(f"  ⚠ No ICD files for {year_range}, skipping")
             continue
 
-        # Incremental baseline (cancer/NDD method)
-        all_file = all_files_dict[year_range]
-        print(f"  Incremental baseline (cancer/NDD): {all_file.name}")
-        df_all, _ = extract_data_rows(all_file, keep_metadata=False)
-
-        # True all-cause total (CVD/suicide method)
         df_true_all = None
         if year_range in true_allcause_dict:
             true_file = true_allcause_dict[year_range]
-            print(f"  True all-cause (CVD/suicide):     {true_file.name}")
+            print(f"  True all-cause: {true_file.name}")
             df_true_all, _ = extract_data_rows(true_file, keep_metadata=False)
         else:
-            print(f"  ⚠ No true all-cause file for {year_range} (CVD/suicide will be skipped)")
+            print(f"  ⚠ No true all-cause file for {year_range} — all ICD codes will be skipped")
 
         for icd_code, icd_file in sorted(icd_files[year_range].items()):
-            is_cancer_ndd = icd_code in CANCER_NDD_CODES
-
-            if is_cancer_ndd and not run_cancer_ndd:
-                print(f"    Skipping {icd_code} (cancer/NDD, RUN_CANCER_NDD=0)")
+            group_key = ICD_TO_GROUP.get(icd_code, "")
+            if SKIP_GROUPS.get(group_key) == 0:
+                print(f"    Skipping {icd_code} (group '{group_key}' disabled in SKIP_GROUPS)")
                 continue
 
-            if not is_cancer_ndd and df_true_all is None:
+            if df_true_all is None:
                 print(f"    ⚠ Skipping {icd_code} (no true all-cause file)")
                 continue
 
-            print(f"    Processing {icd_code} ({'incremental' if is_cancer_ndd else 'subtraction'})...")
+            print(f"    Processing {icd_code} (subtraction)...")
 
             df_icd, _ = extract_data_rows(icd_file, keep_metadata=False)
 
-            if is_cancer_ndd:
-                # Incremental method: Di = ALL_{ICD}(baseline+target) - ALL(baseline)
-                # df_all → _Residual, df_icd → _Total  (Di = Total - Residual)
-                merged = df_all.merge(
-                    df_icd,
-                    on=["County Code", "Ten-Year Age Groups"],
-                    suffixes=("_Residual", "_Total"),
-                    how="inner",
-                )
-            else:
-                # Subtraction method: Di = ALL_TRUE(total) - ALL_{ICD}(residual)
-                # df_true_all → _Total, df_icd → _Residual  (Di = Total - Residual)
-                merged = df_true_all.merge(
-                    df_icd,
-                    on=["County Code", "Ten-Year Age Groups"],
-                    suffixes=("_Total", "_Residual"),
-                    how="inner",
-                )
+            # Subtraction method: Di = ALL_TRUE(total) - ALL_{ICD}(residual)
+            merged = df_true_all.merge(
+                df_icd,
+                on=["County Code", "Ten-Year Age Groups"],
+                suffixes=("_Total", "_Residual"),
+                how="inner",
+            )
 
             results = []
             for _, row in merged.iterrows():
@@ -803,10 +773,9 @@ def write_direct_deaths(merged_dir: Path, input_dir: Path, output_dir: Path):
     """
     Phase 4: Process 2021-2024 death files with population attached.
 
-    - Cancer/NDD codes: deaths written directly (no triangulation baseline available).
-    - CVD/suicide codes: Di = ALL_TRUE(total) - ALL_{ICD}(residual), same subtraction
-      method as 2006-2020.  Requires '{year} All_Cause_of_Death.csv' in merged_dir.
-
+    All codes use: Di = ALL_TRUE(total) - ALL_{ICD}(residual)
+    Requires '{year} All_Cause_of_Death.csv' in merged_dir.
+    Groups with SKIP_GROUPS[group_key] == 0 are skipped.
     Suppressed deaths treated as 0.  NaN County Code rows are dropped.
     """
     print("\n" + "=" * 70)
@@ -824,7 +793,6 @@ def write_direct_deaths(merged_dir: Path, input_dir: Path, output_dir: Path):
         print(f"\nLoading population for {year_range}...")
         pop_lookup = load_population_2021_2024(input_dir, year_range)
 
-        # True all-cause file for CVD/suicide subtraction
         true_allcause_path = merged_dir / f"{year_range} All_Cause_of_Death.csv"
         df_true_all = None
         if true_allcause_path.exists():
@@ -832,7 +800,7 @@ def write_direct_deaths(merged_dir: Path, input_dir: Path, output_dir: Path):
             df_true_all, _ = extract_data_rows(true_allcause_path, keep_metadata=False)
             df_true_all = df_true_all[df_true_all["County Code"].notna()].copy()
         else:
-            print(f"  ⚠ No true all-cause file for {year_range} — CVD/suicide will be skipped")
+            print(f"  ⚠ No true all-cause file for {year_range} — all ICD codes will be skipped")
 
         for merged_file in merged_files:
             filename_info = parse_filename(
@@ -842,69 +810,44 @@ def write_direct_deaths(merged_dir: Path, input_dir: Path, output_dir: Path):
                 continue
 
             icd_code = filename_info["icd"]
-            is_cancer_ndd = icd_code in CANCER_NDD_CODES
+            group_key = ICD_TO_GROUP.get(icd_code, "")
+            if SKIP_GROUPS.get(group_key) == 0:
+                print(f"  Skipping {icd_code} (group '{group_key}' disabled in SKIP_GROUPS)")
+                continue
 
-            if not is_cancer_ndd and df_true_all is None:
+            if df_true_all is None:
                 print(f"  ⚠ Skipping {icd_code} (no true all-cause file)")
                 continue
 
-            print(f"  Processing {icd_code} ({'direct' if is_cancer_ndd else 'subtraction'})...")
+            print(f"  Processing {icd_code} (subtraction)...")
 
             df_icd, _ = extract_data_rows(merged_file, keep_metadata=False)
             df_icd = df_icd[df_icd["County Code"].notna()].copy()
 
+            # Subtraction method: Di = ALL_TRUE(total) - ALL_{ICD}(residual)
+            merged = df_true_all.merge(
+                df_icd,
+                on=["County Code", "Ten-Year Age Groups"],
+                suffixes=("_Total", "_Residual"),
+                how="inner",
+            )
             results = []
+            for _, row in merged.iterrows():
+                county = str(row["County Code"]).zfill(5)
+                age_group = row["Ten-Year Age Groups"]
 
-            if is_cancer_ndd:
-                # Direct write: deaths come from the ICD file as-is
-                for _, row in df_icd.iterrows():
-                    county = str(row["County Code"]).zfill(5)
-                    age_group = row["Ten-Year Age Groups"]
-
-                    death_val, is_suppressed, is_missing = parse_death_value(row["Deaths"])
-                    if is_missing:
-                        deaths = None
-                        flag = "Missing"
-                    elif is_suppressed:
-                        deaths = 0
-                        flag = "Suppressed"
-                    else:
-                        deaths = death_val
-                        flag = "Clean"
-
-                    population = pop_lookup.get(county, {}).get(age_group, None)
-                    results.append({
-                        "County Code": county,
-                        "Ten-Year Age Groups": age_group,
-                        "Ten-Year Age Groups Code": row.get("Ten-Year Age Groups Code", ""),
-                        "Deaths": deaths,
-                        "Population": population,
-                        "Quality_Flag": flag,
-                    })
-            else:
-                # Subtraction method: Di = ALL_TRUE(total) - ALL_{ICD}(residual)
-                merged = df_true_all.merge(
-                    df_icd,
-                    on=["County Code", "Ten-Year Age Groups"],
-                    suffixes=("_Total", "_Residual"),
-                    how="inner",
+                di, quality_flag = calculate_target_deaths(
+                    row["Deaths_Total"], row["Deaths_Residual"]
                 )
-                for _, row in merged.iterrows():
-                    county = str(row["County Code"]).zfill(5)
-                    age_group = row["Ten-Year Age Groups"]
-
-                    di, quality_flag = calculate_target_deaths(
-                        row["Deaths_Total"], row["Deaths_Residual"]
-                    )
-                    population = pop_lookup.get(county, {}).get(age_group, None)
-                    results.append({
-                        "County Code": county,
-                        "Ten-Year Age Groups": age_group,
-                        "Ten-Year Age Groups Code": row.get("Ten-Year Age Groups Code_Residual", ""),
-                        "Deaths": di,
-                        "Population": population,
-                        "Quality_Flag": quality_flag,
-                    })
+                population = pop_lookup.get(county, {}).get(age_group, None)
+                results.append({
+                    "County Code": county,
+                    "Ten-Year Age Groups": age_group,
+                    "Ten-Year Age Groups Code": row.get("Ten-Year Age Groups Code_Residual", ""),
+                    "Deaths": di,
+                    "Population": population,
+                    "Quality_Flag": quality_flag,
+                })
 
             result_df = pd.DataFrame(results)
 
@@ -935,8 +878,8 @@ def main():
 
     project_root, config = load_config()
 
-    global CANCER_NDD_CODES
-    CANCER_NDD_CODES = _build_cancer_ndd_codes(config)
+    global ICD_TO_GROUP
+    ICD_TO_GROUP = _build_icd_to_group(config)
 
     input_dir = project_root / "Data/Original/CDC Triangulation/NotMerged"
     merged_dir = project_root / "Data/Original/CDC Triangulation/Merged"
@@ -956,7 +899,7 @@ def main():
 
     print(f"\nFound {len(csv_files)} death files, {len(pop_files)} population files, "
           f"{len(true_allcause_files)} true all-cause files")
-    print(f"RUN_CANCER_NDD = {RUN_CANCER_NDD}")
+    print(f"SKIP_GROUPS = {SKIP_GROUPS}")
 
     # Phase 1: Validation
     print("\n" + "=" * 70)
@@ -1024,13 +967,13 @@ def main():
     merge_true_allcause_files(input_dir, merged_dir)
 
     # Phase 3: Subtraction (pre-2021 years)
-    subtract_deaths(merged_dir, subtracted_dir, run_cancer_ndd=bool(RUN_CANCER_NDD))
+    subtract_deaths(merged_dir, subtracted_dir)
 
     # Phase 4: Direct output for 2021-2024 with population attached
     write_direct_deaths(merged_dir, input_dir, subtracted_dir)
 
     # Phase 5: Synthesize sum_of disease composites in Subtracted/
-    synthesize_sum_of_subtracted(subtracted_dir, config, run_cancer_ndd=bool(RUN_CANCER_NDD))
+    synthesize_sum_of_subtracted(subtracted_dir, config)
 
     print("\n" + "=" * 70)
     print("SUMMARY")
@@ -1038,7 +981,7 @@ def main():
     print(f"Validated:      {total_files} death files "
           f"({len(pop_files)} population + {len(true_allcause_files)} all-cause files skipped)")
     print(f"Merged:         {len(file_groups)} output files")
-    print(f"RUN_CANCER_NDD: {RUN_CANCER_NDD}")
+    print(f"SKIP_GROUPS:    {SKIP_GROUPS}")
     print(f"Merged dir:     {merged_dir}")
     print(f"Subtracted dir: {subtracted_dir}")
     print("\n✓ All phases completed successfully!")

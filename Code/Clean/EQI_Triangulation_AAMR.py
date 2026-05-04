@@ -23,27 +23,29 @@ from typing import Any
 
 
 # ── Run control ──────────────────────────────────────────────────────────────
-# Set to 0 to skip cancer/NDD AAMR calculation (results already computed).
-RUN_CANCER_NDD = 0
+# Set a disease group to 0 to skip its AAMR calculation. Any other value (or absent key) runs it.
+# All groups run by default. Uncomment lines below to skip:
+SKIP_GROUPS: dict = {
+    # "cancer": 0,
+    # "ndd": 0,
+}
 
-# Populated from config in main(); cancer and NDD icd_codes (incremental method group).
-CANCER_NDD_CODES: set = set()
+# Maps icd_code → disease group key; populated from config in main().
+ICD_TO_GROUP: dict = {}
 
 
-def _build_cancer_ndd_codes(config: dict) -> set:
-    """Collect all cancer and NDD icd_codes from diseases config (incremental method group)."""
-    diseases = config.get("diseases", {})
-    codes: set = set()
-    for group_key in ("cancer", "ndd"):
-        group = diseases.get(group_key, {})
-        overall = group.get("overall", {})
+def _build_icd_to_group(config: dict) -> dict:
+    """Build {icd_code: group_key} from diseases config for group-based skip checks."""
+    mapping: dict = {}
+    for group_key, group_cfg in config.get("diseases", {}).items():
+        overall = group_cfg.get("overall", {})
         if overall.get("icd_code"):
-            codes.add(overall["icd_code"])
-        for subtype in group.get("subtypes", {}).values():
+            mapping[overall["icd_code"]] = group_key
+        for subtype in group_cfg.get("subtypes", {}).values():
             code = subtype.get("icd_code")
             if code:
-                codes.add(code)
-    return codes
+                mapping[code] = group_key
+    return mapping
 
 
 # 2000 US Standard Population weights
@@ -353,8 +355,8 @@ def main():
     # Load configuration
     project_root, config = load_config()
 
-    global CANCER_NDD_CODES
-    CANCER_NDD_CODES = _build_cancer_ndd_codes(config)
+    global ICD_TO_GROUP
+    ICD_TO_GROUP = _build_icd_to_group(config)
 
     # Set up paths
     input_dir = project_root / "Data/Original/CDC Triangulation/Subtracted"
@@ -375,7 +377,7 @@ def main():
         return
 
     print(f"\nFound {len(subtracted_files)} subtracted files")
-    print(f"RUN_CANCER_NDD = {RUN_CANCER_NDD}")
+    print(f"SKIP_GROUPS = {SKIP_GROUPS}")
 
     # Process each file
     print("\n" + "=" * 70)
@@ -392,7 +394,8 @@ def main():
             print(f"  ⚠ Could not parse filename: {file_path.name}, skipping")
             continue
 
-        if icd_code in CANCER_NDD_CODES and not RUN_CANCER_NDD:
+        group_key = ICD_TO_GROUP.get(icd_code, "")
+        if SKIP_GROUPS.get(group_key) == 0:
             skipped_count += 1
             continue
 
@@ -413,7 +416,7 @@ def main():
     print("SUMMARY")
     print("=" * 70)
     print(f"Processed:     {processed_count} files")
-    print(f"Skipped:       {skipped_count} cancer/NDD files (RUN_CANCER_NDD={RUN_CANCER_NDD})")
+    print(f"Skipped:       {skipped_count} files (SKIP_GROUPS={SKIP_GROUPS})")
     print(f"Output dir:    {output_dir}")
     print("\n✓ AAMR calculation completed successfully!")
 

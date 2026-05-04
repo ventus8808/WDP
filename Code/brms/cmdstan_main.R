@@ -19,7 +19,7 @@ utils::globalVariables(c('EQI','EQI_Air','EQI_Water','EQI_Land','EQI_Built','EQI
 option_list <- list(
   make_option(c("--data"), type="character", default="Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv", help="Input interval data"),
   make_option(c("--output-dir"), type="character", default="Result/brms", help="Output directory"),
-  make_option(c("--cancer-types"), type="character", default=NA, help="Comma separated ICD codes"),
+  make_option(c("--outcomes"), type="character", default=NA, help="Comma separated ICD codes"),
   make_option(c("--chains"), type="integer", default=4),
   make_option(c("--iter"), type="integer", default=2000),
   make_option(c("--warmup"), type="integer", default=1000),
@@ -47,7 +47,7 @@ project_root <- normalizePath(".")
 path <- file.path(project_root,opt$data); if(!file.exists(path)) stop("Data not found: ", path)
 dt <- fread(path)
 
-req <- c("COUNTY_FIPS","EQI_Period","Time_Period","Lag_Years","Cancer_Type","AAMR_Lower","AAMR_Upper","Smoking_Rate","RUCC","EQI","EQI_Air","EQI_Water","EQI_Land","EQI_Built","EQI_Social")
+req <- c("COUNTY_FIPS","EQI_Period","Time_Period","Lag_Years","Outcome","AAMR_Lower","AAMR_Upper","Smoking_Rate","RUCC","EQI","EQI_Air","EQI_Water","EQI_Land","EQI_Built","EQI_Social")
 miss <- setdiff(req, names(dt)); if(length(miss)) stop("Missing cols: ", paste(miss,collapse=","))
 
 if(!"State_FIPS" %in% names(dt)) dt[, State_FIPS := substr(sprintf("%05s", COUNTY_FIPS),1,2)]
@@ -63,13 +63,15 @@ scenario_list <- list(
   list(key="EQI0005_AAMR2006_2010", eqi="2000-2005", aamr="2006-2010", lag=5),
   list(key="EQI0005_AAMR2011_2015", eqi="2000-2005", aamr="2011-2015", lag=10),
   list(key="EQI0005_AAMR2016_2020", eqi="2000-2005", aamr="2016-2020", lag=15),
+  list(key="EQI0005_AAMR2021_2024", eqi="2000-2005", aamr="2021-2024", lag=20),
   list(key="EQI0610_AAMR2011_2015", eqi="2006-2010", aamr="2011-2015", lag=5),
-  list(key="EQI0610_AAMR2016_2020", eqi="2006-2010", aamr="2016-2020", lag=10)
+  list(key="EQI0610_AAMR2016_2020", eqi="2006-2010", aamr="2016-2020", lag=10),
+  list(key="EQI0610_AAMR2021_2024", eqi="2006-2010", aamr="2021-2024", lag=15)
 )
 
-all_cancers <- sort(unique(dt$Cancer_Type))
-selected <- if (is.na(opt$`cancer-types`)) all_cancers else { reqc <- str_split(opt$`cancer-types`,",",simplify=TRUE) |> as.vector() |> str_trim(); inv <- setdiff(reqc,all_cancers); if(length(inv)) stop("Invalid cancer types: ", paste(inv,collapse=",")); reqc }
-message("Cancer types to analyze: ", paste(selected,collapse=","))
+all_outcomes <- sort(unique(dt$Outcome))
+selected <- if (is.na(opt$`outcomes`)) all_outcomes else { reqc <- str_split(opt$`outcomes`,",",simplify=TRUE) |> as.vector() |> str_trim(); inv <- setdiff(reqc,all_outcomes); if(length(inv)) stop("Invalid outcomes: ", paste(inv,collapse=",")); reqc }
+message("Outcomes to analyze: ", paste(selected,collapse=","))
 
 out_dir <- file.path(project_root,opt$`output-dir`); if(!dir.exists(out_dir)) dir.create(out_dir,recursive=TRUE)
 
@@ -163,12 +165,12 @@ extract_quintiles <- function(draw_df, names_vec, prefix){
   out
 }
 
-for(cancer in selected){
-  message("===== Disease: ", cancer, " =====")
-  outfile <- file.path(out_dir, paste0(cancer, "_main.csv"))
+for(outcome in selected){
+  message("===== Outcome: ", outcome, " =====")
+  outfile <- file.path(out_dir, paste0(outcome, "_main.csv"))
   for(sc in scenario_list){
     scen_key <- sc$key; eqi_p <- sc$eqi; aamr_p <- sc$aamr; lagv <- sc$lag
-    scen_dt <- dt[EQI_Period==eqi_p & Time_Period==aamr_p & Cancer_Type==cancer]
+    scen_dt <- dt[EQI_Period==eqi_p & Time_Period==aamr_p & Outcome==outcome]
     if(nrow(scen_dt) < opt$`min-n`){ message("[Skip] Scenario ", scen_key, " overall n=", nrow(scen_dt)); next }
     eqi_out <- gsub('-', '_', eqi_p); aamr_out <- gsub('-', '_', aamr_p)
     layers <- c("Overall", paste0("RUCC",1:4))
@@ -200,7 +202,7 @@ for(cancer in selected){
         summ_over <- posterior::summarize_draws(fit_overall$draws("beta"))
         met_over <- extract_quintile_metrics(draws, des_overall$names, "EQI_factor", summ_over)
         row_over <- tibble(
-          ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag,"EQI"),
+          ICD_Code=outcome, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag,"EQI"),
           Q1=q_over$Q1, Q2=q_over$Q2, Q3=q_over$Q3, Q4=q_over$Q4, Q5=q_over$Q5,
           Q2_p=met_over$Q2_p, Q3_p=met_over$Q3_p, Q4_p=met_over$Q4_p, Q5_p=met_over$Q5_p,
           Q2_rhat=sprintf("%.4f", met_over$Q2_rhat), Q3_rhat=sprintf("%.4f", met_over$Q3_rhat), Q4_rhat=sprintf("%.4f", met_over$Q4_rhat), Q5_rhat=sprintf("%.4f", met_over$Q5_rhat),
@@ -226,7 +228,7 @@ for(cancer in selected){
           qd <- extract_quintiles(draws_m, des_multi$names, dom)
           md <- extract_quintile_metrics(draws_m, des_multi$names, dom, summ_m)
           row_dom <- tibble(
-            ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag, sub("_factor","",dom)),
+            ICD_Code=outcome, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model=paste0(layer_tag, sub("_factor","",dom)),
             Q1=qd$Q1, Q2=qd$Q2, Q3=qd$Q3, Q4=qd$Q4, Q5=qd$Q5,
             Q2_p=md$Q2_p, Q3_p=md$Q3_p, Q4_p=md$Q4_p, Q5_p=md$Q5_p,
             Q2_rhat=sprintf("%.4f", md$Q2_rhat), Q3_rhat=sprintf("%.4f", md$Q3_rhat), Q4_rhat=sprintf("%.4f", md$Q4_rhat), Q5_rhat=sprintf("%.4f", md$Q5_rhat),
@@ -239,6 +241,6 @@ for(cancer in selected){
       }
     }
   }
-  message("===== Completed: ", cancer, " =====")
+  message("===== Completed: ", outcome, " =====")
 }
 message("All requested analyses complete. Output directory: ", out_dir)
