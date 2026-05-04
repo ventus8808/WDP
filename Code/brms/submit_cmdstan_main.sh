@@ -72,7 +72,7 @@ if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   Rscript - <<'RS'
   suppressPackageStartupMessages({library(data.table)})
   # Load main data
-  main_path <- "Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv"
+  main_path <- "Data/Processed/df_EQI_AAMR_Triangulation/df_Main.csv"
   if (file.exists(main_path)) {
     dt <- fread(main_path, select = "Outcome")
     u <- unique(dt[, .(Outcome)])
