@@ -14,10 +14,10 @@ suppressPackageStartupMessages({
   library(cmdstanr)
   library(posterior)
 })
-utils::globalVariables(c("EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social", "Smoking_Rate", "State_FIPS"))
+utils::globalVariables(c("EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social", "State_FIPS"))
 
 option_list <- list(
-  make_option(c("--data"), type = "character", default = "Data/Processed/df_EQI_AAMR_Triangulation/df_Main.csv", help = "Input interval data"),
+  make_option(c("--data"), type = "character", default = "Data/Processed/df/df_Main.csv", help = "Input interval data"),
   make_option(c("--output-dir"), type = "character", default = "Result/brms", help = "Output directory"),
   make_option(c("--outcomes"), type = "character", default = NA, help = "Comma separated ICD codes"),
   make_option(c("--chains"), type = "integer", default = 4),
@@ -55,7 +55,7 @@ path <- file.path(project_root, opt$data)
 if (!file.exists(path)) stop("Data not found: ", path)
 dt <- fread(path)
 
-req <- c("COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Outcome", "AAMR_Lower", "AAMR_Upper", "Smoking_Rate", "RUCC", "EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social")
+req <- c("COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Outcome", "AAMR_Lower", "AAMR_Upper", "RUCC", "EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social")
 miss <- setdiff(req, names(dt))
 if (length(miss)) stop("Missing cols: ", paste(miss, collapse = ","))
 
@@ -94,28 +94,12 @@ message("Outcomes to analyze: ", paste(selected, collapse = ","))
 out_dir <- file.path(project_root, opt$`output-dir`)
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
-sig_mark <- function(p) {
-  if (is.na(p)) {
-    return("")
-  }
-  if (p < 0.001) {
-    return("***")
-  }
-  if (p < 0.01) {
-    return("**")
-  }
-  if (p < 0.05) {
-    return("*")
-  }
-  ""
-}
 format_cell <- function(draws) {
   if (length(draws) == 0) {
     return("")
   }
   ci <- quantile(draws, c(0.025, 0.975), na.rm = TRUE)
-  p <- 2 * min(mean(draws > 0), mean(draws < 0))
-  sprintf("%0.2f(%0.2f,%0.2f)%s", mean(draws), ci[1], ci[2], sig_mark(p))
+  sprintf("%0.2f(%0.2f,%0.2f)", mean(draws), ci[1], ci[2])
 }
 append_rows <- function(path, df) {
   if (!file.exists(path)) write_csv(df, path) else suppressWarnings(write.table(df, path, sep = ",", col.names = FALSE, row.names = FALSE, append = TRUE))
@@ -171,10 +155,10 @@ extract_quintile_metrics <- function(draw_df, names_vec, prefix, summ_df) {
   out
 }
 
-build_design_overall <- function(d) { # Intercept + Smoking + EQI Q2..Q5
+build_design_overall <- function(d) {
   d <- d %>% mutate(EQI_factor = factor(EQI, levels = 1:5))
-  d <- d[complete.cases(d[, c("Smoking_Rate", "EQI_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS")]), ]
-  mm <- model.matrix(~ Smoking_Rate + EQI_factor, d, contrasts.arg = list(EQI_factor = contr.treatment(5)))
+  d <- d[complete.cases(d[, c("EQI_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS")]), ]
+  mm <- model.matrix(~ EQI_factor, d, contrasts.arg = list(EQI_factor = contr.treatment(5)))
   colnames(mm) <- make.names(colnames(mm))
   list(X = mm, names = colnames(mm), df = d)
 }
@@ -187,8 +171,8 @@ build_design_multi <- function(d) {
     EQI_Built_factor = factor(EQI_Built, levels = 1:5),
     EQI_Social_factor = factor(EQI_Social, levels = 1:5)
   )
-  d <- d[complete.cases(d[, c("Smoking_Rate", "EQI_Air_factor", "EQI_Water_factor", "EQI_Land_factor", "EQI_Built_factor", "EQI_Social_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS")]), ]
-  form <- as.formula("~ Smoking_Rate + EQI_Air_factor + EQI_Water_factor + EQI_Land_factor + EQI_Built_factor + EQI_Social_factor")
+  d <- d[complete.cases(d[, c("EQI_Air_factor", "EQI_Water_factor", "EQI_Land_factor", "EQI_Built_factor", "EQI_Social_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS")]), ]
+  form <- as.formula("~ EQI_Air_factor + EQI_Water_factor + EQI_Land_factor + EQI_Built_factor + EQI_Social_factor")
   mm <- model.matrix(form, d,
     contrasts.arg = list(
       EQI_Air_factor = contr.treatment(5), EQI_Water_factor = contr.treatment(5),

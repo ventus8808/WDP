@@ -1,31 +1,42 @@
 #!/bin/bash
 # Slurm array launcher for sensitivity covariate analysis
-# 10 tasks: 5 model groups × 2 cancer types, each task runs all 3 lags internally
-# Task layout (SLURM_ARRAY_TASK_ID):
-#   0-4  → NDD    (G20_G30_G12.2_F01_F03) × [Baseline_Full, Insurance, Doctor, Forest, Monitoring]
-#   5-9  → Cancer (C00_C97)               × [Baseline_Full, Insurance, Doctor, Forest, Monitoring]
-# A merge job runs automatically after all 10 tasks complete.
+# 7 tasks — one per overall disease outcome.
+# Each task runs all 13 sensitivity models × 7 scenarios internally.
+# Task layout (SLURM_ARRAY_TASK_ID → outcome):
+#   0 → CLD     (K70_K76_C22)
+#   1 → CRD     (J40_J47_J60_J70_J84_D86_C34)
+#   2 → CKD     (N00_N29_C64_C65)
+#   3 → CVD     (I00_I99)
+#   4 → Suicide (X60_X84_Y87.0)
+#   5 → NDD     (G20_G30_G12.2_F01_F03)
+#   6 → Cancer  (C00_C97)
 #
 # Usage:
 #   bash Code/brms/submit_cmdstan_sensitivity.sh
 
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WDP_sens_covar
+#SBATCH --job-name=WDP_sens
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
-#SBATCH --time=0-12:00:00
-#SBATCH --output=sens_covar_%A_%a.out
-#SBATCH --error=sens_covar_%A_%a.err
+#SBATCH --time=2-00:00:00
+#SBATCH --output=cmdstan_sens_%A_%a.out
+#SBATCH --error=cmdstan_sens_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] $2"; }
 
-# ---- Task mapping ----
-CANCER_TYPES=("G20_G30_G12.2_F01_F03" "C00_C97")
-MODEL_GROUPS=("Baseline_Full" "Insurance" "Doctor" "Forest" "Monitoring")
-N_MODELS=${#MODEL_GROUPS[@]}   # 5
+# ---- Overall outcomes (one task each) ----
+OUTCOMES=(
+  "K70_K76_C22"
+  "J40_J47_J60_J70_J84_D86_C34"
+  "N00_N29_C64_C65"
+  "I00_I99"
+  "X60_X84_Y87.0"
+  "G20_G30_G12.2_F01_F03"
+  "C00_C97"
+)
 
 # ---- Locate project root ----
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -60,46 +71,40 @@ if [ ! -f "$RUNNER" ]; then log ERROR "R script not found: $RUNNER"; exit 1; fi
 
 # ---- Controller mode: submit array ----
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  TOTAL_TASKS=$(( ${#CANCER_TYPES[@]} * N_MODELS ))   # 10
-  log INFO "Submitting array of ${TOTAL_TASKS} tasks (${#CANCER_TYPES[@]} cancers × ${N_MODELS} model groups)"
-  log INFO "Each task writes its own output files — no merge step needed."
+  N=${#OUTCOMES[@]}   # 7
+  log INFO "Submitting ${N}-task array (one task per overall outcome)"
+  log INFO "Each task runs 13 sensitivity models × 7 scenarios internally"
 
-  ARRAY_JOB=$(sbatch --array=0-$((TOTAL_TASKS-1)) \
+  ARRAY_JOB=$(sbatch --array=0-$((N-1)) \
     --export=ALL,ENV_NAME="$ENV_NAME" \
     --parsable \
     "$0")
   log INFO "Array job ID: $ARRAY_JOB"
   log INFO "Monitor with: squeue -u \$USER"
-  log INFO "Output files: Result/brms_Sensativity/{NDD,Cancer}_sensitivity_{EQI,Covar}_{ModelGroup}.csv"
+  log INFO "Output: Result/brms_Sensitivity/{CLD,CRD,CKD,CVD,Suicide,NDD,Cancer}_Sensitivity.csv"
   exit 0
 fi
 
 # ---- Worker mode ----
 TASK_ID=$SLURM_ARRAY_TASK_ID
-CANCER_IDX=$(( TASK_ID / N_MODELS ))
-MODEL_IDX=$(( TASK_ID % N_MODELS ))
+OUTCOME="${OUTCOMES[$TASK_ID]}"
 
-CANCER_TYPE="${CANCER_TYPES[$CANCER_IDX]}"
-MODEL_GROUP="${MODEL_GROUPS[$MODEL_IDX]}"
-
-if [ -z "$CANCER_TYPE" ] || [ -z "$MODEL_GROUP" ]; then
-  log ERROR "Invalid task ID $TASK_ID"; exit 1
+if [ -z "$OUTCOME" ]; then
+  log ERROR "Invalid task ID $TASK_ID (max index: $((${#OUTCOMES[@]}-1)))"; exit 1
 fi
 
-log INFO "Task $TASK_ID → Cancer=$CANCER_TYPE | ModelGroup=$MODEL_GROUP"
+log INFO "Task $TASK_ID → Outcome=$OUTCOME"
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-# Different seed per task for better chain jitter
 SEED=$(( 1234 + TASK_ID ))
 
 Rscript "$RUNNER" \
-  --cancer-types  "$CANCER_TYPE" \
-  --model-group   "$MODEL_GROUP" \
-  --output-dir    "Result/brms_Sensativity" \
+  --outcomes    "$OUTCOME" \
+  --output-dir  "Result/brms_Sensitivity" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \
   --seed "$SEED"
 
-log INFO "Done: Task=$TASK_ID Cancer=$CANCER_TYPE ModelGroup=$MODEL_GROUP"
+log INFO "Done: Task=$TASK_ID Outcome=$OUTCOME"

@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 # cmdstanr MRR pipeline — Overall EQI only, EQI0005 lags only (5, 10, 15)
 # Outputs (all in Result/brms_MRR_lag/):
-#   {cancer}_main.csv     — MRD (mean difference, unchanged format)
-#   {cancer}_MRR.csv      — Mortality Rate Ratio Q2-Q5 vs Q1
-#   {cancer}_lag_test.csv — Pairwise lag comparison (Q5 draws)
+#   {outcome}_main.csv     — MRD (mean difference, unchanged format)
+#   {outcome}_MRR.csv      — Mortality Rate Ratio Q2-Q5 vs Q1
+#   {outcome}_lag_test.csv — Pairwise lag comparison (Q5 draws)
 
 suppressPackageStartupMessages({
   library(optparse)
@@ -20,10 +20,10 @@ utils::globalVariables(c('EQI','EQI_Air','EQI_Water','EQI_Land','EQI_Built','EQI
 
 option_list <- list(
   make_option(c("--data"), type="character",
-              default="Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate_Typology_LandUse.csv",
+              default="Data/Processed/df_EQI_AAMR_Triangulation/df_Main.csv",
               help="Input interval data"),
   make_option(c("--output-dir"), type="character", default="Result/brms_MRR_lag", help="Output directory for all results"),
-  make_option(c("--cancer-types"),   type="character", default=NA,                     help="Comma separated ICD codes"),
+  make_option(c("--outcomes"),        type="character", default=NA,                     help="Comma separated ICD codes"),
   make_option(c("--chains"),         type="integer",   default=4),
   make_option(c("--iter"),           type="integer",   default=2000),
   make_option(c("--warmup"),         type="integer",   default=1000),
@@ -62,7 +62,7 @@ path <- file.path(project_root, opt$data)
 if (!file.exists(path)) stop("Data not found: ", path)
 dt <- fread(path)
 
-req  <- c("COUNTY_FIPS","EQI_Period","Time_Period","Lag_Years","Cancer_Type",
+req  <- c("COUNTY_FIPS","EQI_Period","Time_Period","Lag_Years","Outcome",
           "AAMR_Lower","AAMR_Upper","Smoking_Rate","RUCC",
           "EQI","EQI_Air","EQI_Water","EQI_Land","EQI_Built","EQI_Social")
 miss <- setdiff(req, names(dt))
@@ -84,16 +84,16 @@ scenario_list <- list(
   list(key="EQI0005_AAMR2016_2020", eqi="2000-2005", aamr="2016-2020", lag=15)
 )
 
-all_cancers <- sort(unique(dt$Cancer_Type))
-selected <- if (is.na(opt$`cancer-types`)) {
-  all_cancers
+all_outcomes <- sort(unique(dt$Outcome))
+selected <- if (is.na(opt$`outcomes`)) {
+  all_outcomes
 } else {
-  reqc <- str_split(opt$`cancer-types`, ",", simplify=TRUE) |> as.vector() |> str_trim()
-  inv  <- setdiff(reqc, all_cancers)
-  if (length(inv)) stop("Invalid cancer types: ", paste(inv, collapse=","))
+  reqc <- str_split(opt$`outcomes`, ",", simplify=TRUE) |> as.vector() |> str_trim()
+  inv  <- setdiff(reqc, all_outcomes)
+  if (length(inv)) stop("Invalid outcomes: ", paste(inv, collapse=","))
   reqc
 }
-message("Cancer types to analyze: ", paste(selected, collapse=","))
+message("Outcomes to analyze: ", paste(selected, collapse=","))
 
 # ---------------------------------------------------------------------------
 # Output directory (single dir for all 3 file types)
@@ -180,7 +180,7 @@ extract_quintiles <- function(draw_df, names_vec, prefix) {
 # Compute MRR (Q1-Q5 vs Lag5 Q1) from posterior draws.
 # ref_draws: posterior draws of mu_Q1 from the Lag5 model (the universal reference).
 #            If NULL (should not happen after lag5 is processed), falls back to current Q1.
-compute_mrr <- function(draws, names_vec, layer_dt, cancer, eqi_out, aamr_out, lagv, ref_draws) {
+compute_mrr <- function(draws, names_vec, layer_dt, outcome, eqi_out, aamr_out, lagv, ref_draws) {
   smoking_idx  <- match("Smoking_Rate", names_vec)
   mean_smoking <- mean(layer_dt$Smoking_Rate, na.rm=TRUE)
   mu_Q1_draws  <- draws[["beta[1]"]] + draws[[paste0("beta[", smoking_idx, "]")]] * mean_smoking
@@ -199,7 +199,7 @@ compute_mrr <- function(draws, names_vec, layer_dt, cancer, eqi_out, aamr_out, l
     pos <- sum(mrr_centered > 0, na.rm=TRUE); neg <- sum(mrr_centered < 0, na.rm=TRUE); nn <- pos + neg
     p_raw <- if (nn == 0) NA_real_ else 2 * min((pos + 0.5) / (nn + 1), (neg + 0.5) / (nn + 1))
     tibble(
-      ICD_Code    = cancer,
+      ICD_Code    = outcome,
       EQI_Period  = eqi_out,
       AAMR_Period = aamr_out,
       Lag         = lagv,
@@ -215,7 +215,7 @@ compute_mrr <- function(draws, names_vec, layer_dt, cancer, eqi_out, aamr_out, l
 }
 
 # Pairwise lag test on Q5 beta draws: lag5 vs lag10, lag10 vs lag15, lag15 vs lag5.
-run_lag_test <- function(lag_q5_store, cancer, out_dir) {
+run_lag_test <- function(lag_q5_store, outcome, out_dir) {
   pairs <- list(c("5","10"), c("10","15"), c("15","5"))
   rows  <- lapply(pairs, function(p) {
     la <- p[1]; lb <- p[2]
@@ -223,7 +223,7 @@ run_lag_test <- function(lag_q5_store, cancer, out_dir) {
     da <- lag_q5_store[[la]]; db <- lag_q5_store[[lb]]
     diff_draws <- da - db
     tibble(
-      ICD_Code   = cancer,
+      ICD_Code   = outcome,
       comparison = paste0("lag", la, "_vs_lag", lb),
       diff_mean  = round(mean(diff_draws,            na.rm=TRUE), 4),
       diff_lower = round(quantile(diff_draws, 0.025, na.rm=TRUE), 4),
@@ -233,25 +233,25 @@ run_lag_test <- function(lag_q5_store, cancer, out_dir) {
   })
   result <- bind_rows(Filter(Negate(is.null), rows))
   if (nrow(result) > 0) {
-    lag_file <- file.path(out_dir, paste0(cancer, "_lag_test.csv"))
+    lag_file <- file.path(out_dir, paste0(outcome, "_lag_test.csv"))
     append_rows(lag_file, result)
-    message("[LAG TEST] ", nrow(result), " comparisons written for ", cancer)
+    message("[LAG TEST] ", nrow(result), " comparisons written for ", outcome)
   }
 }
 
 # ===========================================================================
 # Main loop
 # ===========================================================================
-for (cancer in selected) {
-  message("===== Disease: ", cancer, " =====")
-  outfile        <- file.path(out_dir, paste0(cancer, "_main.csv"))
-  mrr_file       <- file.path(out_dir, paste0(cancer, "_MRR.csv"))
+for (outcome in selected) {
+  message("===== Outcome: ", outcome, " =====")
+  outfile        <- file.path(out_dir, paste0(outcome, "_main.csv"))
+  mrr_file       <- file.path(out_dir, paste0(outcome, "_MRR.csv"))
   lag_q5_store   <- list()   # keyed by lag value: "5", "10", "15"
   lag5_ref_draws <- NULL     # Lag5 Q1 draws; used as universal MRR reference for all lags
 
   for (sc in scenario_list) {
     scen_key <- sc$key; eqi_p <- sc$eqi; aamr_p <- sc$aamr; lagv <- sc$lag
-    scen_dt  <- dt[EQI_Period==eqi_p & Time_Period==aamr_p & Cancer_Type==cancer]
+    scen_dt  <- dt[EQI_Period==eqi_p & Time_Period==aamr_p & Outcome==outcome]
     if (nrow(scen_dt) < opt$`min-n`) {
       message("[Skip] ", scen_key, " n=", nrow(scen_dt)); next
     }
@@ -312,7 +312,7 @@ for (cancer in selected) {
     summ_over <- posterior::summarize_draws(fit_overall$draws("beta"))
     met_over  <- extract_quintile_metrics(draws, des_overall$names, "EQI_factor", summ_over)
     row_over  <- tibble(
-      ICD_Code=cancer, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model="EQI",
+      ICD_Code=outcome, EQI_Period=eqi_out, AAMR_Period=aamr_out, Lag=lagv, Model="EQI",
       Q1=q_over$Q1, Q2=q_over$Q2, Q3=q_over$Q3, Q4=q_over$Q4, Q5=q_over$Q5,
       Q2_p=met_over$Q2_p, Q3_p=met_over$Q3_p, Q4_p=met_over$Q4_p, Q5_p=met_over$Q5_p,
       Q2_rhat=sprintf("%.4f", met_over$Q2_rhat),
@@ -332,7 +332,7 @@ for (cancer in selected) {
     message("[OK] ", scen_key, " MRD")
 
     # ---- MRR: Q1-Q5 vs Lag5 Q1 (universal reference for all lags) ----
-    mrr_df <- compute_mrr(draws, des_overall$names, layer_dt, cancer, eqi_out, aamr_out, lagv, ref_draws=lag5_ref_draws)
+    mrr_df <- compute_mrr(draws, des_overall$names, layer_dt, outcome, eqi_out, aamr_out, lagv, ref_draws=lag5_ref_draws)
     if (nrow(mrr_df) > 0) append_rows(mrr_file, mrr_df)
     message("[OK] ", scen_key, " MRR")
 
@@ -344,9 +344,9 @@ for (cancer in selected) {
   }  # end scenario loop
 
   # ---- Pairwise lag test (Q5): lag5 vs lag10, lag10 vs lag15, lag15 vs lag5 ----
-  run_lag_test(lag_q5_store, cancer, out_dir)
+  run_lag_test(lag_q5_store, outcome, out_dir)
 
-  message("===== Completed: ", cancer, " =====")
+  message("===== Completed: ", outcome, " =====")
 }
 
 message("All analyses complete. Output directory: ", out_dir)

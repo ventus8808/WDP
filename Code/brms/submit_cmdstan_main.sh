@@ -65,28 +65,22 @@ if [ ! -f "$RUNNER" ]; then
 fi
 
 # Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
-# discover outcomes and submit an array, then exit.
+# read outcome.list and submit an array, then exit.
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   OUTCOME_LIST_FILE="outcome.list"
-  log INFO "发现所有outcomes并生成任务列表: $OUTCOME_LIST_FILE (位于项目根目录)"
-  Rscript - <<'RS'
-  suppressPackageStartupMessages({library(data.table)})
-  # Load main data
-  main_path <- "Data/Processed/df_EQI_AAMR_Triangulation/df_Main.csv"
-  if (file.exists(main_path)) {
-    dt <- fread(main_path, select = "Outcome")
-    u <- unique(dt[, .(Outcome)])
-    u <- u[order(Outcome)]
-  } else {
-    stop("Main data not found")
-  }
-  if (nrow(u) == 0) stop("No outcomes found")
-  # Write outcomes
-  writeLines(u$Outcome, "outcomes_main.list")
-  cat(nrow(u))
-RS
+  # Auto-generate from df_Main.csv if the list is missing or stale
+  if [ ! -f "$OUTCOME_LIST_FILE" ]; then
+    log INFO "outcome.list not found — generating from Data/Processed/df/df_Main.csv"
+    python3 -c "
+import pandas as pd
+df = pd.read_csv('Data/Processed/df/df_Main.csv', usecols=['Outcome'])
+for o in sorted(df['Outcome'].unique()):
+    print(o)
+" > "$OUTCOME_LIST_FILE"
+    log INFO "Generated outcome.list with $(wc -l < "$OUTCOME_LIST_FILE" | tr -d ' ') outcomes"
+  fi
   N=$(wc -l < "$OUTCOME_LIST_FILE" | tr -d ' ')
-  if [ "$N" -le 0 ]; then log ERROR "未找到任何outcome"; exit 1; fi
+  if [ "$N" -le 0 ]; then log ERROR "outcome.list is empty"; exit 1; fi
   log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个outcomes，每个任务运行Overall + RUCC1-4)"
   # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \

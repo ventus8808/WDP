@@ -78,10 +78,10 @@ data_sources:
     eqi_processed: "Data/Processed/CDC"
     eqi_output_pattern: "Data/Processed/CDC/CDC_EQI_{time_period}.csv"
     eqi_suppression_threshold: 40.0
-    # Location & Urbanization 源与输出
-    location_urbanization_original: "Data/Original/ CDC WONDER/Location and Urbanization"
-    location_output_file: "Data/Processed/CDC/Location.csv"
-    urbanization_output_file: "Data/Processed/CDC/Urbanization.csv"
+    # Census Region (static county mapping)
+    census_region_original: "Data/Original/CDC WONDER Location and Urbanization"
+    census_region_source_file: "Location_Region_Division_State.csv"
+    census_region_output: "Data/Processed/Covariate/Census_Region.csv"
     download_urls:
       base: "https://wonder.cdc.gov/"
 
@@ -138,6 +138,11 @@ data_sources:
     processed: "Data/Processed/Environmental"
   tiger:
     shapefile: "Data/Original/County Shapeline/tl_2015_us_county.shp"
+  climate_zone:
+    original: "Data/Original/Climate Zone"
+    koppen_file: "koeppengeigerUScounty.txt"
+    doe_file: "climate_zones.csv"
+    output_file: "Data/Processed/Covariate/Climate_Zone.csv"
 
   # EPA Environmental Quality Index数据
   epa_eqi:
@@ -165,6 +170,8 @@ data_sources:
     usda_ers:
       original: "Data/Original/USDA ERS"
       processed: "Data/Processed/Socioeconomic"
+      typology_source: "2004CountyTypologyCode.xls"
+      typology_output: "Data/Processed/Covariate/Economic_type.csv"
   seer_population:
     original: "Data/Original/SEER Population"
     processed: "Data/Processed/Socioeconomic"
@@ -825,63 +832,6 @@ brms_analysis:
     aamr_lower: "AAMR_lower"
     aamr_upper: "AAMR_upper"
     smoking_rate: "Smoking_Rate"
-
-  # ICD-10 代码映射到癌症名称
-  icd_mapping:
-    "C00_C97": "All-site Cancer"
-    "C15_C26": "Digestive System Cancer"
-    "C18_C21": "Colorectal Cancer"
-    "C22": "Liver Cancer"
-    "C25": "Pancreatic Cancer"
-    "C30_C39": "Respiratory System Cancer"
-    "C34": "Lung Cancer"
-    "C40_C41": "Bone and Articular Cartilage Cancer"
-    "C43_C44": "Skin Cancer"
-    "C45_C49": "Mesothelial and Soft Tissue Cancer"
-    "C50": "Breast Cancer"
-    "C51_C58": "Female Genital Organs Cancer"
-    "C60_C63": "Male Genital Organs Cancer"
-    "C61": "Prostate Cancer"
-    "C64_C68": "Urinary Tract Cancer"
-    "C64": "Kidney Cancer"
-    "C67": "Bladder Cancer"
-    "C69_C72": "Brain and Central Nervous System Cancer"
-    "C73_C75": "Thyroid and Endocrine Glands Cancer"
-    "C76_C80": "Ill-defined and Secondary Sites Cancer"
-    "C81_C96": "Lymphoid and Hematopoietic Cancer"
-    "C82_C86": "Non-Hodgkin Lymphoma"
-    "C91_C95": "Leukemia"
-    "C97": "Multiple Primary Sites Cancer"
-    "G10": "Huntington's Disease (HD)"
-    "G20": "Parkinson's Disease (PD)"
-    "G30": "Alzheimer's Disease (AD)"
-    "G12.2": "Amyotrophic Lateral Sclerosis (ALS)"
-    "F01": "Vascular Dementia (VD)"
-    "F03": "Unspecified Dementia (UD)"
-    "G20_G30_G12.2_F01_F03": "Neurodegenerative Disease (NDD)"
-    "G30_F01_F03": "Dementia (AD+VD+UD)"
-    "C82_C85": "Non-Hodgkin Lymphoma"
-    "C64_C65": "Kidney and Renal Pelvis Cancer"
-    "C56": "Ovary Cancer"
-
-  # 分析参数 - 与LMM系统完全对齐的场景定义
-  analysis_parameters:
-    # 基础参数 - 与LMM all_cancer_types对齐
-    cancer_types: [
-        "C00_C97", # All Cancers
-        "C15_C26", # Digestive Organs
-        "C18_C21", # Colorectal
-        "C25", # Pancreas
-        "C30_C39", # Respiratory
-        "C34", # Lung Cancer
-        "C50", # Breast Cancer
-        "C51_C58", # Female Genital
-        "C60_C63", # Male Genital
-        "C61", # Prostate
-        "C64_C68", # Urinary Tract
-        "C76_C80", # Ill-defined
-        "C81_C96", # Lymphoid/Hematologic
-      ]
 
     # EQI时期和AAMR时期的组合
     scenario_combinations:

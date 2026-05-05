@@ -1,6 +1,6 @@
 #!/bin/bash
 # Slurm array launcher for cmdstan_main_MRR.R
-# One task per cancer type; each task runs 3 EQI0005 scenarios (lags 5/10/15),
+# One task per outcome; each task runs 3 EQI0005 scenarios (lags 5/10/15),
 # Overall EQI model only, and outputs MRD + MRR + lag test to Result/brms_MRR_lag/.
 # Usage:
 #   bash Code/brms/submit_cmdstan_main_MRR.sh    # submit array to Slurm
@@ -19,18 +19,6 @@
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
 
-
-# --- Fixed cancer list (ICD codes beginning with C) ---
-CANCER_TYPES=(
-  "F01"
-  "F03"
-  "G10"
-  "G12.2"
-  "G20"
-  "G20_G30_G12.2_F01_F03"
-  "G30"
-  "G30_F01_F03"
-)
 
 # --- Locate project root ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -78,15 +66,13 @@ fi
 
 # --- Controller mode: submit array ---
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  N=${#CANCER_TYPES[@]}
-  log INFO "提交数组任务: 0-$((N-1)) (共 $N 个癌症类型)"
-  for i in "${!CANCER_TYPES[@]}"; do
-    log INFO "  [$i] ${CANCER_TYPES[$i]}"
-  done
-  # Pass the cancer list as a colon-separated env var to workers
-  CANCER_LIST=$(IFS=':'; echo "${CANCER_TYPES[*]}")
+  OUTCOME_LIST_FILE="outcome.list"
+  if [ ! -f "$OUTCOME_LIST_FILE" ]; then log ERROR "找不到outcome列表: $OUTCOME_LIST_FILE"; exit 1; fi
+  N=$(wc -l < "$OUTCOME_LIST_FILE" | tr -d ' ')
+  if [ "$N" -le 0 ]; then log ERROR "未找到任何outcome"; exit 1; fi
+  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个outcomes)"
   sbatch --array=0-$((N-1)) \
-    --export=ALL,CANCER_LIST="$CANCER_LIST",ENV_NAME="$ENV_NAME" \
+    --export=ALL,OUTCOME_FILE="$PROJECT_ROOT/$OUTCOME_LIST_FILE",ENV_NAME="$ENV_NAME" \
     "$0"
   log INFO "提交完成。使用 squeue 查看进度。"
   exit 0
@@ -95,13 +81,11 @@ fi
 # --- Worker mode ---
 log INFO "开始处理任务 $SLURM_ARRAY_TASK_ID"
 
-# Reconstruct array from colon-separated env var
-IFS=':' read -ra CANCERS <<< "$CANCER_LIST"
-CANCER_TYPE="${CANCERS[$SLURM_ARRAY_TASK_ID]}"
-if [ -z "$CANCER_TYPE" ]; then
-  log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的癌症类型"; exit 1
+OUTCOME=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$OUTCOME_FILE")
+if [ -z "$OUTCOME" ]; then
+  log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的outcome"; exit 1
 fi
-log INFO "处理癌症类型: $CANCER_TYPE"
+log INFO "处理outcome: $OUTCOME"
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
@@ -109,11 +93,11 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
 Rscript "$RUNNER" \
-  --cancer-types "$CANCER_TYPE" \
+  --outcomes "$OUTCOME" \
   --output-dir "Result/brms_MRR_lag" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \
   --seed "$SEED"
 
-log INFO "✅ 完成: Cancer=$CANCER_TYPE"
+log INFO "✅ 完成: Outcome=$OUTCOME"
 log INFO "输出目录: Result/brms_MRR_lag/"

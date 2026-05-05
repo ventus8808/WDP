@@ -1,0 +1,39 @@
+# Covariate label mappings
+# Used for display, stratification, and reporting across all analyses.
+
+RUCC:
+  1: "Metropolitan urban"
+  2: "Nonmetropolitan urban"
+  3: "Less urban"
+  4: "Thinly populated"
+
+Census_Region:
+  1: "Northeast"
+  2: "Midwest"
+  3: "South"
+  4: "West"
+
+koppen_major:
+  A: "Tropical"
+  B: "Dry"
+  C: "Temperate"
+  D: "Continental"
+  E: "Polar"
+
+doe_zone:
+  1: "Very Hot"
+  2: "Hot"
+  3: "Warm"
+  4: "Mixed"
+  5: "Cool"
+  6: "Cold"
+  7: "Very Cold"
+  8: "Subarctic"
+
+Economic_type:
+  1: "Farming-dependent"
+  2: "Mining-dependent"
+  3: "Manufacturing-dependent"
+  4: "Federal/State government-dependent"
+  5: "Services-dependent"
+  6: "Nonspecialized"
