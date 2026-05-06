@@ -66,7 +66,7 @@ if (!file.exists(path)) stop("Data not found: ", path)
 dt <- fread(path)
 
 req <- c(
-  "COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Cancer_Type", "AAMR_Lower", "AAMR_Upper", "RUCC", "EQI",
+  "COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Outcome", "AAMR_Lower", "AAMR_Upper", "RUCC", "EQI",
   "Smoking_rate", "Physical_Activities_rate", "Obesity_rate", "Uninsured_rate", "Physician_Density_per100k", "Diabetes_Prevalence_rate"
 )
 miss <- setdiff(req, names(dt))
