@@ -210,7 +210,7 @@ extract_quintiles <- function(draw_df, names_vec, prefix) {
 build_design_combo <- function(d, covariates) {
   d <- d %>% mutate(EQI_factor = factor(EQI, levels = 1:5))
   needed <- c("EQI_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS", covariates)
-  d <- d[complete.cases(d[, needed, drop = FALSE]), ]
+  d <- d[complete.cases(d[, ..needed]), ]
   form <- if (length(covariates) == 0) {
     ~EQI_factor
   } else {
