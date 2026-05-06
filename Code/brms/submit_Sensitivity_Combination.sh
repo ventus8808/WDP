@@ -26,8 +26,13 @@ set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] $2"; }
 # ---- Overall outcomes (one task each) ----
 OUTCOMES=(
-  "I00_I99"
-  "C00_C97"
+"K70_K76_C22"
+"J40_J47_J60_J70_J84_D86_C34"
+"N00_N29_C64_C65"
+"I00_I99"
+"X60_X84_Y87.0"
+"G20_G30_G12.2_F01_F03"
+"C00_C97"
 )
 # ---- Locate project root ----
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
