@@ -74,7 +74,16 @@ dt[, cens := ifelse(AAMR_Lower == AAMR_Upper, 0, 2)]
 dt <- dt[RUCC %in% 1:4 | is.na(RUCC)]
 
 # ICD code → short disease name for output file naming (overall outcomes only)
-icd_to_name <- c("I00_I99" = "CVD", "J40_J47_J60_J70_J84_D86_C34" = "CRD")
+icd_to_name <- c(
+  "I00_I99" = "CVD",
+  "J40_J47_J60_J70_J84_D86_C34" = "CRD",
+  "K70_K76_C22" = "CLD",
+  "N00_N29_C64_C65" = "CKD",
+  "X60_X84_Y87.0" = "Suicide",
+  "G20_G30_G12.2_F01_F03" = "NDD",
+  "C00_C97" = "Cancer"
+)
+
 disease_label <- function(icd) {
   nm <- icd_to_name[icd]
   if (is.na(nm)) icd else unname(nm)

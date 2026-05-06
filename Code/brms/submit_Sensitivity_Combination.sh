@@ -13,8 +13,7 @@
 #
 # Usage:
 #   bash Code/brms/submit_Sensitivity_Combination.sh
-
-#SBATCH --partition=kshctest
+#SBATCH --partition=kshctest02
 #SBATCH --job-name=WDP_sens_comb
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -23,21 +22,13 @@
 #SBATCH --time=2-00:00:00
 #SBATCH --output=cmdstan_sens_comb_%A_%a.out
 #SBATCH --error=cmdstan_sens_comb_%A_%a.err
-
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] $2"; }
-
 # ---- Overall outcomes (one task each) ----
 OUTCOMES=(
-  "K70_K76_C22"
-  "J40_J47_J60_J70_J84_D86_C34"
-  "N00_N29_C64_C65"
   "I00_I99"
-  "X60_X84_Y87.0"
-  "G20_G30_G12.2_F01_F03"
   "C00_C97"
 )
-
 # ---- Locate project root ----
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_ROOT=""
@@ -50,31 +41,21 @@ if [ -z "$PROJECT_ROOT" ] || [ ! -f "$PROJECT_ROOT/config.yaml" ]; then
 fi
 cd "$PROJECT_ROOT"
 log INFO "Project root: $PROJECT_ROOT"
-
-# ---- Activate conda ----
+# ---- Activate micromamba env ----
 ENV_NAME="${ENV_NAME:-brms}"
-set +u
-if [ -z "${CONDA_DEFAULT_ENV-}" ] || [ "${CONDA_DEFAULT_ENV}" != "$ENV_NAME" ]; then
-  if   [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then source "$HOME/miniconda3/etc/profile.d/conda.sh"
-  elif [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ];   then source "/opt/anaconda3/etc/profile.d/conda.sh"
-  else log ERROR "conda init script not found"; exit 1
-  fi
-  conda activate "$ENV_NAME" || { log ERROR "Failed to activate conda env: $ENV_NAME"; exit 1; }
-fi
-set -u
-
+export MAMBA_EXE="$HOME/micromamba/micromamba"
+export MAMBA_ROOT_PREFIX="$HOME/micromamba"
+eval "$("$MAMBA_EXE" shell hook --shell bash)"
+micromamba activate "$ENV_NAME" || { log ERROR "Failed to activate micromamba env: $ENV_NAME"; exit 1; }
 module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
 export TBB_CXX_TYPE=gcc
-
 RUNNER="Code/brms/brms_Sensitivity_Combination.R"
 if [ ! -f "$RUNNER" ]; then log ERROR "R script not found: $RUNNER"; exit 1; fi
-
 # ---- Controller mode: submit array ----
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   N=${#OUTCOMES[@]}   # 7
   log INFO "Submitting ${N}-task array (one task per overall outcome)"
   log INFO "Each task runs 64 covariate combinations × 3 scenarios internally"
-
   ARRAY_JOB=$(sbatch --array=0-$((N-1)) \
     --export=ALL,ENV_NAME="$ENV_NAME" \
     --parsable \
@@ -84,27 +65,20 @@ if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
   log INFO "Output: Result/brms_Sensitivity_Combination/{CVD,NDD,CLD,CRD,CKD,Suicide,Cancer}_Sensitivity_Combination.csv"
   exit 0
 fi
-
 # ---- Worker mode ----
 TASK_ID=$SLURM_ARRAY_TASK_ID
 OUTCOME="${OUTCOMES[$TASK_ID]}"
-
 if [ -z "$OUTCOME" ]; then
   log ERROR "Invalid task ID $TASK_ID (max index: $((${#OUTCOMES[@]}-1)))"; exit 1
 fi
-
 log INFO "Task $TASK_ID → Outcome=$OUTCOME"
-
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
-
 SEED=$(( 1234 + TASK_ID ))
-
-Rscript "$RUNNER" \
+micromamba run -n "$ENV_NAME" Rscript "$RUNNER" \
   --cancer-types "$OUTCOME" \
   --output-dir   "Result/brms_Sensitivity_Combination" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \
   --seed "$SEED"
-
 log INFO "Done: Task=$TASK_ID Outcome=$OUTCOME"
