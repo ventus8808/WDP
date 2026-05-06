@@ -74,7 +74,7 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 SEED=$(( 1234 + TASK_ID ))
 micromamba run -n "$ENV_NAME" Rscript "$RUNNER" \
-  --cancer-types "$OUTCOME" \
+  --outcomes     "$OUTCOME" \
   --output-dir   "Result/brms_Sensitivity_Combination" \
   --chains 4 --iter 2000 --warmup 1000 \
   --adapt-delta 0.95 --max-treedepth 12 \

@@ -29,7 +29,7 @@ utils::globalVariables(c(
 option_list <- list(
   make_option(c("--data"), type = "character", default = "Data/Processed/df/df_Sensitivity.csv", help = "Input interval data"),
   make_option(c("--output-dir"), type = "character", default = "Result/brms_Sensitivity_Combination", help = "Output directory"),
-  make_option(c("--cancer-types"), type = "character", default = NA, help = "Comma separated ICD codes"),
+  make_option(c("--outcomes"), type = "character", default = NA, help = "Comma separated ICD codes"),
   make_option(c("--chains"), type = "integer", default = 4),
   make_option(c("--iter"), type = "integer", default = 2000),
   make_option(c("--warmup"), type = "integer", default = 1000),
@@ -122,44 +122,28 @@ message(
   " (k=0:1, k=1:6, k=2:15, k=3:20, k=4:15, k=5:6, k=6:1)"
 )
 
-all_cancers <- sort(unique(dt$Cancer_Type))
-selected <- if (is.na(opt$`cancer-types`)) {
-  all_cancers
+all_outcomes <- sort(unique(dt$Outcome))
+selected <- if (is.na(opt$`outcomes`)) {
+  all_outcomes
 } else {
-  reqc <- str_split(opt$`cancer-types`, ",", simplify = TRUE) |>
+  reqc <- str_split(opt$`outcomes`, ",", simplify = TRUE) |>
     as.vector() |>
     str_trim()
-  inv <- setdiff(reqc, all_cancers)
-  if (length(inv)) stop("Invalid cancer types: ", paste(inv, collapse = ","))
+  inv <- setdiff(reqc, all_outcomes)
+  if (length(inv)) stop("Invalid outcomes: ", paste(inv, collapse = ","))
   reqc
 }
-message("Cancer types to analyze: ", paste(selected, collapse = ","))
+message("Outcomes to analyze: ", paste(selected, collapse = ","))
 
 out_dir <- file.path(project_root, opt$`output-dir`)
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
-sig_mark <- function(p) {
-  if (is.na(p)) {
-    return("")
-  }
-  if (p < 0.001) {
-    return("***")
-  }
-  if (p < 0.01) {
-    return("**")
-  }
-  if (p < 0.05) {
-    return("*")
-  }
-  ""
-}
 format_cell <- function(draws) {
   if (length(draws) == 0) {
     return("")
   }
   ci <- quantile(draws, c(0.025, 0.975), na.rm = TRUE)
-  p <- 2 * min(mean(draws > 0), mean(draws < 0))
-  sprintf("%0.2f(%0.2f,%0.2f)%s", mean(draws), ci[1], ci[2], sig_mark(p))
+  sprintf("%0.2f(%0.2f,%0.2f)", mean(draws), ci[1], ci[2])
 }
 append_rows <- function(path, df) {
   if (!file.exists(path)) write_csv(df, path) else suppressWarnings(write.table(df, path, sep = ",", col.names = FALSE, row.names = FALSE, append = TRUE))
@@ -237,16 +221,16 @@ build_design_combo <- function(d, covariates) {
   list(X = mm, names = colnames(mm), df = d)
 }
 
-for (cancer in selected) {
-  dlabel <- disease_label(cancer)
-  message("===== Disease: ", dlabel, " (", cancer, ") =====")
+for (outcome in selected) {
+  dlabel <- disease_label(outcome)
+  message("===== Disease: ", dlabel, " (", outcome, ") =====")
   outfile <- file.path(out_dir, paste0(dlabel, "_Sensitivity_Combination.csv"))
   for (sc in scenario_list) {
     scen_key <- sc$key
     eqi_p <- sc$eqi
     aamr_p <- sc$aamr
     lagv <- sc$lag
-    scen_dt <- dt[EQI_Period == eqi_p & Time_Period == aamr_p & Cancer_Type == cancer]
+    scen_dt <- dt[EQI_Period == eqi_p & Time_Period == aamr_p & Outcome == outcome]
     if (nrow(scen_dt) < opt$`min-n`) {
       message("[Skip] Scenario ", scen_key, " overall n=", nrow(scen_dt))
       next
@@ -308,7 +292,7 @@ for (cancer in selected) {
         met <- extract_quintile_metrics(draws, des$names, "EQI_factor", summ)
 
         row <- tibble(
-          ICD_Code = cancer, EQI_Period = eqi_out, AAMR_Period = aamr_out, Lag = lagv, Model = full_model_tag,
+          ICD_Code = outcome, EQI_Period = eqi_out, AAMR_Period = aamr_out, Lag = lagv, Model = full_model_tag,
           Q1 = q_vals$Q1, Q2 = q_vals$Q2, Q3 = q_vals$Q3, Q4 = q_vals$Q4, Q5 = q_vals$Q5,
           Q2_p = met$Q2_p, Q3_p = met$Q3_p, Q4_p = met$Q4_p, Q5_p = met$Q5_p,
           Q2_rhat = sprintf("%.4f", met$Q2_rhat), Q3_rhat = sprintf("%.4f", met$Q3_rhat),
