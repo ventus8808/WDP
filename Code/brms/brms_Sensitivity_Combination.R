@@ -27,7 +27,7 @@ utils::globalVariables(c(
 ))
 
 option_list <- list(
-  make_option(c("--data"), type = "character", default = "Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv", help = "Input interval data"),
+  make_option(c("--data"), type = "character", default = "Data/Processed/df/df_Sensitivity.csv", help = "Input interval data"),
   make_option(c("--output-dir"), type = "character", default = "Result/brms_Sensitivity_Combination", help = "Output directory"),
   make_option(c("--cancer-types"), type = "character", default = NA, help = "Comma separated ICD codes"),
   make_option(c("--chains"), type = "integer", default = 4),
