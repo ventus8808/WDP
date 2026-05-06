@@ -47,7 +47,8 @@ export MAMBA_EXE="$HOME/micromamba/micromamba"
 export MAMBA_ROOT_PREFIX="$HOME/micromamba"
 eval "$("$MAMBA_EXE" shell hook --shell bash)"
 micromamba activate "$ENV_NAME" || { log ERROR "Failed to activate micromamba env: $ENV_NAME"; exit 1; }
-module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
+export CC="$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-gcc"
+export CXX="$CONDA_PREFIX/bin/x86_64-conda-linux-gnu-g++"
 export TBB_CXX_TYPE=gcc
 RUNNER="Code/brms/brms_Sensitivity_Combination.R"
 if [ ! -f "$RUNNER" ]; then log ERROR "R script not found: $RUNNER"; exit 1; fi
