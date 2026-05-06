@@ -16,6 +16,11 @@ suppressPackageStartupMessages({
   library(cmdstanr)
   library(posterior)
 })
+
+candidates <- list.dirs(path.expand("~/.cmdstan"), recursive = FALSE)
+if (length(candidates) == 0) stop("未找到 cmdstan，请先运行 install_cmdstan()")
+cmdstanr::set_cmdstan_path(tail(sort(candidates), 1))
+
 utils::globalVariables(c(
   "EQI", "Smoking_rate", "Physical_Activities_rate", "Obesity_rate",
   "Uninsured_rate", "Physician_Density_per100k", "Diabetes_Prevalence_rate", "State_FIPS"
