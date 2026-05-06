@@ -12,7 +12,7 @@
 #   6 → Cancer  (C00_C97)
 #
 # Usage:
-#   bash Code/brms/submit_cmdstan_Sensitivity_Combination.sh
+#   bash Code/brms/submit_Sensitivity_Combination.sh
 
 #SBATCH --partition=kshctest
 #SBATCH --job-name=WDP_sens_comb
@@ -66,7 +66,7 @@ set -u
 module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/cmdstan_main_Sensativity_Combination.R"
+RUNNER="Code/brms/brms_Sensitivity_Combination.R"
 if [ ! -f "$RUNNER" ]; then log ERROR "R script not found: $RUNNER"; exit 1; fi
 
 # ---- Controller mode: submit array ----
@@ -81,7 +81,7 @@ if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
     "$0")
   log INFO "Array job ID: $ARRAY_JOB"
   log INFO "Monitor with: squeue -u \$USER"
-  log INFO "Output: Result/brms_Sensitivity_Combination/{K70_K76_C22,...}_main.csv"
+  log INFO "Output: Result/brms_Sensitivity_Combination/{CVD,NDD,CLD,CRD,CKD,Suicide,Cancer}_Sensitivity_Combination.csv"
   exit 0
 fi
 
