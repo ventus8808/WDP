@@ -1,5 +1,0 @@
-CmdStan path set to: /public/home/vanadiumscandium/.cmdstan/cmdstan-2.35.0
-Detected cores: 32 | Using: 25
-Total covariate combinations: 64 (k=0:1, k=1:6, k=2:15, k=3:20, k=4:15, k=5:6, k=6:1)
-Error: Invalid cancer types: C00_C97
-Execution halted

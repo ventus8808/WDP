@@ -1,19 +1,18 @@
 #!/bin/bash
-# Slurm array launcher for sensitivity combination analysis.
-# One task per overall outcome (from outcome_overall.list); each task runs all
-# 64 covariate combinations × 4 EQI-2000-2005 scenarios internally.
+# Slurm array launcher for the main interval-censored mixed model pipeline
+# One task per outcome; each task runs all scenarios inside the R runner.
 # Usage:
-#   bash Code/brms/submit_Sensitivity_Combination.sh
+#   bash Code/brms/submit_Main.sh
 
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WDP_sens_comb
+#SBATCH --job-name=WDP_cmdstan_main
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
-#SBATCH --time=2-00:00:00
-#SBATCH --output=sens_comb_%A_%a.out
-#SBATCH --error=sens_comb_%A_%a.err
+#SBATCH --time=1-00:00:00
+#SBATCH --output=main_%A_%a.out
+#SBATCH --error=main_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -26,6 +25,7 @@ if [ -f "${SCRIPT_DIR}/../../config.yaml" ]; then
 elif [ -n "${SLURM_SUBMIT_DIR-}" ] && [ -f "${SLURM_SUBMIT_DIR}/config.yaml" ]; then
   PROJECT_ROOT="$SLURM_SUBMIT_DIR"
 else
+  # Fallback to cwd if it contains config.yaml
   if [ -f "config.yaml" ]; then PROJECT_ROOT="$(pwd -P)"; fi
 fi
 
@@ -58,21 +58,23 @@ module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, u
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/brms_Sensitivity_Combination.R"
+RUNNER="Code/brms/brms_Main.R"
 
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
 fi
 
-# Controller mode: if not running as an array worker, read outcome_overall.list and submit an array, then exit.
+# Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
+# read outcome.list and submit an array, then exit.
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  OUTCOME_LIST_FILE="outcome_overall.list"
+  OUTCOME_LIST_FILE="outcome.list"
   if [ ! -f "$OUTCOME_LIST_FILE" ]; then
-    log ERROR "outcome_overall.list not found in project root"; exit 1
+    log ERROR "outcome.list not found in project root"; exit 1
   fi
   N=$(wc -l < "$OUTCOME_LIST_FILE" | tr -d ' ')
-  if [ "$N" -le 0 ]; then log ERROR "outcome_overall.list is empty"; exit 1; fi
+  if [ "$N" -le 0 ]; then log ERROR "outcome.list is empty"; exit 1; fi
   log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个outcomes)"
+  # Export list path and env name to workers
   sbatch --array=0-$((N-1)) \
     --export=ALL,OUTCOME_FILE="$PROJECT_ROOT/$OUTCOME_LIST_FILE",ENV_NAME="$ENV_NAME" \
          "$0"
@@ -82,15 +84,19 @@ fi
 
 # Worker mode: run the actual job
 log INFO "开始处理任务 $SLURM_ARRAY_TASK_ID"
+# Read the outcome for this task
 OUTCOME=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$OUTCOME_FILE")
 if [ -z "$OUTCOME" ]; then log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的outcome"; exit 1; fi
 log INFO "处理outcome: $OUTCOME"
 
+# Limit threading to allocation to be polite on shared nodes
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
+# Use a different seed per task for better chain jitter
 SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
+# Run the main interval-censored pipeline for this outcome
 Rscript "$RUNNER" \
   --outcomes "$OUTCOME" \
   --chains 4 --iter 2000 --warmup 1000 \

@@ -1,9 +1,0 @@
-Detected cores: 32 | Using: 25
-/public/home/vanadiumscandium/micromamba/envs/brms/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/ld: 
-src/cmdstan/main.o: in function `cmdstan::command(int, char const**)':
-main.cpp:(.text._ZN7cmdstan7commandEiPPKc+0x1751): undefined reference to `get_stan_profile_data[abi:cxx11]()'
-collect2: error: ld returned 1 exit status
-make: *** [make/program:82: /tmp/RtmpuwaMD9/model-6041346a44e5] Error 1
-
-Error: An error occured during compilation! See the message above for more information.
-Execution halted

@@ -1,18 +1,18 @@
 #!/bin/bash
-# Slurm array launcher for the cmdstan main interval-censored mixed model pipeline
-# One task per outcome; each task runs all scenarios and RUCC layers inside the R runner.
+# Slurm array launcher for the geographic-stratified interval-censored mixed model pipeline.
+# One task per outcome; each task runs all strat-vars × strat-vals × scenarios inside the R runner.
 # Usage:
-#   bash Code/brms/submit_cmdstan_main.sh
+#   bash Code/brms/submit_Stratified_Geo.sh
 
 #SBATCH --partition=kshctest
-#SBATCH --job-name=WDP_cmdstan_main
+#SBATCH --job-name=WDP_Stratified_Geo
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
-#SBATCH --time=1-00:00:00
-#SBATCH --output=cmdstan_main_%A_%a.out
-#SBATCH --error=cmdstan_main_%A_%a.err
+#SBATCH --time=2-00:00:00
+#SBATCH --output=stratified_geo_%A_%a.out
+#SBATCH --error=stratified_geo_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -25,7 +25,6 @@ if [ -f "${SCRIPT_DIR}/../../config.yaml" ]; then
 elif [ -n "${SLURM_SUBMIT_DIR-}" ] && [ -f "${SLURM_SUBMIT_DIR}/config.yaml" ]; then
   PROJECT_ROOT="$SLURM_SUBMIT_DIR"
 else
-  # Fallback to cwd if it contains config.yaml
   if [ -f "config.yaml" ]; then PROJECT_ROOT="$(pwd -P)"; fi
 fi
 
@@ -58,31 +57,21 @@ module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, u
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/cmdstan_main.R"
+RUNNER="Code/brms/brms_Stratified_Geo.R"
 
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
 fi
 
-# Controller mode: if not running as an array worker (either outside Slurm or a non-array sbatch),
-# read outcome.list and submit an array, then exit.
+# Controller mode: if not running as an array worker, read outcome.list and submit an array, then exit.
 if [ -z "${SLURM_ARRAY_TASK_ID-}" ]; then
-  OUTCOME_LIST_FILE="outcome.list"
-  # Auto-generate from df_Main.csv if the list is missing or stale
+  OUTCOME_LIST_FILE="outcome_overall.list"
   if [ ! -f "$OUTCOME_LIST_FILE" ]; then
-    log INFO "outcome.list not found — generating from Data/Processed/df/df_Main.csv"
-    python3 -c "
-import pandas as pd
-df = pd.read_csv('Data/Processed/df/df_Main.csv', usecols=['Outcome'])
-for o in sorted(df['Outcome'].unique()):
-    print(o)
-" > "$OUTCOME_LIST_FILE"
-    log INFO "Generated outcome.list with $(wc -l < "$OUTCOME_LIST_FILE" | tr -d ' ') outcomes"
+    log ERROR "outcome_overall.list not found in project root"; exit 1
   fi
   N=$(wc -l < "$OUTCOME_LIST_FILE" | tr -d ' ')
   if [ "$N" -le 0 ]; then log ERROR "outcome.list is empty"; exit 1; fi
-  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个outcomes，每个任务运行Overall + RUCC1-4)"
-  # Export list path and env name to workers
+  log INFO "将提交数组任务: 0-$((N-1)) (共 $N 个outcomes)"
   sbatch --array=0-$((N-1)) \
     --export=ALL,OUTCOME_FILE="$PROJECT_ROOT/$OUTCOME_LIST_FILE",ENV_NAME="$ENV_NAME" \
          "$0"
@@ -92,20 +81,15 @@ fi
 
 # Worker mode: run the actual job
 log INFO "开始处理任务 $SLURM_ARRAY_TASK_ID"
-# Read the outcome for this task
 OUTCOME=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$OUTCOME_FILE")
 if [ -z "$OUTCOME" ]; then log ERROR "无法读取任务 $SLURM_ARRAY_TASK_ID 的outcome"; exit 1; fi
 log INFO "处理outcome: $OUTCOME"
 
-# Limit threading to allocation to be polite on shared nodes
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-# Use a different seed per task for better chain jitter
 SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
-# Run the main interval-censored pipeline for this outcome
-# This runs Overall + RUCC1-4 stratifications internally
 Rscript "$RUNNER" \
   --outcomes "$OUTCOME" \
   --chains 4 --iter 2000 --warmup 1000 \

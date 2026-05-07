@@ -1,6 +1,0 @@
-[2026-05-06 21:57:14] [INFO] Project root: /public/home/vanadiumscandium/WDP
-[2026-05-06 21:57:22] [INFO] Task 0 → Outcome=I00_I99
-[1] "EQI"                       "Smoking_rate"             
-[3] "Physical_Activities_rate"  "Obesity_rate"             
-[5] "Uninsured_rate"            "Physician_Density_per100k"
-[7] "Diabetes_Prevalence_rate"  "State_FIPS"               

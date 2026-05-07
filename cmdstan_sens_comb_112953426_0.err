@@ -1,4 +1,0 @@
-CmdStan path set to: /public/home/vanadiumscandium/.cmdstan/cmdstan-2.35.0
-Detected cores: 32 | Using: 25
-Error: Missing cols: Smoking_rate,Physical_Activities_rate,Obesity_rate,Uninsured_rate,Physician_Density_per100k,Diabetes_Prevalence_rate
-Execution halted

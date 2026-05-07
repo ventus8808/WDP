@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Sensitivity combination analysis: all 2^6 subsets of 6 control covariates added to EQI exposure.
 # Models: +0 covariate (EQI only) = 1; +1 = C(6,1)=6; +2 = C(6,2)=15; +3 = C(6,3)=20;
-#         +4 = C(6,4)=15; +5 = C(6,5)=6; +6 = 1 → total 64 models per scenario/layer.
+#         +4 = C(6,4)=15; +5 = C(6,5)=6; +6 = 1 → total 64 models per scenario.
 # EQI 2000-2005 scenarios only (2006-2010 EQI removed).
 # Output format: ICD_Code, EQI_Period, AAMR_Period, Lag, Model, Q1..Q5 + diagnostics.
 
@@ -27,7 +27,7 @@ utils::globalVariables(c(
 ))
 
 option_list <- list(
-  make_option(c("--data"), type = "character", default = "Data/Processed/df/df_Sensitivity.csv", help = "Input interval data"),
+  make_option(c("--data"), type = "character", default = "Data/Processed/df.csv", help = "Input interval data"),
   make_option(c("--output-dir"), type = "character", default = "Result/brms_Sensitivity_Combination", help = "Output directory"),
   make_option(c("--outcomes"), type = "character", default = NA, help = "Comma separated ICD codes"),
   make_option(c("--chains"), type = "integer", default = 4),
@@ -36,7 +36,6 @@ option_list <- list(
   make_option(c("--adapt-delta"), type = "double", default = 0.95),
   make_option(c("--max-treedepth"), type = "integer", default = 12),
   make_option(c("--min-n"), type = "integer", default = 50),
-  make_option(c("--min-n-rucc"), type = "integer", default = 30),
   make_option(c("--seed"), type = "integer", default = 1234),
   make_option(c("--test"), action = "store_true", default = FALSE)
 )
@@ -66,7 +65,7 @@ if (!file.exists(path)) stop("Data not found: ", path)
 dt <- fread(path)
 
 req <- c(
-  "COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Outcome", "AAMR_Lower", "AAMR_Upper", "RUCC", "EQI",
+  "COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Outcome", "AAMR_Lower", "AAMR_Upper", "EQI",
   "Smoking_rate", "Physical_Activities_rate", "Obesity_rate", "Uninsured_rate", "Physician_Density_per100k", "Diabetes_Prevalence_rate"
 )
 miss <- setdiff(req, names(dt))
@@ -76,7 +75,6 @@ if (!"State_FIPS" %in% names(dt)) dt[, State_FIPS := substr(sprintf("%05s", COUN
 
 dt <- dt[!is.na(AAMR_Lower) & !is.na(AAMR_Upper)]
 dt[, cens := ifelse(AAMR_Lower == AAMR_Upper, 0, 2)]
-dt <- dt[RUCC %in% 1:4 | is.na(RUCC)]
 
 # ICD code → short disease name for output file naming (overall outcomes only)
 icd_to_name <- c(
@@ -206,6 +204,21 @@ extract_quintiles <- function(draw_df, names_vec, prefix) {
   out
 }
 
+extract_covariate <- function(draw_df, names_vec, col_name, summ_df) {
+  idx <- match(col_name, names_vec)
+  if (is.na(idx)) return(list(est = "", p = NA_character_, rhat = NA_real_, ess_bulk = NA_real_, ess_tail = NA_real_))
+  col <- paste0("beta[", idx, "]")
+  draws_col <- draw_df[[col]]
+  sr <- summ_df[summ_df$variable == col, , drop = FALSE]
+  list(
+    est      = format_cell(draws_col),
+    p        = compute_p(draws_col),
+    rhat     = if (nrow(sr)) sr$rhat     else NA_real_,
+    ess_bulk = if (nrow(sr)) sr$ess_bulk else NA_real_,
+    ess_tail = if (nrow(sr)) sr$ess_tail else NA_real_
+  )
+}
+
 # Build design matrix: intercept + optional covariates + EQI_factor (treatment contrasts, Q1 as ref).
 build_design_combo <- function(d, covariates) {
   d <- d %>% mutate(EQI_factor = factor(EQI, levels = 1:5))
@@ -237,74 +250,68 @@ for (outcome in selected) {
     }
     eqi_out <- gsub("-", "_", eqi_p)
     aamr_out <- gsub("-", "_", aamr_p)
-    layers <- c("Overall", paste0("RUCC", 1:4))
-    for (lay in layers) {
-      if (lay == "Overall") {
-        layer_dt <- scen_dt
-        min_req <- opt$`min-n`
-        layer_tag <- ""
-      } else {
-        rv <- as.integer(sub("RUCC", "", lay))
-        layer_dt <- scen_dt[RUCC == rv]
-        min_req <- opt$`min-n-rucc`
-        layer_tag <- paste0("RUCC", rv, "_")
-      }
-      if (nrow(layer_dt) < min_req) {
-        message("[Skip] ", scen_key, " ", lay, " n=", nrow(layer_dt))
+
+    for (combo in combo_list) {
+      model_label <- if (length(combo) == 0) "EQI" else paste(c("EQI", covar_abbrev[combo]), collapse = "+")
+
+      des <- build_design_combo(scen_dt, combo)
+      if (nrow(des$df) < opt$`min-n`) {
+        message("[Skip] ", scen_key, " ", model_label, " n=", nrow(des$df))
         next
       }
 
-      for (combo in combo_list) {
-        model_label <- if (length(combo) == 0) "EQI" else paste(c("EQI", covar_abbrev[combo]), collapse = "+")
-        full_model_tag <- paste0(layer_tag, model_label)
+      states_c <- sort(unique(des$df$State_FIPS))
+      state_index_c <- match(des$df$State_FIPS, states_c)
+      data_list <- list(
+        N = nrow(des$df), S = length(states_c), state = state_index_c,
+        y_lower = des$df$AAMR_Lower, y_upper = des$df$AAMR_Upper, cens = des$df$cens,
+        K = ncol(des$X), X = des$X
+      )
+      init_fn <- function() list(beta = rep(0, data_list$K), z_u = rep(0, data_list$S), sigma = 50, sigma_u = 10)
 
-        des <- build_design_combo(layer_dt, combo)
-        if (nrow(des$df) < min_req) {
-          message("[Skip] ", scen_key, " ", lay, " ", model_label, " n=", nrow(des$df))
-          next
-        }
+      fit <- try(mod$sample(
+        data = data_list, chains = opt$chains, iter_sampling = opt$iter - opt$warmup, iter_warmup = opt$warmup,
+        adapt_delta = opt$`adapt-delta`, max_treedepth = opt$`max-treedepth`,
+        parallel_chains = min(opt$chains, cores_used), refresh = 0, seed = opt$seed,
+        init = rep(list(init_fn()), opt$chains)
+      ), silent = TRUE)
 
-        states_c <- sort(unique(des$df$State_FIPS))
-        state_index_c <- match(des$df$State_FIPS, states_c)
-        data_list <- list(
-          N = nrow(des$df), S = length(states_c), state = state_index_c,
-          y_lower = des$df$AAMR_Lower, y_upper = des$df$AAMR_Upper, cens = des$df$cens,
-          K = ncol(des$X), X = des$X
-        )
-        init_fn <- function() list(beta = rep(0, data_list$K), z_u = rep(0, data_list$S), sigma = 50, sigma_u = 10)
-
-        fit <- try(mod$sample(
-          data = data_list, chains = opt$chains, iter_sampling = opt$iter - opt$warmup, iter_warmup = opt$warmup,
-          adapt_delta = opt$`adapt-delta`, max_treedepth = opt$`max-treedepth`,
-          parallel_chains = min(opt$chains, cores_used), refresh = 0, seed = opt$seed,
-          init = rep(list(init_fn()), opt$chains)
-        ), silent = TRUE)
-
-        if (inherits(fit, "try-error")) {
-          message("[Fail] ", scen_key, " ", lay, " ", model_label)
-          next
-        }
-
-        draws <- as_draws_df(fit$draws("beta"))
-        colnames(draws) <- paste0("beta[", seq_len(ncol(draws)), "]")
-        q_vals <- extract_quintiles(draws, des$names, "EQI_factor")
-        summ <- posterior::summarize_draws(fit$draws("beta"))
-        met <- extract_quintile_metrics(draws, des$names, "EQI_factor", summ)
-
-        row <- tibble(
-          ICD_Code = outcome, EQI_Period = eqi_out, AAMR_Period = aamr_out, Lag = lagv, Model = full_model_tag,
-          Q1 = q_vals$Q1, Q2 = q_vals$Q2, Q3 = q_vals$Q3, Q4 = q_vals$Q4, Q5 = q_vals$Q5,
-          Q2_p = met$Q2_p, Q3_p = met$Q3_p, Q4_p = met$Q4_p, Q5_p = met$Q5_p,
-          Q2_rhat = sprintf("%.4f", met$Q2_rhat), Q3_rhat = sprintf("%.4f", met$Q3_rhat),
-          Q4_rhat = sprintf("%.4f", met$Q4_rhat), Q5_rhat = sprintf("%.4f", met$Q5_rhat),
-          Q2_ess_bulk = as.integer(round(met$Q2_ess_bulk)), Q3_ess_bulk = as.integer(round(met$Q3_ess_bulk)),
-          Q4_ess_bulk = as.integer(round(met$Q4_ess_bulk)), Q5_ess_bulk = as.integer(round(met$Q5_ess_bulk)),
-          Q2_ess_tail = as.integer(round(met$Q2_ess_tail)), Q3_ess_tail = as.integer(round(met$Q3_ess_tail)),
-          Q4_ess_tail = as.integer(round(met$Q4_ess_tail)), Q5_ess_tail = as.integer(round(met$Q5_ess_tail))
-        )
-        append_rows(outfile, row)
-        message("[OK] ", scen_key, " ", lay, " ", model_label)
+      if (inherits(fit, "try-error")) {
+        message("[Fail] ", scen_key, " ", model_label)
+        next
       }
+
+      draws <- as_draws_df(fit$draws("beta"))
+      colnames(draws) <- paste0("beta[", seq_len(ncol(draws)), "]")
+      q_vals <- extract_quintiles(draws, des$names, "EQI_factor")
+      summ <- posterior::summarize_draws(fit$draws("beta"))
+      met <- extract_quintile_metrics(draws, des$names, "EQI_factor", summ)
+      sm_c <- extract_covariate(draws, des$names, "Smoking_rate", summ)
+      pa_c <- extract_covariate(draws, des$names, "Physical_Activities_rate", summ)
+      ob_c <- extract_covariate(draws, des$names, "Obesity_rate", summ)
+      un_c <- extract_covariate(draws, des$names, "Uninsured_rate", summ)
+      pd_c <- extract_covariate(draws, des$names, "Physician_Density_per100k", summ)
+      db_c <- extract_covariate(draws, des$names, "Diabetes_Prevalence_rate", summ)
+
+      row <- tibble(
+        ICD_Code = outcome, EQI_Period = eqi_out, AAMR_Period = aamr_out, Lag = lagv, Model = model_label,
+        Q1 = q_vals$Q1, Q2 = q_vals$Q2, Q3 = q_vals$Q3, Q4 = q_vals$Q4, Q5 = q_vals$Q5,
+        Q2_p = met$Q2_p, Q3_p = met$Q3_p, Q4_p = met$Q4_p, Q5_p = met$Q5_p,
+        Q2_rhat = sprintf("%.4f", met$Q2_rhat), Q3_rhat = sprintf("%.4f", met$Q3_rhat),
+        Q4_rhat = sprintf("%.4f", met$Q4_rhat), Q5_rhat = sprintf("%.4f", met$Q5_rhat),
+        Q2_ess_bulk = as.integer(round(met$Q2_ess_bulk)), Q3_ess_bulk = as.integer(round(met$Q3_ess_bulk)),
+        Q4_ess_bulk = as.integer(round(met$Q4_ess_bulk)), Q5_ess_bulk = as.integer(round(met$Q5_ess_bulk)),
+        Q2_ess_tail = as.integer(round(met$Q2_ess_tail)), Q3_ess_tail = as.integer(round(met$Q3_ess_tail)),
+        Q4_ess_tail = as.integer(round(met$Q4_ess_tail)), Q5_ess_tail = as.integer(round(met$Q5_ess_tail)),
+        SM = sm_c$est, SM_p = sm_c$p, SM_rhat = sprintf("%.4f", sm_c$rhat), SM_ess_bulk = as.integer(round(sm_c$ess_bulk)), SM_ess_tail = as.integer(round(sm_c$ess_tail)),
+        PA = pa_c$est, PA_p = pa_c$p, PA_rhat = sprintf("%.4f", pa_c$rhat), PA_ess_bulk = as.integer(round(pa_c$ess_bulk)), PA_ess_tail = as.integer(round(pa_c$ess_tail)),
+        OB = ob_c$est, OB_p = ob_c$p, OB_rhat = sprintf("%.4f", ob_c$rhat), OB_ess_bulk = as.integer(round(ob_c$ess_bulk)), OB_ess_tail = as.integer(round(ob_c$ess_tail)),
+        UN = un_c$est, UN_p = un_c$p, UN_rhat = sprintf("%.4f", un_c$rhat), UN_ess_bulk = as.integer(round(un_c$ess_bulk)), UN_ess_tail = as.integer(round(un_c$ess_tail)),
+        PD = pd_c$est, PD_p = pd_c$p, PD_rhat = sprintf("%.4f", pd_c$rhat), PD_ess_bulk = as.integer(round(pd_c$ess_bulk)), PD_ess_tail = as.integer(round(pd_c$ess_tail)),
+        DB = db_c$est, DB_p = db_c$p, DB_rhat = sprintf("%.4f", db_c$rhat), DB_ess_bulk = as.integer(round(db_c$ess_bulk)), DB_ess_tail = as.integer(round(db_c$ess_tail))
+      )
+      append_rows(outfile, row)
+      message("[OK] ", scen_key, " ", model_label)
     }
   }
   message("===== Completed: ", dlabel, " =====")
