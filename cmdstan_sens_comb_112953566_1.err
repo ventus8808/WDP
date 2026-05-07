@@ -1,0 +1,4 @@
+CmdStan path set to: /public/home/vanadiumscandium/.cmdstan/cmdstan-2.35.0
+Detected cores: 32 | Using: 25
+Error: Missing cols: Cancer_Type
+Execution halted

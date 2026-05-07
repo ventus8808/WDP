@@ -1,0 +1,9 @@
+CmdStan path set to: /public/home/vanadiumscandium/.cmdstan/cmdstan-2.35.0
+Detected cores: 32 | Using: 25
+Total covariate combinations: 64 (k=0:1, k=1:6, k=2:15, k=3:20, k=4:15, k=5:6, k=6:1)
+Outcomes to analyze: C00_C97
+===== Disease: Cancer (C00_C97) =====
+Error in .checkTypos(e, names_x) : 
+  j (the 2nd argument inside [...]) is a single symbol but column name 'needed' is not found. If you intended to select columns using a variable in calling scope, please try DT[, ..needed]. The .. prefix conveys one-level-up similar to a file system path.
+Calls: build_design_combo ... <Anonymous> -> .checkTypos -> stopf -> raise_condition -> signal
+Execution halted

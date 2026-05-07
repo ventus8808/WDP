@@ -1,0 +1,13 @@
+error    libmamba Could not set lock (Resource temporarily unavailable)
+warning  libmamba Cannot lock '/public/home/vanadiumscandium/.cache/mamba/proc'
+    Waiting for other mamba process to finish
+CmdStan path set to: /public/home/vanadiumscandium/.cmdstan/cmdstan-2.38.0
+Detected cores: 32 | Using: 25
+ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a
+
+ar: unable to rename 'stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a'; reason: No such file or directory
+
+make: *** [stan/lib/stan_math/make/libraries:81: stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a] Error 1
+
+Error: An error occured during compilation! See the message above for more information.
+Execution halted
