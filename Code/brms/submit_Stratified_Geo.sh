@@ -4,15 +4,15 @@
 # Usage:
 #   bash Code/brms/submit_Stratified_Geo.sh
 
-#SBATCH --partition=kshctest
+#SBATCH --partition=kshctest02
 #SBATCH --job-name=WDP_Stratified_Geo
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=2-00:00:00
-#SBATCH --output=stratified_geo_%A_%a.out
-#SBATCH --error=stratified_geo_%A_%a.err
+#SBATCH --output=Stratified_Geo_%A_%a.out
+#SBATCH --error=Stratified_Geo_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }

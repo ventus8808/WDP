@@ -5,15 +5,15 @@
 # Usage:
 #   bash Code/brms/submit_Sensitivity_Combination.sh
 
-#SBATCH --partition=kshctest
-#SBATCH --job-name=WDP_sens_comb
+#SBATCH --partition=kshctest02
+#SBATCH --job-name=brms_Sensitivity_Combination
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=2-00:00:00
-#SBATCH --output=sens_comb_%A_%a.out
-#SBATCH --error=sens_comb_%A_%a.err
+#SBATCH --output=Sensitivity_Combination_%A_%a.out
+#SBATCH --error=Sensitivity_Combination_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }

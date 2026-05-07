@@ -4,15 +4,15 @@
 # Usage:
 #   bash Code/brms/submit_Main.sh
 
-#SBATCH --partition=kshctest
-#SBATCH --job-name=WDP_cmdstan_main
+#SBATCH --partition=kshctest02
+#SBATCH --job-name=brms_Main
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=48G
+#SBATCH --mem=56G
 #SBATCH --time=1-00:00:00
-#SBATCH --output=main_%A_%a.out
-#SBATCH --error=main_%A_%a.err
+#SBATCH --output=Main_%A_%a.out
+#SBATCH --error=Main_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
