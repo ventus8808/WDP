@@ -1,18 +1,18 @@
 #!/bin/bash
-# Slurm array launcher for the geographic-stratified interval-censored mixed model pipeline.
-# One task per outcome; each task runs all strat-vars × strat-vals × scenarios inside the R runner.
+# Slurm array launcher for the demographic-stratified interval-censored mixed model pipeline.
+# One task per outcome; each task runs all strata (Male, Female, White, Black, Others) × scenarios inside the R runner.
 # Usage:
-#   bash Code/brms/submit_Stratified_Geo.sh
+#   bash Code/brms/submit_Stratified_Demo.sh
 
 #SBATCH --partition=wzhctest
-#SBATCH --job-name=WDP_Stratified_Geo
+#SBATCH --job-name=WDP_Stratified_Demo
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
 #SBATCH --time=2-00:00:00
-#SBATCH --output=Stratified_Geo_%A_%a.out
-#SBATCH --error=Stratified_Geo_%A_%a.err
+#SBATCH --output=Stratified_Demo_%A_%a.out
+#SBATCH --error=Stratified_Demo_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -57,7 +57,7 @@ module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, u
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/brms_Stratified_Geo.R"
+RUNNER="Code/brms/brms_Stratified_Demo.R"
 
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1

@@ -1,8 +1,8 @@
 """
 CDC Triangulation Stratified AAMR Calculator
 
-This script calculates Age-Adjusted Mortality Rate (AAMR) and confidence intervals
-for stratified triangulation outputs.
+Calculates Age-Adjusted Mortality Rate (AAMR) and confidence intervals for all
+stratified subtracted files (Male, Female, White, Black, Others, and any other stratum).
 
 Uses proper statistical methods:
 - Poisson distribution for variance/standard error
@@ -12,9 +12,10 @@ Uses proper statistical methods:
 Input:  Subtracted death counts from Data/Original/CDC Triangulation/Stratified_Subtracted/
 Output: AAMR with CI to     Data/Original/CDC Triangulation/Stratified_AAMR/
 
-Filename assumptions (preserve stratum in filenames):
-- 2016-2020_G20_G30_G12.2_F01_F03_White.csv  -> year=2016-2020, icd=G20_G30_G12.2_F01_F03, stratum=White
-- 2016-2020_C81-C96_Male.csv                  -> year=2016-2020, icd=C81-C96, stratum=Male
+Filename convention (stratum is always the last underscore-delimited token):
+- 2016-2020_K74_Male.csv       -> year=2016-2020, icd=K74, stratum=Male
+- 2021-2024_C00_C97_Female.csv -> year=2021-2024, icd=C00_C97, stratum=Female
+- 2016-2020_I00_I99_Others.csv -> year=2016-2020, icd=I00_I99, stratum=Others
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@
 # Usage:
 #   bash Code/brms/submit_Main.sh
 
-#SBATCH --partition=kshctest02
+#SBATCH --partition=wzhctest
 #SBATCH --job-name=brms_Main
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

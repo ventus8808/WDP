@@ -5,7 +5,7 @@
 # Usage:
 #   bash Code/brms/submit_Sensitivity_Combination.sh
 
-#SBATCH --partition=kshctest02
+#SBATCH --partition=wzhctest
 #SBATCH --job-name=brms_Sensitivity_Combination
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

@@ -1,116 +1,116 @@
 Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata,Total_Deaths,Total_Population,AAMR,AAMR_SE,AAMR_Lower,AAMR_Upper,AAMRSE
-2006-2010,C00_C97,All-site Cancer,Cancer,County Economic Typology,Farming,41622,20793230,167.3245,0.8248,165.7209,168.9399,167.32 ± 0.82
-2006-2010,C00_C97,All-site Cancer,Cancer,County Economic Typology,Mining,31404,14617184,195.457,1.1119,193.3011,197.6309,195.46 ± 1.11
-2006-2010,C00_C97,All-site Cancer,Cancer,County Economic Typology,Manufacturing,615201,294175065,186.1172,0.2386,185.6524,186.5829,186.12 ± 0.24
-2006-2010,C00_C97,All-site Cancer,Cancer,County Economic Typology,Government,305284,176788820,177.7255,0.3243,177.0956,178.3571,177.73 ± 0.32
-2006-2010,C00_C97,All-site Cancer,Cancer,County Economic Typology,Services,1180108,650908678,170.1099,0.1574,169.8032,170.4171,170.11 ± 0.16
-2006-2010,C00_C97,All-site Cancer,Cancer,County Economic Typology,Nonspecialized,652473,361939164,178.3728,0.2223,177.9402,178.8061,178.37 ± 0.22
-2006-2010,C00_C97,All-site Cancer,Cancer,County Economic Typology,National,2826092,1519222141,176.3593,0.1055,176.1537,176.565,176.36 ± 0.11
-2006-2010,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Farming,4307,20793230,17.219,0.2641,16.7086,17.7411,17.22 ± 0.26
-2006-2010,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Mining,2949,14617184,18.462,0.3427,17.8016,19.1406,18.46 ± 0.34
-2006-2010,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Manufacturing,57246,294175065,17.3247,0.0728,17.1831,17.4672,17.32 ± 0.07
-2006-2010,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Government,28188,176788820,16.4519,0.0988,16.2604,16.6451,16.45 ± 0.10
-2006-2010,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Services,111452,650908678,16.0117,0.0482,15.9179,16.106,16.01 ± 0.05
-2006-2010,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Nonspecialized,61159,361939164,16.7482,0.0682,16.6157,16.8815,16.75 ± 0.07
-2006-2010,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,National,265301,1519222141,16.5456,0.0323,16.4827,16.6087,16.55 ± 0.03
-2006-2010,C22,Liver Cancer,Liver,County Economic Typology,Farming,1190,20793230,4.8127,0.1403,4.5431,5.0941,4.81 ± 0.14
-2006-2010,C22,Liver Cancer,Liver,County Economic Typology,Mining,936,14617184,5.7339,0.189,5.3724,6.1133,5.73 ± 0.19
-2006-2010,C22,Liver Cancer,Liver,County Economic Typology,Manufacturing,16891,294175065,5.0385,0.039,4.9628,5.1151,5.04 ± 0.04
-2006-2010,C22,Liver Cancer,Liver,County Economic Typology,Government,10445,176788820,5.8897,0.0582,5.7773,6.0037,5.89 ± 0.06
-2006-2010,C22,Liver Cancer,Liver,County Economic Typology,Services,40905,650908678,5.8072,0.0289,5.751,5.8637,5.81 ± 0.03
-2006-2010,C22,Liver Cancer,Liver,County Economic Typology,Nonspecialized,21080,361939164,5.6202,0.039,5.5446,5.6966,5.62 ± 0.04
-2006-2010,C22,Liver Cancer,Liver,County Economic Typology,National,91447,1519222141,5.5996,0.0186,5.5633,5.636,5.60 ± 0.02
-2006-2010,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Farming,2439,20793230,9.7862,0.1991,9.4017,10.1825,9.79 ± 0.20
-2006-2010,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Mining,1684,14617184,10.3868,0.255,9.8966,10.895,10.39 ± 0.26
-2006-2010,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Manufacturing,37010,294175065,11.1334,0.0582,11.0203,11.2474,11.13 ± 0.06
-2006-2010,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Government,18970,176788820,11.04,0.0808,10.8834,11.1982,11.04 ± 0.08
-2006-2010,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Services,75639,650908678,10.8845,0.0398,10.8071,10.9624,10.88 ± 0.04
-2006-2010,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Nonspecialized,39497,361939164,10.7658,0.0546,10.6599,10.8725,10.77 ± 0.05
-2006-2010,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,National,175239,1519222141,10.907,0.0262,10.856,10.9582,10.91 ± 0.03
-2006-2010,C34,Lung Cancer,Lung,County Economic Typology,Farming,11804,20793230,47.4186,0.438,46.567,48.2819,47.42 ± 0.44
-2006-2010,C34,Lung Cancer,Lung,County Economic Typology,Mining,9893,14617184,60.7195,0.6149,59.5288,61.928,60.72 ± 0.61
-2006-2010,C34,Lung Cancer,Lung,County Economic Typology,Manufacturing,184492,294175065,55.5918,0.1301,55.3384,55.8461,55.59 ± 0.13
-2006-2010,C34,Lung Cancer,Lung,County Economic Typology,Government,85560,176788820,49.7359,0.1714,49.4032,50.0703,49.74 ± 0.17
-2006-2010,C34,Lung Cancer,Lung,County Economic Typology,Services,313775,650908678,45.4247,0.0815,45.2659,45.5839,45.42 ± 0.08
-2006-2010,C34,Lung Cancer,Lung,County Economic Typology,Nonspecialized,186406,361939164,50.9164,0.1187,50.6855,51.1481,50.92 ± 0.12
-2006-2010,C34,Lung Cancer,Lung,County Economic Typology,National,791930,1519222141,49.4425,0.0559,49.3337,49.5516,49.44 ± 0.06
-2006-2010,C50,Breast Cancer,Breast,County Economic Typology,Farming,2718,20793230,10.9896,0.2127,10.5803,11.4106,10.99 ± 0.21
-2006-2010,C50,Breast Cancer,Breast,County Economic Typology,Mining,1975,14617184,12.3141,0.2801,11.777,12.8695,12.31 ± 0.28
-2006-2010,C50,Breast Cancer,Breast,County Economic Typology,Manufacturing,42583,294175065,12.8704,0.0628,12.7485,12.9932,12.87 ± 0.06
-2006-2010,C50,Breast Cancer,Breast,County Economic Typology,Government,22063,176788820,12.6671,0.0861,12.5005,12.8354,12.67 ± 0.09
-2006-2010,C50,Breast Cancer,Breast,County Economic Typology,Services,89643,650908678,12.8124,0.043,12.7286,12.8965,12.81 ± 0.04
-2006-2010,C50,Breast Cancer,Breast,County Economic Typology,Nonspecialized,46569,361939164,12.5599,0.0587,12.4461,12.6745,12.56 ± 0.06
-2006-2010,C50,Breast Cancer,Breast,County Economic Typology,National,205551,1519222141,12.7195,0.0282,12.6645,12.7746,12.72 ± 0.03
-2006-2010,C56,Ovary Cancer,Ovarian,County Economic Typology,Farming,1048,20793230,4.2292,0.1316,3.977,4.4932,4.23 ± 0.13
-2006-2010,C56,Ovary Cancer,Ovarian,County Economic Typology,Mining,695,14617184,4.2948,0.1644,3.9814,4.6264,4.29 ± 0.16
-2006-2010,C56,Ovary Cancer,Ovarian,County Economic Typology,Manufacturing,15238,294175065,4.6039,0.0375,4.5311,4.6776,4.60 ± 0.04
-2006-2010,C56,Ovary Cancer,Ovarian,County Economic Typology,Government,7582,176788820,4.3807,0.0507,4.2826,4.4804,4.38 ± 0.05
-2006-2010,C56,Ovary Cancer,Ovarian,County Economic Typology,Services,31684,650908678,4.5407,0.0256,4.4908,4.591,4.54 ± 0.03
-2006-2010,C56,Ovary Cancer,Ovarian,County Economic Typology,Nonspecialized,16548,361939164,4.486,0.0351,4.4179,4.5548,4.49 ± 0.04
-2006-2010,C56,Ovary Cancer,Ovarian,County Economic Typology,National,72795,1519222141,4.5159,0.0168,4.4831,4.5488,4.52 ± 0.02
-2006-2010,C61,Prostate Cancer,Prostate,County Economic Typology,Farming,2554,20793230,9.9958,0.1984,9.6119,10.3912,10.00 ± 0.20
-2006-2010,C61,Prostate Cancer,Prostate,County Economic Typology,Mining,1537,14617184,10.0043,0.2562,9.5103,10.5172,10.00 ± 0.26
-2006-2010,C61,Prostate Cancer,Prostate,County Economic Typology,Manufacturing,29327,294175065,8.9546,0.0525,8.8524,9.0577,8.95 ± 0.05
-2006-2010,C61,Prostate Cancer,Prostate,County Economic Typology,Government,15612,176788820,9.4722,0.0762,9.3242,9.622,9.47 ± 0.08
-2006-2010,C61,Prostate Cancer,Prostate,County Economic Typology,Services,61270,650908678,8.861,0.0359,8.791,8.9314,8.86 ± 0.04
-2006-2010,C61,Prostate Cancer,Prostate,County Economic Typology,Nonspecialized,32266,361939164,9.1152,0.0509,9.016,9.2152,9.12 ± 0.05
-2006-2010,C61,Prostate Cancer,Prostate,County Economic Typology,National,142566,1519222141,9.0297,0.024,8.9829,9.0767,9.03 ± 0.02
-2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Farming,1131,20793230,4.5785,0.137,4.3155,4.8533,4.58 ± 0.14
-2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Mining,833,14617184,5.1334,0.1794,4.7907,5.4942,5.13 ± 0.18
-2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Manufacturing,14207,294175065,4.2646,0.036,4.1948,4.3353,4.26 ± 0.04
-2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Government,7159,176788820,4.1283,0.0492,4.0333,4.2251,4.13 ± 0.05
-2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Services,25333,650908678,3.6379,0.023,3.5933,3.683,3.64 ± 0.02
-2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Nonspecialized,15438,361939164,4.1789,0.0339,4.1132,4.2453,4.18 ± 0.03
-2006-2010,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,National,64101,1519222141,3.9739,0.0158,3.9432,4.0047,3.97 ± 0.02
-2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Farming,1497,20793230,6.0042,0.1561,5.7039,6.3163,6.00 ± 0.16
-2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Mining,1106,14617184,7.0431,0.2133,6.6341,7.4707,7.04 ± 0.21
-2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Manufacturing,22371,294175065,6.8419,0.046,6.7525,6.9322,6.84 ± 0.05
-2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Government,10553,176788820,6.2449,0.0612,6.1263,6.3652,6.24 ± 0.06
-2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Services,43049,650908678,6.2397,0.0302,6.1809,6.299,6.24 ± 0.03
-2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Nonspecialized,23485,361939164,6.5232,0.0428,6.44,6.6072,6.52 ± 0.04
-2006-2010,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,National,102061,1519222141,6.4357,0.0202,6.3963,6.4754,6.44 ± 0.02
-2006-2010,C91_C95,Leukemia,Leukemia,County Economic Typology,Farming,1658,20793230,6.703,0.1658,6.3842,7.0336,6.70 ± 0.17
-2006-2010,C91_C95,Leukemia,Leukemia,County Economic Typology,Mining,1180,14617184,7.5253,0.2207,7.102,7.9672,7.53 ± 0.22
-2006-2010,C91_C95,Leukemia,Leukemia,County Economic Typology,Manufacturing,23819,294175065,7.3314,0.0478,7.2386,7.4251,7.33 ± 0.05
-2006-2010,C91_C95,Leukemia,Leukemia,County Economic Typology,Government,11650,176788820,6.8842,0.0642,6.7598,7.0104,6.88 ± 0.06
-2006-2010,C91_C95,Leukemia,Leukemia,County Economic Typology,Services,46668,650908678,6.8142,0.0317,6.7525,6.8763,6.81 ± 0.03
-2006-2010,C91_C95,Leukemia,Leukemia,County Economic Typology,Nonspecialized,25726,361939164,7.1602,0.0449,7.0729,7.2482,7.16 ± 0.04
-2006-2010,C91_C95,Leukemia,Leukemia,County Economic Typology,National,110701,1519222141,7.0127,0.0212,6.9715,7.0542,7.01 ± 0.02
-2006-2010,G10,Huntington's Disease (HD),HD,County Economic Typology,Farming,70,20793230,0.2914,0.0351,0.2272,0.3681,0.29 ± 0.04
-2006-2010,G10,Huntington's Disease (HD),HD,County Economic Typology,Mining,47,14617184,0.2964,0.0439,0.2178,0.3941,0.30 ± 0.04
-2006-2010,G10,Huntington's Disease (HD),HD,County Economic Typology,Manufacturing,1059,294175065,0.3237,0.0101,0.3045,0.3438,0.32 ± 0.01
-2006-2010,G10,Huntington's Disease (HD),HD,County Economic Typology,Government,532,176788820,0.2947,0.0129,0.2702,0.3208,0.29 ± 0.01
-2006-2010,G10,Huntington's Disease (HD),HD,County Economic Typology,Services,1614,650908678,0.2314,0.0058,0.2203,0.243,0.23 ± 0.01
-2006-2010,G10,Huntington's Disease (HD),HD,County Economic Typology,Nonspecialized,1096,361939164,0.2889,0.0088,0.272,0.3065,0.29 ± 0.01
-2006-2010,G10,Huntington's Disease (HD),HD,County Economic Typology,National,4418,1519222141,0.272,0.0041,0.264,0.2801,0.27 ± 0.00
-2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Farming,438,20793230,1.7961,0.0863,1.6318,1.9725,1.80 ± 0.09
-2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Mining,277,14617184,1.7077,0.1036,1.5125,1.9211,1.71 ± 0.10
-2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Manufacturing,6842,294175065,2.0681,0.0252,2.0194,2.1177,2.07 ± 0.03
-2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Government,3440,176788820,1.98,0.0341,1.9144,2.0473,1.98 ± 0.03
-2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Services,12729,650908678,1.8427,0.0164,1.8109,1.875,1.84 ± 0.02
-2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Nonspecialized,7486,361939164,2.0319,0.0237,1.9861,2.0785,2.03 ± 0.02
-2006-2010,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,National,31212,1519222141,1.9455,0.0111,1.924,1.9672,1.95 ± 0.01
-2006-2010,G20,Parkinson's Disease (PD),PD,County Economic Typology,Farming,1513,20793230,5.9129,0.1525,5.6186,6.2185,5.91 ± 0.15
-2006-2010,G20,Parkinson's Disease (PD),PD,County Economic Typology,Mining,926,14617184,6.1828,0.2036,5.7909,6.5942,6.18 ± 0.20
-2006-2010,G20,Parkinson's Disease (PD),PD,County Economic Typology,Manufacturing,21765,294175065,6.7337,0.0457,6.6445,6.8238,6.73 ± 0.05
-2006-2010,G20,Parkinson's Disease (PD),PD,County Economic Typology,Government,10887,176788820,6.8005,0.0653,6.6734,6.9295,6.80 ± 0.07
-2006-2010,G20,Parkinson's Disease (PD),PD,County Economic Typology,Services,43509,650908678,6.3243,0.0304,6.265,6.384,6.32 ± 0.03
-2006-2010,G20,Parkinson's Disease (PD),PD,County Economic Typology,Nonspecialized,23280,361939164,6.7174,0.0441,6.6314,6.8042,6.72 ± 0.04
-2006-2010,G20,Parkinson's Disease (PD),PD,County Economic Typology,National,101880,1519222141,6.5388,0.0205,6.4987,6.579,6.54 ± 0.02
-2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Farming,14397,20793236,54.3311,0.4544,53.4472,55.2259,54.33 ± 0.45
-2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Mining,9632,14617184,65.1084,0.6643,63.8146,66.4219,65.11 ± 0.66
-2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Manufacturing,219778,294175065,66.4777,0.1421,66.2,66.7562,66.48 ± 0.14
-2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Government,106391,176788820,65.5039,0.2012,65.1109,65.8987,65.50 ± 0.20
-2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Services,401543,650908678,56.517,0.0895,56.3423,56.6921,56.52 ± 0.09
-2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Nonspecialized,227755,361939164,64.5714,0.1356,64.3065,64.8372,64.57 ± 0.14
-2006-2010,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,National,979496,1519222147,61.3281,0.0621,61.2067,61.4497,61.33 ± 0.06
-2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Farming,12376,20793236,46.3307,0.4178,45.518,47.1543,46.33 ± 0.42
-2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Mining,8382,14617184,56.9216,0.6223,55.7095,58.1534,56.92 ± 0.62
-2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Manufacturing,190112,294175065,57.3521,0.1318,57.0946,57.6105,57.35 ± 0.13
-2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Government,91532,176788820,56.4287,0.1868,56.0638,56.7955,56.43 ± 0.19
-2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Services,343691,650908678,48.1186,0.0823,47.9578,48.2797,48.12 ± 0.08
-2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Nonspecialized,195893,361939164,55.5332,0.1257,55.2876,55.7797,55.53 ± 0.13
-2006-2010,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,National,841986,1519222147,52.5719,0.0574,52.4597,52.6844,52.57 ± 0.06
+2006-2010,C00_C97,C00_C97,Cancer,County Economic Typology,Farming,41622,20793230,167.3245,0.8248,165.7209,168.9399,167.32 ± 0.82
+2006-2010,C00_C97,C00_C97,Cancer,County Economic Typology,Mining,31404,14617184,195.457,1.1119,193.3011,197.6309,195.46 ± 1.11
+2006-2010,C00_C97,C00_C97,Cancer,County Economic Typology,Manufacturing,615201,294175065,186.1172,0.2386,185.6524,186.5829,186.12 ± 0.24
+2006-2010,C00_C97,C00_C97,Cancer,County Economic Typology,Government,305284,176788820,177.7255,0.3243,177.0956,178.3571,177.73 ± 0.32
+2006-2010,C00_C97,C00_C97,Cancer,County Economic Typology,Services,1180108,650908678,170.1099,0.1574,169.8032,170.4171,170.11 ± 0.16
+2006-2010,C00_C97,C00_C97,Cancer,County Economic Typology,Nonspecialized,652473,361939164,178.3728,0.2223,177.9402,178.8061,178.37 ± 0.22
+2006-2010,C00_C97,C00_C97,Cancer,County Economic Typology,National,2826092,1519222141,176.3593,0.1055,176.1537,176.565,176.36 ± 0.11
+2006-2010,C18_C21,C18_C21,Colorectal,County Economic Typology,Farming,4307,20793230,17.219,0.2641,16.7086,17.7411,17.22 ± 0.26
+2006-2010,C18_C21,C18_C21,Colorectal,County Economic Typology,Mining,2949,14617184,18.462,0.3427,17.8016,19.1406,18.46 ± 0.34
+2006-2010,C18_C21,C18_C21,Colorectal,County Economic Typology,Manufacturing,57246,294175065,17.3247,0.0728,17.1831,17.4672,17.32 ± 0.07
+2006-2010,C18_C21,C18_C21,Colorectal,County Economic Typology,Government,28188,176788820,16.4519,0.0988,16.2604,16.6451,16.45 ± 0.10
+2006-2010,C18_C21,C18_C21,Colorectal,County Economic Typology,Services,111452,650908678,16.0117,0.0482,15.9179,16.106,16.01 ± 0.05
+2006-2010,C18_C21,C18_C21,Colorectal,County Economic Typology,Nonspecialized,61159,361939164,16.7482,0.0682,16.6157,16.8815,16.75 ± 0.07
+2006-2010,C18_C21,C18_C21,Colorectal,County Economic Typology,National,265301,1519222141,16.5456,0.0323,16.4827,16.6087,16.55 ± 0.03
+2006-2010,C22,C22,Liver,County Economic Typology,Farming,1190,20793230,4.8127,0.1403,4.5431,5.0941,4.81 ± 0.14
+2006-2010,C22,C22,Liver,County Economic Typology,Mining,936,14617184,5.7339,0.189,5.3724,6.1133,5.73 ± 0.19
+2006-2010,C22,C22,Liver,County Economic Typology,Manufacturing,16891,294175065,5.0385,0.039,4.9628,5.1151,5.04 ± 0.04
+2006-2010,C22,C22,Liver,County Economic Typology,Government,10445,176788820,5.8897,0.0582,5.7773,6.0037,5.89 ± 0.06
+2006-2010,C22,C22,Liver,County Economic Typology,Services,40905,650908678,5.8072,0.0289,5.751,5.8637,5.81 ± 0.03
+2006-2010,C22,C22,Liver,County Economic Typology,Nonspecialized,21080,361939164,5.6202,0.039,5.5446,5.6966,5.62 ± 0.04
+2006-2010,C22,C22,Liver,County Economic Typology,National,91447,1519222141,5.5996,0.0186,5.5633,5.636,5.60 ± 0.02
+2006-2010,C25,C25,Pancreatic,County Economic Typology,Farming,2439,20793230,9.7862,0.1991,9.4017,10.1825,9.79 ± 0.20
+2006-2010,C25,C25,Pancreatic,County Economic Typology,Mining,1684,14617184,10.3868,0.255,9.8966,10.895,10.39 ± 0.26
+2006-2010,C25,C25,Pancreatic,County Economic Typology,Manufacturing,37010,294175065,11.1334,0.0582,11.0203,11.2474,11.13 ± 0.06
+2006-2010,C25,C25,Pancreatic,County Economic Typology,Government,18970,176788820,11.04,0.0808,10.8834,11.1982,11.04 ± 0.08
+2006-2010,C25,C25,Pancreatic,County Economic Typology,Services,75639,650908678,10.8845,0.0398,10.8071,10.9624,10.88 ± 0.04
+2006-2010,C25,C25,Pancreatic,County Economic Typology,Nonspecialized,39497,361939164,10.7658,0.0546,10.6599,10.8725,10.77 ± 0.05
+2006-2010,C25,C25,Pancreatic,County Economic Typology,National,175239,1519222141,10.907,0.0262,10.856,10.9582,10.91 ± 0.03
+2006-2010,C34,C34,Lung,County Economic Typology,Farming,11804,20793230,47.4186,0.438,46.567,48.2819,47.42 ± 0.44
+2006-2010,C34,C34,Lung,County Economic Typology,Mining,9893,14617184,60.7195,0.6149,59.5288,61.928,60.72 ± 0.61
+2006-2010,C34,C34,Lung,County Economic Typology,Manufacturing,184492,294175065,55.5918,0.1301,55.3384,55.8461,55.59 ± 0.13
+2006-2010,C34,C34,Lung,County Economic Typology,Government,85560,176788820,49.7359,0.1714,49.4032,50.0703,49.74 ± 0.17
+2006-2010,C34,C34,Lung,County Economic Typology,Services,313775,650908678,45.4247,0.0815,45.2659,45.5839,45.42 ± 0.08
+2006-2010,C34,C34,Lung,County Economic Typology,Nonspecialized,186406,361939164,50.9164,0.1187,50.6855,51.1481,50.92 ± 0.12
+2006-2010,C34,C34,Lung,County Economic Typology,National,791930,1519222141,49.4425,0.0559,49.3337,49.5516,49.44 ± 0.06
+2006-2010,C50,C50,Breast,County Economic Typology,Farming,2718,20793230,10.9896,0.2127,10.5803,11.4106,10.99 ± 0.21
+2006-2010,C50,C50,Breast,County Economic Typology,Mining,1975,14617184,12.3141,0.2801,11.777,12.8695,12.31 ± 0.28
+2006-2010,C50,C50,Breast,County Economic Typology,Manufacturing,42583,294175065,12.8704,0.0628,12.7485,12.9932,12.87 ± 0.06
+2006-2010,C50,C50,Breast,County Economic Typology,Government,22063,176788820,12.6671,0.0861,12.5005,12.8354,12.67 ± 0.09
+2006-2010,C50,C50,Breast,County Economic Typology,Services,89643,650908678,12.8124,0.043,12.7286,12.8965,12.81 ± 0.04
+2006-2010,C50,C50,Breast,County Economic Typology,Nonspecialized,46569,361939164,12.5599,0.0587,12.4461,12.6745,12.56 ± 0.06
+2006-2010,C50,C50,Breast,County Economic Typology,National,205551,1519222141,12.7195,0.0282,12.6645,12.7746,12.72 ± 0.03
+2006-2010,C56,C56,Ovarian,County Economic Typology,Farming,1048,20793230,4.2292,0.1316,3.977,4.4932,4.23 ± 0.13
+2006-2010,C56,C56,Ovarian,County Economic Typology,Mining,695,14617184,4.2948,0.1644,3.9814,4.6264,4.29 ± 0.16
+2006-2010,C56,C56,Ovarian,County Economic Typology,Manufacturing,15238,294175065,4.6039,0.0375,4.5311,4.6776,4.60 ± 0.04
+2006-2010,C56,C56,Ovarian,County Economic Typology,Government,7582,176788820,4.3807,0.0507,4.2826,4.4804,4.38 ± 0.05
+2006-2010,C56,C56,Ovarian,County Economic Typology,Services,31684,650908678,4.5407,0.0256,4.4908,4.591,4.54 ± 0.03
+2006-2010,C56,C56,Ovarian,County Economic Typology,Nonspecialized,16548,361939164,4.486,0.0351,4.4179,4.5548,4.49 ± 0.04
+2006-2010,C56,C56,Ovarian,County Economic Typology,National,72795,1519222141,4.5159,0.0168,4.4831,4.5488,4.52 ± 0.02
+2006-2010,C61,C61,Prostate,County Economic Typology,Farming,2554,20793230,9.9958,0.1984,9.6119,10.3912,10.00 ± 0.20
+2006-2010,C61,C61,Prostate,County Economic Typology,Mining,1537,14617184,10.0043,0.2562,9.5103,10.5172,10.00 ± 0.26
+2006-2010,C61,C61,Prostate,County Economic Typology,Manufacturing,29327,294175065,8.9546,0.0525,8.8524,9.0577,8.95 ± 0.05
+2006-2010,C61,C61,Prostate,County Economic Typology,Government,15612,176788820,9.4722,0.0762,9.3242,9.622,9.47 ± 0.08
+2006-2010,C61,C61,Prostate,County Economic Typology,Services,61270,650908678,8.861,0.0359,8.791,8.9314,8.86 ± 0.04
+2006-2010,C61,C61,Prostate,County Economic Typology,Nonspecialized,32266,361939164,9.1152,0.0509,9.016,9.2152,9.12 ± 0.05
+2006-2010,C61,C61,Prostate,County Economic Typology,National,142566,1519222141,9.0297,0.024,8.9829,9.0767,9.03 ± 0.02
+2006-2010,C64_C65,C64_C65,Kidney,County Economic Typology,Farming,1131,20793230,4.5785,0.137,4.3155,4.8533,4.58 ± 0.14
+2006-2010,C64_C65,C64_C65,Kidney,County Economic Typology,Mining,833,14617184,5.1334,0.1794,4.7907,5.4942,5.13 ± 0.18
+2006-2010,C64_C65,C64_C65,Kidney,County Economic Typology,Manufacturing,14207,294175065,4.2646,0.036,4.1948,4.3353,4.26 ± 0.04
+2006-2010,C64_C65,C64_C65,Kidney,County Economic Typology,Government,7159,176788820,4.1283,0.0492,4.0333,4.2251,4.13 ± 0.05
+2006-2010,C64_C65,C64_C65,Kidney,County Economic Typology,Services,25333,650908678,3.6379,0.023,3.5933,3.683,3.64 ± 0.02
+2006-2010,C64_C65,C64_C65,Kidney,County Economic Typology,Nonspecialized,15438,361939164,4.1789,0.0339,4.1132,4.2453,4.18 ± 0.03
+2006-2010,C64_C65,C64_C65,Kidney,County Economic Typology,National,64101,1519222141,3.9739,0.0158,3.9432,4.0047,3.97 ± 0.02
+2006-2010,C82_C85,C82_C85,NHL,County Economic Typology,Farming,1497,20793230,6.0042,0.1561,5.7039,6.3163,6.00 ± 0.16
+2006-2010,C82_C85,C82_C85,NHL,County Economic Typology,Mining,1106,14617184,7.0431,0.2133,6.6341,7.4707,7.04 ± 0.21
+2006-2010,C82_C85,C82_C85,NHL,County Economic Typology,Manufacturing,22371,294175065,6.8419,0.046,6.7525,6.9322,6.84 ± 0.05
+2006-2010,C82_C85,C82_C85,NHL,County Economic Typology,Government,10553,176788820,6.2449,0.0612,6.1263,6.3652,6.24 ± 0.06
+2006-2010,C82_C85,C82_C85,NHL,County Economic Typology,Services,43049,650908678,6.2397,0.0302,6.1809,6.299,6.24 ± 0.03
+2006-2010,C82_C85,C82_C85,NHL,County Economic Typology,Nonspecialized,23485,361939164,6.5232,0.0428,6.44,6.6072,6.52 ± 0.04
+2006-2010,C82_C85,C82_C85,NHL,County Economic Typology,National,102061,1519222141,6.4357,0.0202,6.3963,6.4754,6.44 ± 0.02
+2006-2010,C91_C95,C91_C95,Leukemia,County Economic Typology,Farming,1658,20793230,6.703,0.1658,6.3842,7.0336,6.70 ± 0.17
+2006-2010,C91_C95,C91_C95,Leukemia,County Economic Typology,Mining,1180,14617184,7.5253,0.2207,7.102,7.9672,7.53 ± 0.22
+2006-2010,C91_C95,C91_C95,Leukemia,County Economic Typology,Manufacturing,23819,294175065,7.3314,0.0478,7.2386,7.4251,7.33 ± 0.05
+2006-2010,C91_C95,C91_C95,Leukemia,County Economic Typology,Government,11650,176788820,6.8842,0.0642,6.7598,7.0104,6.88 ± 0.06
+2006-2010,C91_C95,C91_C95,Leukemia,County Economic Typology,Services,46668,650908678,6.8142,0.0317,6.7525,6.8763,6.81 ± 0.03
+2006-2010,C91_C95,C91_C95,Leukemia,County Economic Typology,Nonspecialized,25726,361939164,7.1602,0.0449,7.0729,7.2482,7.16 ± 0.04
+2006-2010,C91_C95,C91_C95,Leukemia,County Economic Typology,National,110701,1519222141,7.0127,0.0212,6.9715,7.0542,7.01 ± 0.02
+2006-2010,G10,G10,HD,County Economic Typology,Farming,70,20793230,0.2914,0.0351,0.2272,0.3681,0.29 ± 0.04
+2006-2010,G10,G10,HD,County Economic Typology,Mining,47,14617184,0.2964,0.0439,0.2178,0.3941,0.30 ± 0.04
+2006-2010,G10,G10,HD,County Economic Typology,Manufacturing,1059,294175065,0.3237,0.0101,0.3045,0.3438,0.32 ± 0.01
+2006-2010,G10,G10,HD,County Economic Typology,Government,532,176788820,0.2947,0.0129,0.2702,0.3208,0.29 ± 0.01
+2006-2010,G10,G10,HD,County Economic Typology,Services,1614,650908678,0.2314,0.0058,0.2203,0.243,0.23 ± 0.01
+2006-2010,G10,G10,HD,County Economic Typology,Nonspecialized,1096,361939164,0.2889,0.0088,0.272,0.3065,0.29 ± 0.01
+2006-2010,G10,G10,HD,County Economic Typology,National,4418,1519222141,0.272,0.0041,0.264,0.2801,0.27 ± 0.00
+2006-2010,G12.2,G12.2,ALS,County Economic Typology,Farming,438,20793230,1.7961,0.0863,1.6318,1.9725,1.80 ± 0.09
+2006-2010,G12.2,G12.2,ALS,County Economic Typology,Mining,277,14617184,1.7077,0.1036,1.5125,1.9211,1.71 ± 0.10
+2006-2010,G12.2,G12.2,ALS,County Economic Typology,Manufacturing,6842,294175065,2.0681,0.0252,2.0194,2.1177,2.07 ± 0.03
+2006-2010,G12.2,G12.2,ALS,County Economic Typology,Government,3440,176788820,1.98,0.0341,1.9144,2.0473,1.98 ± 0.03
+2006-2010,G12.2,G12.2,ALS,County Economic Typology,Services,12729,650908678,1.8427,0.0164,1.8109,1.875,1.84 ± 0.02
+2006-2010,G12.2,G12.2,ALS,County Economic Typology,Nonspecialized,7486,361939164,2.0319,0.0237,1.9861,2.0785,2.03 ± 0.02
+2006-2010,G12.2,G12.2,ALS,County Economic Typology,National,31212,1519222141,1.9455,0.0111,1.924,1.9672,1.95 ± 0.01
+2006-2010,G20,G20,PD,County Economic Typology,Farming,1513,20793230,5.9129,0.1525,5.6186,6.2185,5.91 ± 0.15
+2006-2010,G20,G20,PD,County Economic Typology,Mining,926,14617184,6.1828,0.2036,5.7909,6.5942,6.18 ± 0.20
+2006-2010,G20,G20,PD,County Economic Typology,Manufacturing,21765,294175065,6.7337,0.0457,6.6445,6.8238,6.73 ± 0.05
+2006-2010,G20,G20,PD,County Economic Typology,Government,10887,176788820,6.8005,0.0653,6.6734,6.9295,6.80 ± 0.07
+2006-2010,G20,G20,PD,County Economic Typology,Services,43509,650908678,6.3243,0.0304,6.265,6.384,6.32 ± 0.03
+2006-2010,G20,G20,PD,County Economic Typology,Nonspecialized,23280,361939164,6.7174,0.0441,6.6314,6.8042,6.72 ± 0.04
+2006-2010,G20,G20,PD,County Economic Typology,National,101880,1519222141,6.5388,0.0205,6.4987,6.579,6.54 ± 0.02
+2006-2010,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Farming,14397,20793236,54.3311,0.4544,53.4472,55.2259,54.33 ± 0.45
+2006-2010,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Mining,9632,14617184,65.1084,0.6643,63.8146,66.4219,65.11 ± 0.66
+2006-2010,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Manufacturing,219778,294175065,66.4777,0.1421,66.2,66.7562,66.48 ± 0.14
+2006-2010,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Government,106391,176788820,65.5039,0.2012,65.1109,65.8987,65.50 ± 0.20
+2006-2010,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Services,401543,650908678,56.517,0.0895,56.3423,56.6921,56.52 ± 0.09
+2006-2010,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Nonspecialized,227755,361939164,64.5714,0.1356,64.3065,64.8372,64.57 ± 0.14
+2006-2010,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,National,979496,1519222147,61.3281,0.0621,61.2067,61.4497,61.33 ± 0.06
+2006-2010,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Farming,12376,20793236,46.3307,0.4178,45.518,47.1543,46.33 ± 0.42
+2006-2010,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Mining,8382,14617184,56.9216,0.6223,55.7095,58.1534,56.92 ± 0.62
+2006-2010,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Manufacturing,190112,294175065,57.3521,0.1318,57.0946,57.6105,57.35 ± 0.13
+2006-2010,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Government,91532,176788820,56.4287,0.1868,56.0638,56.7955,56.43 ± 0.19
+2006-2010,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Services,343691,650908678,48.1186,0.0823,47.9578,48.2797,48.12 ± 0.08
+2006-2010,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Nonspecialized,195893,361939164,55.5332,0.1257,55.2876,55.7797,55.53 ± 0.13
+2006-2010,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,National,841986,1519222147,52.5719,0.0574,52.4597,52.6844,52.57 ± 0.06
 2006-2010,I00_I99,I00_I99,CVD,County Economic Typology,Farming,66766,20793230,260.3609,1.014,258.3897,262.3434,260.36 ± 1.01
 2006-2010,I00_I99,I00_I99,CVD,County Economic Typology,Mining,45959,14617184,297.8309,1.3978,295.1142,300.5665,297.83 ± 1.40
 2006-2010,I00_I99,I00_I99,CVD,County Economic Typology,Manufacturing,881658,294175065,266.8511,0.2854,266.2944,267.4087,266.85 ± 0.29
@@ -153,13 +153,13 @@ Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata
 2006-2010,J40_J47,J40_J47,J40_J47,County Economic Typology,Services,254177,650908678,36.8771,0.0734,36.7338,37.0207,36.88 ± 0.07
 2006-2010,J40_J47,J40_J47,J40_J47,County Economic Typology,Nonspecialized,164621,361939164,46.2576,0.1145,46.0344,46.4816,46.26 ± 0.11
 2006-2010,J40_J47,J40_J47,J40_J47,County Economic Typology,National,668624,1519222141,42.3634,0.052,42.2619,42.465,42.36 ± 0.05
-2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Farming,14714,20793230,58.1141,0.481,57.1789,59.0608,58.11 ± 0.48
-2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Mining,11421,14617184,73.2098,0.6887,71.8732,74.565,73.21 ± 0.69
-2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Manufacturing,194448,294175065,59.4078,0.1352,59.1441,59.6725,59.41 ± 0.14
-2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Government,92534,176788820,55.796,0.1844,55.4371,56.1567,55.80 ± 0.18
-2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Services,321675,650908678,46.5732,0.0824,46.4124,46.7344,46.57 ± 0.08
-2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Nonspecialized,204469,361939164,57.4589,0.1276,57.2101,57.7085,57.46 ± 0.13
-2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,National,839261,1519222141,53.1269,0.0582,53.0133,53.2407,53.13 ± 0.06
+2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Farming,14714,20793230,58.1141,0.481,57.1789,59.0608,58.11 ± 0.48
+2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Mining,11421,14617184,73.2098,0.6887,71.8732,74.565,73.21 ± 0.69
+2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Manufacturing,194448,294175065,59.4078,0.1352,59.1441,59.6725,59.41 ± 0.14
+2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Government,92534,176788820,55.796,0.1844,55.4371,56.1567,55.80 ± 0.18
+2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Services,321675,650908678,46.5732,0.0824,46.4124,46.7344,46.57 ± 0.08
+2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Nonspecialized,204469,361939164,57.4589,0.1276,57.2101,57.7085,57.46 ± 0.13
+2006-2010,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,National,839261,1519222141,53.1269,0.0582,53.0133,53.2407,53.13 ± 0.06
 2006-2010,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Farming,26518,20793230,105.5327,0.6505,104.2663,106.8107,105.53 ± 0.65
 2006-2010,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Mining,21314,14617184,133.9293,0.9233,132.1373,135.7396,133.93 ± 0.92
 2006-2010,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Manufacturing,378940,294175065,114.9996,0.1876,114.6338,115.3664,115.00 ± 0.19
@@ -328,118 +328,118 @@ Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata
 2006-2010,Y87.0,Y87.0,SI,County Economic Typology,Services,164,650908678,0.0244,0.0019,0.0208,0.0284,0.02 ± 0.00
 2006-2010,Y87.0,Y87.0,SI,County Economic Typology,Nonspecialized,81,361939164,0.0219,0.0024,0.0174,0.0272,0.02 ± 0.00
 2006-2010,Y87.0,Y87.0,SI,County Economic Typology,National,361,1519222141,0.0232,0.0012,0.0209,0.0257,0.02 ± 0.00
-2011-2015,C00_C97,All-site Cancer,Cancer,County Economic Typology,Farming,41257,21176023,156.0031,0.7768,154.5014,157.5158,156.00 ± 0.78
-2011-2015,C00_C97,All-site Cancer,Cancer,County Economic Typology,Mining,31888,14915360,183.5645,1.0426,181.5552,185.5905,183.56 ± 1.04
-2011-2015,C00_C97,All-site Cancer,Cancer,County Economic Typology,Manufacturing,635775,299389398,174.575,0.2218,174.1461,175.0046,174.57 ± 0.22
-2011-2015,C00_C97,All-site Cancer,Cancer,County Economic Typology,Government,320964,185616434,164.9473,0.2951,164.3772,165.519,164.95 ± 0.30
-2011-2015,C00_C97,All-site Cancer,Cancer,County Economic Typology,Services,1210781,681029590,155.7658,0.1433,155.4885,156.0435,155.77 ± 0.14
-2011-2015,C00_C97,All-site Cancer,Cancer,County Economic Typology,Nonspecialized,686674,379753739,166.1183,0.2031,165.7256,166.5117,166.12 ± 0.20
-2011-2015,C00_C97,All-site Cancer,Cancer,County Economic Typology,National,2927339,1581880544,163.2663,0.0966,163.0793,163.4534,163.27 ± 0.10
-2011-2015,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Farming,4111,21176023,15.604,0.2466,15.1306,16.0884,15.60 ± 0.25
-2011-2015,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Mining,3015,14915360,17.5363,0.324,16.9158,18.1736,17.54 ± 0.32
-2011-2015,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Manufacturing,56522,299389398,15.6089,0.0666,15.4805,15.7381,15.61 ± 0.07
-2011-2015,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Government,28263,185616434,14.5916,0.088,14.422,14.7627,14.59 ± 0.09
-2011-2015,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Services,108293,681029590,13.8987,0.0428,13.8161,13.9818,13.90 ± 0.04
-2011-2015,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Nonspecialized,61575,379753739,14.9359,0.061,14.8181,15.0543,14.94 ± 0.06
-2011-2015,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,National,261779,1581880544,14.6218,0.0289,14.5658,14.6779,14.62 ± 0.03
-2011-2015,C22,Liver Cancer,Liver,County Economic Typology,Farming,1521,21176023,5.7172,0.1482,5.4334,6.0119,5.72 ± 0.15
-2011-2015,C22,Liver Cancer,Liver,County Economic Typology,Mining,1244,14915360,6.9083,0.1991,6.5297,7.3032,6.91 ± 0.20
-2011-2015,C22,Liver Cancer,Liver,County Economic Typology,Manufacturing,22314,299389398,5.9678,0.0405,5.8897,6.0466,5.97 ± 0.04
-2011-2015,C22,Liver Cancer,Liver,County Economic Typology,Government,13876,185616434,6.8351,0.0589,6.7219,6.9498,6.84 ± 0.06
-2011-2015,C22,Liver Cancer,Liver,County Economic Typology,Services,51905,681029590,6.5081,0.0289,6.4522,6.5643,6.51 ± 0.03
-2011-2015,C22,Liver Cancer,Liver,County Economic Typology,Nonspecialized,28123,379753739,6.5445,0.0396,6.4682,6.6214,6.54 ± 0.04
-2011-2015,C22,Liver Cancer,Liver,County Economic Typology,National,118983,1581880544,6.4356,0.0189,6.3991,6.4723,6.44 ± 0.02
-2011-2015,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Farming,2668,21176023,10.1091,0.1979,9.7291,10.5001,10.11 ± 0.20
-2011-2015,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Mining,1875,14915360,10.681,0.2502,10.203,11.1757,10.68 ± 0.25
-2011-2015,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Manufacturing,41241,299389398,11.2227,0.0559,11.1146,11.3315,11.22 ± 0.06
-2011-2015,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Government,21671,185616434,11.0856,0.0763,10.9385,11.2342,11.09 ± 0.08
-2011-2015,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Services,84860,681029590,10.8569,0.0377,10.7839,10.9302,10.86 ± 0.04
-2011-2015,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Nonspecialized,44769,379753739,10.7597,0.0515,10.6602,10.8598,10.76 ± 0.05
-2011-2015,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,National,197084,1581880544,10.9229,0.0249,10.8747,10.9712,10.92 ± 0.02
-2011-2015,C34,Lung Cancer,Lung,County Economic Typology,Farming,11375,21176023,42.7531,0.4041,41.971,43.5461,42.75 ± 0.40
-2011-2015,C34,Lung Cancer,Lung,County Economic Typology,Mining,9536,14915360,54.0796,0.5612,52.9996,55.1761,54.08 ± 0.56
-2011-2015,C34,Lung Cancer,Lung,County Economic Typology,Manufacturing,184088,299389398,50.0068,0.1179,49.7786,50.2358,50.01 ± 0.12
-2011-2015,C34,Lung Cancer,Lung,County Economic Typology,Government,85574,185616434,43.7081,0.1514,43.4157,44.0019,43.71 ± 0.15
-2011-2015,C34,Lung Cancer,Lung,County Economic Typology,Services,303552,681029590,39.0414,0.0716,38.9027,39.1806,39.04 ± 0.07
-2011-2015,C34,Lung Cancer,Lung,County Economic Typology,Nonspecialized,185402,379753739,44.5595,0.1048,44.3569,44.7628,44.56 ± 0.10
-2011-2015,C34,Lung Cancer,Lung,County Economic Typology,National,779527,1581880544,43.2657,0.0496,43.1697,43.3618,43.27 ± 0.05
-2011-2015,C50,Breast Cancer,Breast,County Economic Typology,Farming,2620,21176023,10.1454,0.2018,9.7606,10.5415,10.15 ± 0.20
-2011-2015,C50,Breast Cancer,Breast,County Economic Typology,Mining,2078,14915360,12.1129,0.2705,11.5977,12.6452,12.11 ± 0.27
-2011-2015,C50,Breast Cancer,Breast,County Economic Typology,Manufacturing,42299,299389398,11.7194,0.0579,11.608,11.8316,11.72 ± 0.06
-2011-2015,C50,Breast Cancer,Breast,County Economic Typology,Government,22612,185616434,11.6058,0.0784,11.4551,11.7581,11.61 ± 0.08
-2011-2015,C50,Breast Cancer,Breast,County Economic Typology,Services,90348,681029590,11.6264,0.0392,11.5507,11.7025,11.63 ± 0.04
-2011-2015,C50,Breast Cancer,Breast,County Economic Typology,Nonspecialized,47777,379753739,11.5331,0.0535,11.4299,11.637,11.53 ± 0.05
-2011-2015,C50,Breast Cancer,Breast,County Economic Typology,National,207734,1581880544,11.6067,0.0258,11.5568,11.6567,11.61 ± 0.03
-2011-2015,C56,Ovary Cancer,Ovarian,County Economic Typology,Farming,968,21176023,3.6997,0.1206,3.4703,3.9403,3.70 ± 0.12
-2011-2015,C56,Ovary Cancer,Ovarian,County Economic Typology,Mining,639,14915360,3.7032,0.1486,3.4216,4.0018,3.70 ± 0.15
-2011-2015,C56,Ovary Cancer,Ovarian,County Economic Typology,Manufacturing,14715,299389398,4.052,0.0339,3.9868,4.1181,4.05 ± 0.03
-2011-2015,C56,Ovary Cancer,Ovarian,County Economic Typology,Government,7560,185616434,3.873,0.0452,3.7862,3.9613,3.87 ± 0.05
-2011-2015,C56,Ovary Cancer,Ovarian,County Economic Typology,Services,30901,681029590,3.9638,0.0228,3.9198,4.0083,3.96 ± 0.02
-2011-2015,C56,Ovary Cancer,Ovarian,County Economic Typology,Nonspecialized,16314,379753739,3.9373,0.0312,3.8771,3.9982,3.94 ± 0.03
-2011-2015,C56,Ovary Cancer,Ovarian,County Economic Typology,National,71097,1581880544,3.9582,0.015,3.9292,3.9874,3.96 ± 0.02
-2011-2015,C61,Prostate Cancer,Prostate,County Economic Typology,Farming,2321,21176023,8.5242,0.178,8.1809,8.8782,8.52 ± 0.18
-2011-2015,C61,Prostate Cancer,Prostate,County Economic Typology,Mining,1410,14915360,8.4108,0.2257,7.9775,8.8616,8.41 ± 0.23
-2011-2015,C61,Prostate Cancer,Prostate,County Economic Typology,Manufacturing,28294,299389398,7.8155,0.0468,7.7247,7.9071,7.82 ± 0.05
-2011-2015,C61,Prostate Cancer,Prostate,County Economic Typology,Government,15474,185616434,8.1793,0.0664,8.0509,8.3092,8.18 ± 0.07
-2011-2015,C61,Prostate Cancer,Prostate,County Economic Typology,Services,60345,681029590,7.7514,0.0319,7.6897,7.8135,7.75 ± 0.03
-2011-2015,C61,Prostate Cancer,Prostate,County Economic Typology,Nonspecialized,32225,379753739,8.0154,0.0451,7.9281,8.1034,8.02 ± 0.05
-2011-2015,C61,Prostate Cancer,Prostate,County Economic Typology,National,140069,1581880544,7.8876,0.0213,7.8464,7.929,7.89 ± 0.02
-2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Farming,725,24751666,2.7106,0.1011,2.5169,2.9153,2.71 ± 0.10
-2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Mining,538,17468833,3.1855,0.1381,2.922,3.4664,3.19 ± 0.14
-2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Manufacturing,10295,350369653,2.8709,0.0285,2.8157,2.9269,2.87 ± 0.03
-2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Government,5214,217409916,2.795,0.039,2.7197,2.872,2.80 ± 0.04
-2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Services,18839,795879565,2.4839,0.0182,2.4486,2.5197,2.48 ± 0.02
-2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Nonspecialized,11629,444478465,2.933,0.0274,2.8799,2.9868,2.93 ± 0.03
-2011-2015,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,National,47240,1850358098,2.71,0.0126,2.6857,2.7346,2.71 ± 0.01
-2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Farming,1500,21176023,5.6854,0.1485,5.4013,5.9806,5.69 ± 0.15
-2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Mining,995,14915360,5.8527,0.1877,5.4946,6.2279,5.85 ± 0.19
-2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Manufacturing,22174,299389398,6.18,0.042,6.0989,6.2619,6.18 ± 0.04
-2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Government,10716,185616434,5.6311,0.0551,5.525,5.7387,5.63 ± 0.06
-2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Services,42392,681029590,5.5176,0.0271,5.4652,5.5704,5.52 ± 0.03
-2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Nonspecialized,23479,379753739,5.8038,0.0383,5.7298,5.8785,5.80 ± 0.04
-2011-2015,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,National,101256,1581880544,5.7374,0.0182,5.7021,5.7729,5.74 ± 0.02
-2011-2015,C91_C95,Leukemia,Leukemia,County Economic Typology,Farming,1637,21176023,6.2317,0.156,5.9335,6.5411,6.23 ± 0.16
-2011-2015,C91_C95,Leukemia,Leukemia,County Economic Typology,Mining,1165,14915360,6.9195,0.2053,6.5278,7.3286,6.92 ± 0.21
-2011-2015,C91_C95,Leukemia,Leukemia,County Economic Typology,Manufacturing,24724,299389398,6.9729,0.0449,6.8862,7.0604,6.97 ± 0.04
-2011-2015,C91_C95,Leukemia,Leukemia,County Economic Typology,Government,12169,185616434,6.4255,0.059,6.3118,6.5407,6.43 ± 0.06
-2011-2015,C91_C95,Leukemia,Leukemia,County Economic Typology,Services,48452,681029590,6.3731,0.0293,6.3165,6.4301,6.37 ± 0.03
-2011-2015,C91_C95,Leukemia,Leukemia,County Economic Typology,Nonspecialized,27153,379753739,6.7646,0.0415,6.6844,6.8455,6.76 ± 0.04
-2011-2015,C91_C95,Leukemia,Leukemia,County Economic Typology,National,115300,1581880544,6.5937,0.0196,6.5557,6.6319,6.59 ± 0.02
-2011-2015,G10,Huntington's Disease (HD),HD,County Economic Typology,Farming,83,21176023,0.3423,0.0385,0.2726,0.4243,0.34 ± 0.04
-2011-2015,G10,Huntington's Disease (HD),HD,County Economic Typology,Mining,41,14915360,0.243,0.0388,0.1744,0.3297,0.24 ± 0.04
-2011-2015,G10,Huntington's Disease (HD),HD,County Economic Typology,Manufacturing,1278,299389398,0.366,0.0105,0.3462,0.3867,0.37 ± 0.01
-2011-2015,G10,Huntington's Disease (HD),HD,County Economic Typology,Government,564,185616434,0.2908,0.0125,0.2673,0.3158,0.29 ± 0.01
-2011-2015,G10,Huntington's Disease (HD),HD,County Economic Typology,Services,1844,681029590,0.2405,0.0057,0.2296,0.2517,0.24 ± 0.01
-2011-2015,G10,Huntington's Disease (HD),HD,County Economic Typology,Nonspecialized,1265,379753739,0.3057,0.0087,0.2891,0.3231,0.31 ± 0.01
-2011-2015,G10,Huntington's Disease (HD),HD,County Economic Typology,National,5075,1581880544,0.2873,0.0041,0.2795,0.2953,0.29 ± 0.00
-2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Farming,446,21176023,1.7107,0.0821,1.5556,1.8771,1.71 ± 0.08
-2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Mining,341,14915360,1.9445,0.107,1.7435,2.1622,1.94 ± 0.11
-2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Manufacturing,7836,299389398,2.1459,0.0246,2.0987,2.194,2.15 ± 0.02
-2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Government,3833,185616434,1.9573,0.0321,1.8958,2.0203,1.96 ± 0.03
-2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Services,14809,681029590,1.9104,0.0159,1.8797,1.9414,1.91 ± 0.02
-2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Nonspecialized,8483,379753739,2.0304,0.0224,1.9875,2.0741,2.03 ± 0.02
-2011-2015,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,National,35748,1581880544,1.9885,0.0107,1.9679,2.0092,1.99 ± 0.01
-2011-2015,G20,Parkinson's Disease (PD),PD,County Economic Typology,Farming,1694,21176023,6.291,0.1538,5.9949,6.5979,6.29 ± 0.15
-2011-2015,G20,Parkinson's Disease (PD),PD,County Economic Typology,Mining,1089,14915360,6.7524,0.2054,6.3573,7.1657,6.75 ± 0.21
-2011-2015,G20,Parkinson's Disease (PD),PD,County Economic Typology,Manufacturing,26542,299389398,7.5227,0.0465,7.4325,7.6138,7.52 ± 0.05
-2011-2015,G20,Parkinson's Disease (PD),PD,County Economic Typology,Government,13392,185616434,7.3666,0.0641,7.2423,7.4924,7.37 ± 0.06
-2011-2015,G20,Parkinson's Disease (PD),PD,County Economic Typology,Services,53721,681029590,7.0193,0.0306,6.9601,7.0789,7.02 ± 0.03
-2011-2015,G20,Parkinson's Disease (PD),PD,County Economic Typology,Nonspecialized,28970,379753739,7.4651,0.0442,7.3794,7.5516,7.47 ± 0.04
-2011-2015,G20,Parkinson's Disease (PD),PD,County Economic Typology,National,125408,1581880544,7.2462,0.0206,7.2062,7.2865,7.25 ± 0.02
-2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Farming,18011,21176023,64.2786,0.482,63.3432,65.2243,64.28 ± 0.48
-2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Mining,12371,14915360,76.6685,0.6912,75.3233,78.0316,76.67 ± 0.69
-2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Manufacturing,287321,299389398,78.7978,0.1479,78.5099,79.0864,78.80 ± 0.15
-2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Government,140005,185616434,75.0617,0.2017,74.669,75.4559,75.06 ± 0.20
-2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Services,523808,681029590,65.0871,0.0908,64.9109,65.2636,65.09 ± 0.09
-2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Nonspecialized,300362,379753739,75.2925,0.1382,75.0235,75.5623,75.29 ± 0.14
-2011-2015,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,National,1281878,1581880544,71.2877,0.0634,71.1644,71.4113,71.29 ± 0.06
-2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Farming,15788,21176023,55.9346,0.4477,55.0655,56.8141,55.93 ± 0.45
-2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Mining,10900,14915360,67.7285,0.65,66.463,69.0122,67.73 ± 0.65
-2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Manufacturing,251665,299389398,68.7631,0.1379,68.4947,69.0323,68.76 ± 0.14
-2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Government,122216,185616434,65.447,0.1882,65.0806,65.815,65.45 ± 0.19
-2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Services,453434,681029590,55.917,0.0838,55.7543,56.08,55.92 ± 0.08
-2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Nonspecialized,261644,379753739,65.4912,0.1287,65.2405,65.7427,65.49 ± 0.13
-2011-2015,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,National,1115647,1581880544,61.7657,0.0589,61.6511,61.8804,61.77 ± 0.06
+2011-2015,C00_C97,C00_C97,Cancer,County Economic Typology,Farming,41257,21176023,156.0031,0.7768,154.5014,157.5158,156.00 ± 0.78
+2011-2015,C00_C97,C00_C97,Cancer,County Economic Typology,Mining,31888,14915360,183.5645,1.0426,181.5552,185.5905,183.56 ± 1.04
+2011-2015,C00_C97,C00_C97,Cancer,County Economic Typology,Manufacturing,635775,299389398,174.575,0.2218,174.1461,175.0046,174.57 ± 0.22
+2011-2015,C00_C97,C00_C97,Cancer,County Economic Typology,Government,320964,185616434,164.9473,0.2951,164.3772,165.519,164.95 ± 0.30
+2011-2015,C00_C97,C00_C97,Cancer,County Economic Typology,Services,1210781,681029590,155.7658,0.1433,155.4885,156.0435,155.77 ± 0.14
+2011-2015,C00_C97,C00_C97,Cancer,County Economic Typology,Nonspecialized,686674,379753739,166.1183,0.2031,165.7256,166.5117,166.12 ± 0.20
+2011-2015,C00_C97,C00_C97,Cancer,County Economic Typology,National,2927339,1581880544,163.2663,0.0966,163.0793,163.4534,163.27 ± 0.10
+2011-2015,C18_C21,C18_C21,Colorectal,County Economic Typology,Farming,4111,21176023,15.604,0.2466,15.1306,16.0884,15.60 ± 0.25
+2011-2015,C18_C21,C18_C21,Colorectal,County Economic Typology,Mining,3015,14915360,17.5363,0.324,16.9158,18.1736,17.54 ± 0.32
+2011-2015,C18_C21,C18_C21,Colorectal,County Economic Typology,Manufacturing,56522,299389398,15.6089,0.0666,15.4805,15.7381,15.61 ± 0.07
+2011-2015,C18_C21,C18_C21,Colorectal,County Economic Typology,Government,28263,185616434,14.5916,0.088,14.422,14.7627,14.59 ± 0.09
+2011-2015,C18_C21,C18_C21,Colorectal,County Economic Typology,Services,108293,681029590,13.8987,0.0428,13.8161,13.9818,13.90 ± 0.04
+2011-2015,C18_C21,C18_C21,Colorectal,County Economic Typology,Nonspecialized,61575,379753739,14.9359,0.061,14.8181,15.0543,14.94 ± 0.06
+2011-2015,C18_C21,C18_C21,Colorectal,County Economic Typology,National,261779,1581880544,14.6218,0.0289,14.5658,14.6779,14.62 ± 0.03
+2011-2015,C22,C22,Liver,County Economic Typology,Farming,1521,21176023,5.7172,0.1482,5.4334,6.0119,5.72 ± 0.15
+2011-2015,C22,C22,Liver,County Economic Typology,Mining,1244,14915360,6.9083,0.1991,6.5297,7.3032,6.91 ± 0.20
+2011-2015,C22,C22,Liver,County Economic Typology,Manufacturing,22314,299389398,5.9678,0.0405,5.8897,6.0466,5.97 ± 0.04
+2011-2015,C22,C22,Liver,County Economic Typology,Government,13876,185616434,6.8351,0.0589,6.7219,6.9498,6.84 ± 0.06
+2011-2015,C22,C22,Liver,County Economic Typology,Services,51905,681029590,6.5081,0.0289,6.4522,6.5643,6.51 ± 0.03
+2011-2015,C22,C22,Liver,County Economic Typology,Nonspecialized,28123,379753739,6.5445,0.0396,6.4682,6.6214,6.54 ± 0.04
+2011-2015,C22,C22,Liver,County Economic Typology,National,118983,1581880544,6.4356,0.0189,6.3991,6.4723,6.44 ± 0.02
+2011-2015,C25,C25,Pancreatic,County Economic Typology,Farming,2668,21176023,10.1091,0.1979,9.7291,10.5001,10.11 ± 0.20
+2011-2015,C25,C25,Pancreatic,County Economic Typology,Mining,1875,14915360,10.681,0.2502,10.203,11.1757,10.68 ± 0.25
+2011-2015,C25,C25,Pancreatic,County Economic Typology,Manufacturing,41241,299389398,11.2227,0.0559,11.1146,11.3315,11.22 ± 0.06
+2011-2015,C25,C25,Pancreatic,County Economic Typology,Government,21671,185616434,11.0856,0.0763,10.9385,11.2342,11.09 ± 0.08
+2011-2015,C25,C25,Pancreatic,County Economic Typology,Services,84860,681029590,10.8569,0.0377,10.7839,10.9302,10.86 ± 0.04
+2011-2015,C25,C25,Pancreatic,County Economic Typology,Nonspecialized,44769,379753739,10.7597,0.0515,10.6602,10.8598,10.76 ± 0.05
+2011-2015,C25,C25,Pancreatic,County Economic Typology,National,197084,1581880544,10.9229,0.0249,10.8747,10.9712,10.92 ± 0.02
+2011-2015,C34,C34,Lung,County Economic Typology,Farming,11375,21176023,42.7531,0.4041,41.971,43.5461,42.75 ± 0.40
+2011-2015,C34,C34,Lung,County Economic Typology,Mining,9536,14915360,54.0796,0.5612,52.9996,55.1761,54.08 ± 0.56
+2011-2015,C34,C34,Lung,County Economic Typology,Manufacturing,184088,299389398,50.0068,0.1179,49.7786,50.2358,50.01 ± 0.12
+2011-2015,C34,C34,Lung,County Economic Typology,Government,85574,185616434,43.7081,0.1514,43.4157,44.0019,43.71 ± 0.15
+2011-2015,C34,C34,Lung,County Economic Typology,Services,303552,681029590,39.0414,0.0716,38.9027,39.1806,39.04 ± 0.07
+2011-2015,C34,C34,Lung,County Economic Typology,Nonspecialized,185402,379753739,44.5595,0.1048,44.3569,44.7628,44.56 ± 0.10
+2011-2015,C34,C34,Lung,County Economic Typology,National,779527,1581880544,43.2657,0.0496,43.1697,43.3618,43.27 ± 0.05
+2011-2015,C50,C50,Breast,County Economic Typology,Farming,2620,21176023,10.1454,0.2018,9.7606,10.5415,10.15 ± 0.20
+2011-2015,C50,C50,Breast,County Economic Typology,Mining,2078,14915360,12.1129,0.2705,11.5977,12.6452,12.11 ± 0.27
+2011-2015,C50,C50,Breast,County Economic Typology,Manufacturing,42299,299389398,11.7194,0.0579,11.608,11.8316,11.72 ± 0.06
+2011-2015,C50,C50,Breast,County Economic Typology,Government,22612,185616434,11.6058,0.0784,11.4551,11.7581,11.61 ± 0.08
+2011-2015,C50,C50,Breast,County Economic Typology,Services,90348,681029590,11.6264,0.0392,11.5507,11.7025,11.63 ± 0.04
+2011-2015,C50,C50,Breast,County Economic Typology,Nonspecialized,47777,379753739,11.5331,0.0535,11.4299,11.637,11.53 ± 0.05
+2011-2015,C50,C50,Breast,County Economic Typology,National,207734,1581880544,11.6067,0.0258,11.5568,11.6567,11.61 ± 0.03
+2011-2015,C56,C56,Ovarian,County Economic Typology,Farming,968,21176023,3.6997,0.1206,3.4703,3.9403,3.70 ± 0.12
+2011-2015,C56,C56,Ovarian,County Economic Typology,Mining,639,14915360,3.7032,0.1486,3.4216,4.0018,3.70 ± 0.15
+2011-2015,C56,C56,Ovarian,County Economic Typology,Manufacturing,14715,299389398,4.052,0.0339,3.9868,4.1181,4.05 ± 0.03
+2011-2015,C56,C56,Ovarian,County Economic Typology,Government,7560,185616434,3.873,0.0452,3.7862,3.9613,3.87 ± 0.05
+2011-2015,C56,C56,Ovarian,County Economic Typology,Services,30901,681029590,3.9638,0.0228,3.9198,4.0083,3.96 ± 0.02
+2011-2015,C56,C56,Ovarian,County Economic Typology,Nonspecialized,16314,379753739,3.9373,0.0312,3.8771,3.9982,3.94 ± 0.03
+2011-2015,C56,C56,Ovarian,County Economic Typology,National,71097,1581880544,3.9582,0.015,3.9292,3.9874,3.96 ± 0.02
+2011-2015,C61,C61,Prostate,County Economic Typology,Farming,2321,21176023,8.5242,0.178,8.1809,8.8782,8.52 ± 0.18
+2011-2015,C61,C61,Prostate,County Economic Typology,Mining,1410,14915360,8.4108,0.2257,7.9775,8.8616,8.41 ± 0.23
+2011-2015,C61,C61,Prostate,County Economic Typology,Manufacturing,28294,299389398,7.8155,0.0468,7.7247,7.9071,7.82 ± 0.05
+2011-2015,C61,C61,Prostate,County Economic Typology,Government,15474,185616434,8.1793,0.0664,8.0509,8.3092,8.18 ± 0.07
+2011-2015,C61,C61,Prostate,County Economic Typology,Services,60345,681029590,7.7514,0.0319,7.6897,7.8135,7.75 ± 0.03
+2011-2015,C61,C61,Prostate,County Economic Typology,Nonspecialized,32225,379753739,8.0154,0.0451,7.9281,8.1034,8.02 ± 0.05
+2011-2015,C61,C61,Prostate,County Economic Typology,National,140069,1581880544,7.8876,0.0213,7.8464,7.929,7.89 ± 0.02
+2011-2015,C64_C65,C64_C65,Kidney,County Economic Typology,Farming,725,24751666,2.7106,0.1011,2.5169,2.9153,2.71 ± 0.10
+2011-2015,C64_C65,C64_C65,Kidney,County Economic Typology,Mining,538,17468833,3.1855,0.1381,2.922,3.4664,3.19 ± 0.14
+2011-2015,C64_C65,C64_C65,Kidney,County Economic Typology,Manufacturing,10295,350369653,2.8709,0.0285,2.8157,2.9269,2.87 ± 0.03
+2011-2015,C64_C65,C64_C65,Kidney,County Economic Typology,Government,5214,217409916,2.795,0.039,2.7197,2.872,2.80 ± 0.04
+2011-2015,C64_C65,C64_C65,Kidney,County Economic Typology,Services,18839,795879565,2.4839,0.0182,2.4486,2.5197,2.48 ± 0.02
+2011-2015,C64_C65,C64_C65,Kidney,County Economic Typology,Nonspecialized,11629,444478465,2.933,0.0274,2.8799,2.9868,2.93 ± 0.03
+2011-2015,C64_C65,C64_C65,Kidney,County Economic Typology,National,47240,1850358098,2.71,0.0126,2.6857,2.7346,2.71 ± 0.01
+2011-2015,C82_C85,C82_C85,NHL,County Economic Typology,Farming,1500,21176023,5.6854,0.1485,5.4013,5.9806,5.69 ± 0.15
+2011-2015,C82_C85,C82_C85,NHL,County Economic Typology,Mining,995,14915360,5.8527,0.1877,5.4946,6.2279,5.85 ± 0.19
+2011-2015,C82_C85,C82_C85,NHL,County Economic Typology,Manufacturing,22174,299389398,6.18,0.042,6.0989,6.2619,6.18 ± 0.04
+2011-2015,C82_C85,C82_C85,NHL,County Economic Typology,Government,10716,185616434,5.6311,0.0551,5.525,5.7387,5.63 ± 0.06
+2011-2015,C82_C85,C82_C85,NHL,County Economic Typology,Services,42392,681029590,5.5176,0.0271,5.4652,5.5704,5.52 ± 0.03
+2011-2015,C82_C85,C82_C85,NHL,County Economic Typology,Nonspecialized,23479,379753739,5.8038,0.0383,5.7298,5.8785,5.80 ± 0.04
+2011-2015,C82_C85,C82_C85,NHL,County Economic Typology,National,101256,1581880544,5.7374,0.0182,5.7021,5.7729,5.74 ± 0.02
+2011-2015,C91_C95,C91_C95,Leukemia,County Economic Typology,Farming,1637,21176023,6.2317,0.156,5.9335,6.5411,6.23 ± 0.16
+2011-2015,C91_C95,C91_C95,Leukemia,County Economic Typology,Mining,1165,14915360,6.9195,0.2053,6.5278,7.3286,6.92 ± 0.21
+2011-2015,C91_C95,C91_C95,Leukemia,County Economic Typology,Manufacturing,24724,299389398,6.9729,0.0449,6.8862,7.0604,6.97 ± 0.04
+2011-2015,C91_C95,C91_C95,Leukemia,County Economic Typology,Government,12169,185616434,6.4255,0.059,6.3118,6.5407,6.43 ± 0.06
+2011-2015,C91_C95,C91_C95,Leukemia,County Economic Typology,Services,48452,681029590,6.3731,0.0293,6.3165,6.4301,6.37 ± 0.03
+2011-2015,C91_C95,C91_C95,Leukemia,County Economic Typology,Nonspecialized,27153,379753739,6.7646,0.0415,6.6844,6.8455,6.76 ± 0.04
+2011-2015,C91_C95,C91_C95,Leukemia,County Economic Typology,National,115300,1581880544,6.5937,0.0196,6.5557,6.6319,6.59 ± 0.02
+2011-2015,G10,G10,HD,County Economic Typology,Farming,83,21176023,0.3423,0.0385,0.2726,0.4243,0.34 ± 0.04
+2011-2015,G10,G10,HD,County Economic Typology,Mining,41,14915360,0.243,0.0388,0.1744,0.3297,0.24 ± 0.04
+2011-2015,G10,G10,HD,County Economic Typology,Manufacturing,1278,299389398,0.366,0.0105,0.3462,0.3867,0.37 ± 0.01
+2011-2015,G10,G10,HD,County Economic Typology,Government,564,185616434,0.2908,0.0125,0.2673,0.3158,0.29 ± 0.01
+2011-2015,G10,G10,HD,County Economic Typology,Services,1844,681029590,0.2405,0.0057,0.2296,0.2517,0.24 ± 0.01
+2011-2015,G10,G10,HD,County Economic Typology,Nonspecialized,1265,379753739,0.3057,0.0087,0.2891,0.3231,0.31 ± 0.01
+2011-2015,G10,G10,HD,County Economic Typology,National,5075,1581880544,0.2873,0.0041,0.2795,0.2953,0.29 ± 0.00
+2011-2015,G12.2,G12.2,ALS,County Economic Typology,Farming,446,21176023,1.7107,0.0821,1.5556,1.8771,1.71 ± 0.08
+2011-2015,G12.2,G12.2,ALS,County Economic Typology,Mining,341,14915360,1.9445,0.107,1.7435,2.1622,1.94 ± 0.11
+2011-2015,G12.2,G12.2,ALS,County Economic Typology,Manufacturing,7836,299389398,2.1459,0.0246,2.0987,2.194,2.15 ± 0.02
+2011-2015,G12.2,G12.2,ALS,County Economic Typology,Government,3833,185616434,1.9573,0.0321,1.8958,2.0203,1.96 ± 0.03
+2011-2015,G12.2,G12.2,ALS,County Economic Typology,Services,14809,681029590,1.9104,0.0159,1.8797,1.9414,1.91 ± 0.02
+2011-2015,G12.2,G12.2,ALS,County Economic Typology,Nonspecialized,8483,379753739,2.0304,0.0224,1.9875,2.0741,2.03 ± 0.02
+2011-2015,G12.2,G12.2,ALS,County Economic Typology,National,35748,1581880544,1.9885,0.0107,1.9679,2.0092,1.99 ± 0.01
+2011-2015,G20,G20,PD,County Economic Typology,Farming,1694,21176023,6.291,0.1538,5.9949,6.5979,6.29 ± 0.15
+2011-2015,G20,G20,PD,County Economic Typology,Mining,1089,14915360,6.7524,0.2054,6.3573,7.1657,6.75 ± 0.21
+2011-2015,G20,G20,PD,County Economic Typology,Manufacturing,26542,299389398,7.5227,0.0465,7.4325,7.6138,7.52 ± 0.05
+2011-2015,G20,G20,PD,County Economic Typology,Government,13392,185616434,7.3666,0.0641,7.2423,7.4924,7.37 ± 0.06
+2011-2015,G20,G20,PD,County Economic Typology,Services,53721,681029590,7.0193,0.0306,6.9601,7.0789,7.02 ± 0.03
+2011-2015,G20,G20,PD,County Economic Typology,Nonspecialized,28970,379753739,7.4651,0.0442,7.3794,7.5516,7.47 ± 0.04
+2011-2015,G20,G20,PD,County Economic Typology,National,125408,1581880544,7.2462,0.0206,7.2062,7.2865,7.25 ± 0.02
+2011-2015,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Farming,18011,21176023,64.2786,0.482,63.3432,65.2243,64.28 ± 0.48
+2011-2015,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Mining,12371,14915360,76.6685,0.6912,75.3233,78.0316,76.67 ± 0.69
+2011-2015,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Manufacturing,287321,299389398,78.7978,0.1479,78.5099,79.0864,78.80 ± 0.15
+2011-2015,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Government,140005,185616434,75.0617,0.2017,74.669,75.4559,75.06 ± 0.20
+2011-2015,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Services,523808,681029590,65.0871,0.0908,64.9109,65.2636,65.09 ± 0.09
+2011-2015,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Nonspecialized,300362,379753739,75.2925,0.1382,75.0235,75.5623,75.29 ± 0.14
+2011-2015,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,National,1281878,1581880544,71.2877,0.0634,71.1644,71.4113,71.29 ± 0.06
+2011-2015,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Farming,15788,21176023,55.9346,0.4477,55.0655,56.8141,55.93 ± 0.45
+2011-2015,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Mining,10900,14915360,67.7285,0.65,66.463,69.0122,67.73 ± 0.65
+2011-2015,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Manufacturing,251665,299389398,68.7631,0.1379,68.4947,69.0323,68.76 ± 0.14
+2011-2015,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Government,122216,185616434,65.447,0.1882,65.0806,65.815,65.45 ± 0.19
+2011-2015,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Services,453434,681029590,55.917,0.0838,55.7543,56.08,55.92 ± 0.08
+2011-2015,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Nonspecialized,261644,379753739,65.4912,0.1287,65.2405,65.7427,65.49 ± 0.13
+2011-2015,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,National,1115647,1581880544,61.7657,0.0589,61.6511,61.8804,61.77 ± 0.06
 2011-2015,I00_I99,I00_I99,CVD,County Economic Typology,Farming,64225,21176023,236.8251,0.9451,234.997,238.6639,236.83 ± 0.95
 2011-2015,I00_I99,I00_I99,CVD,County Economic Typology,Mining,44709,14915360,267.1396,1.2771,264.669,269.6274,267.14 ± 1.28
 2011-2015,I00_I99,I00_I99,CVD,County Economic Typology,Manufacturing,883676,299389398,243.099,0.2614,242.5924,243.6064,243.10 ± 0.26
@@ -482,13 +482,13 @@ Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata
 2011-2015,J40_J47,J40_J47,J40_J47,County Economic Typology,Services,274052,681029590,35.3669,0.0683,35.2346,35.4996,35.37 ± 0.07
 2011-2015,J40_J47,J40_J47,J40_J47,County Economic Typology,Nonspecialized,182994,379753739,45.358,0.1071,45.1505,45.5663,45.36 ± 0.11
 2011-2015,J40_J47,J40_J47,J40_J47,County Economic Typology,National,737347,1581880544,41.6084,0.0489,41.5134,41.7034,41.61 ± 0.05
-2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Farming,16064,21176023,59.7149,0.4747,58.795,60.6456,59.71 ± 0.47
-2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Mining,12827,14915360,75.7825,0.6755,74.4767,77.1055,75.78 ± 0.68
-2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Manufacturing,219304,299389398,60.6802,0.1308,60.4265,60.9347,60.68 ± 0.13
-2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Government,101985,185616434,53.8704,0.1704,53.5403,54.2021,53.87 ± 0.17
-2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Services,349902,681029590,45.0757,0.077,44.9265,45.2253,45.08 ± 0.08
-2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Nonspecialized,228098,379753739,56.5947,0.1197,56.3627,56.8275,56.59 ± 0.12
-2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,National,928180,1581880544,52.3612,0.0549,52.2547,52.4678,52.36 ± 0.05
+2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Farming,16064,21176023,59.7149,0.4747,58.795,60.6456,59.71 ± 0.47
+2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Mining,12827,14915360,75.7825,0.6755,74.4767,77.1055,75.78 ± 0.68
+2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Manufacturing,219304,299389398,60.6802,0.1308,60.4265,60.9347,60.68 ± 0.13
+2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Government,101985,185616434,53.8704,0.1704,53.5403,54.2021,53.87 ± 0.17
+2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Services,349902,681029590,45.0757,0.077,44.9265,45.2253,45.08 ± 0.08
+2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Nonspecialized,228098,379753739,56.5947,0.1197,56.3627,56.8275,56.59 ± 0.12
+2011-2015,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,National,928180,1581880544,52.3612,0.0549,52.2547,52.4678,52.36 ± 0.05
 2011-2015,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Farming,27439,21176023,102.468,0.6234,101.2591,103.6877,102.47 ± 0.62
 2011-2015,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Mining,22363,14915360,129.8621,0.8782,128.1656,131.5755,129.86 ± 0.88
 2011-2015,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Manufacturing,403392,299389398,110.687,0.1761,110.3457,111.0291,110.69 ± 0.18
@@ -650,118 +650,118 @@ Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata
 2011-2015,Y87.0,Y87.0,SI,County Economic Typology,Services,135,681029590,0.0191,0.0017,0.016,0.0226,0.02 ± 0.00
 2011-2015,Y87.0,Y87.0,SI,County Economic Typology,Nonspecialized,86,379753739,0.0218,0.0024,0.0174,0.0269,0.02 ± 0.00
 2011-2015,Y87.0,Y87.0,SI,County Economic Typology,National,346,1581880544,0.0211,0.0012,0.0189,0.0234,0.02 ± 0.00
-2016-2020,C00_C97,All-site Cancer,Cancer,County Economic Typology,Farming,42029,21281587,149.0612,0.7397,147.6395,150.4932,149.06 ± 0.74
-2016-2020,C00_C97,All-site Cancer,Cancer,County Economic Typology,Mining,32066,14757946,171.5684,0.9773,169.6956,173.4567,171.57 ± 0.98
-2016-2020,C00_C97,All-site Cancer,Cancer,County Economic Typology,Manufacturing,648387,304258990,161.9684,0.2048,161.5744,162.3632,161.97 ± 0.20
-2016-2020,C00_C97,All-site Cancer,Cancer,County Economic Typology,Government,334121,191872921,151.9698,0.2672,151.455,152.486,151.97 ± 0.27
-2016-2020,C00_C97,All-site Cancer,Cancer,County Economic Typology,Services,1228652,706715629,140.4571,0.1286,140.2089,140.7057,140.46 ± 0.13
-2016-2020,C00_C97,All-site Cancer,Cancer,County Economic Typology,Nonspecialized,709435,394764712,152.2514,0.1836,151.8973,152.6061,152.25 ± 0.18
-2016-2020,C00_C97,All-site Cancer,Cancer,County Economic Typology,National,2994690,1633651785,149.1678,0.0875,148.9989,149.3368,149.17 ± 0.09
-2016-2020,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Farming,4185,21281587,15.0451,0.2377,14.5927,15.5079,15.05 ± 0.24
-2016-2020,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Mining,3049,14757946,16.6146,0.3075,16.03,17.215,16.61 ± 0.31
-2016-2020,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Manufacturing,56111,304258990,14.2541,0.0614,14.1364,14.3725,14.25 ± 0.06
-2016-2020,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Government,29495,191872921,13.5962,0.0806,13.4414,13.7522,13.60 ± 0.08
-2016-2020,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Services,108946,706715629,12.5382,0.0386,12.4639,12.6129,12.54 ± 0.04
-2016-2020,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Nonspecialized,63802,394764712,13.8444,0.0557,13.7372,13.9523,13.84 ± 0.06
-2016-2020,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,National,265588,1633651785,13.3734,0.0264,13.3226,13.4244,13.37 ± 0.03
-2016-2020,C22,Liver Cancer,Liver,County Economic Typology,Farming,1855,21281587,6.5113,0.1537,6.2184,6.8146,6.51 ± 0.15
-2016-2020,C22,Liver Cancer,Liver,County Economic Typology,Mining,1528,14757946,7.8135,0.2039,7.4266,8.2153,7.81 ± 0.20
-2016-2020,C22,Liver Cancer,Liver,County Economic Typology,Manufacturing,26600,304258990,6.4587,0.0403,6.3813,6.5368,6.46 ± 0.04
-2016-2020,C22,Liver Cancer,Liver,County Economic Typology,Government,16187,191872921,7.0875,0.0567,6.9787,7.1975,7.09 ± 0.06
-2016-2020,C22,Liver Cancer,Liver,County Economic Typology,Services,58012,706715629,6.4673,0.0272,6.4148,6.5202,6.47 ± 0.03
-2016-2020,C22,Liver Cancer,Liver,County Economic Typology,Nonspecialized,33272,394764712,6.8788,0.0383,6.805,6.9531,6.88 ± 0.04
-2016-2020,C22,Liver Cancer,Liver,County Economic Typology,National,137454,1633651785,6.6438,0.0182,6.6087,6.679,6.64 ± 0.02
-2016-2020,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Farming,3040,21281587,10.7335,0.1977,10.3553,11.1219,10.73 ± 0.20
-2016-2020,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Mining,2150,14757946,11.3655,0.2498,10.8901,11.8563,11.37 ± 0.25
-2016-2020,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Manufacturing,47024,304258990,11.6079,0.0544,11.5032,11.7133,11.61 ± 0.05
-2016-2020,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Government,25063,191872921,11.2718,0.0723,11.1327,11.4123,11.27 ± 0.07
-2016-2020,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Services,95521,706715629,10.8236,0.0355,10.755,10.8924,10.82 ± 0.04
-2016-2020,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Nonspecialized,51449,394764712,10.9019,0.0488,10.8079,10.9965,10.90 ± 0.05
-2016-2020,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,National,224247,1633651785,11.0527,0.0237,11.007,11.0986,11.05 ± 0.02
-2016-2020,C34,Lung Cancer,Lung,County Economic Typology,Farming,10451,21281587,36.4658,0.3609,35.77,37.1718,36.47 ± 0.36
-2016-2020,C34,Lung Cancer,Lung,County Economic Typology,Mining,8603,14757946,44.8961,0.4925,43.9523,45.855,44.90 ± 0.49
-2016-2020,C34,Lung Cancer,Lung,County Economic Typology,Manufacturing,171321,304258990,41.856,0.1026,41.658,42.0547,41.86 ± 0.10
-2016-2020,C34,Lung Cancer,Lung,County Economic Typology,Government,78709,191872921,35.1922,0.1274,34.9467,35.4389,35.19 ± 0.13
-2016-2020,C34,Lung Cancer,Lung,County Economic Typology,Services,272173,706715629,30.7564,0.0597,30.6409,30.8722,30.76 ± 0.06
-2016-2020,C34,Lung Cancer,Lung,County Economic Typology,Nonspecialized,171044,394764712,36.0709,0.0885,35.9002,36.2423,36.07 ± 0.09
-2016-2020,C34,Lung Cancer,Lung,County Economic Typology,National,712301,1633651785,34.9149,0.0419,34.8339,34.9961,34.91 ± 0.04
-2016-2020,C50,Breast Cancer,Breast,County Economic Typology,Farming,2668,21281587,9.7779,0.1944,9.4104,10.1562,9.78 ± 0.19
-2016-2020,C50,Breast Cancer,Breast,County Economic Typology,Mining,2093,14757946,11.6001,0.26,11.1084,12.108,11.60 ± 0.26
-2016-2020,C50,Breast Cancer,Breast,County Economic Typology,Manufacturing,42693,304258990,10.9865,0.0545,10.8826,11.0913,10.99 ± 0.05
-2016-2020,C50,Breast Cancer,Breast,County Economic Typology,Government,24143,191872921,11.1978,0.0735,11.057,11.3399,11.20 ± 0.07
-2016-2020,C50,Breast Cancer,Breast,County Economic Typology,Services,91682,706715629,10.6755,0.0359,10.6065,10.7448,10.68 ± 0.04
-2016-2020,C50,Breast Cancer,Breast,County Economic Typology,Nonspecialized,49471,394764712,10.7931,0.0494,10.6982,10.8887,10.79 ± 0.05
-2016-2020,C50,Breast Cancer,Breast,County Economic Typology,National,212750,1633651785,10.818,0.0239,10.7721,10.864,10.82 ± 0.02
-2016-2020,C56,Ovary Cancer,Ovarian,County Economic Typology,Farming,822,21281587,2.992,0.1066,2.791,3.2038,2.99 ± 0.11
-2016-2020,C56,Ovary Cancer,Ovarian,County Economic Typology,Mining,643,14757946,3.4591,0.1395,3.1969,3.7371,3.46 ± 0.14
-2016-2020,C56,Ovary Cancer,Ovarian,County Economic Typology,Manufacturing,13637,304258990,3.4177,0.0298,3.3606,3.4756,3.42 ± 0.03
-2016-2020,C56,Ovary Cancer,Ovarian,County Economic Typology,Government,7446,191872921,3.3938,0.04,3.3171,3.4718,3.39 ± 0.04
-2016-2020,C56,Ovary Cancer,Ovarian,County Economic Typology,Services,30460,706715629,3.4892,0.0203,3.4501,3.5286,3.49 ± 0.02
-2016-2020,C56,Ovary Cancer,Ovarian,County Economic Typology,Nonspecialized,16003,394764712,3.4306,0.0276,3.3776,3.4842,3.43 ± 0.03
-2016-2020,C56,Ovary Cancer,Ovarian,County Economic Typology,National,69011,1633651785,3.4434,0.0133,3.4177,3.4691,3.44 ± 0.01
-2016-2020,C61,Prostate Cancer,Prostate,County Economic Typology,Farming,2381,21281587,8.1712,0.1687,7.8463,8.5062,8.17 ± 0.17
-2016-2020,C61,Prostate Cancer,Prostate,County Economic Typology,Mining,1501,14757946,8.141,0.2122,7.7343,8.5635,8.14 ± 0.21
-2016-2020,C61,Prostate Cancer,Prostate,County Economic Typology,Manufacturing,31312,304258990,7.7841,0.0444,7.6981,7.8708,7.78 ± 0.04
-2016-2020,C61,Prostate Cancer,Prostate,County Economic Typology,Government,18116,191872921,8.3448,0.0626,8.2237,8.4672,8.34 ± 0.06
-2016-2020,C61,Prostate Cancer,Prostate,County Economic Typology,Services,66846,706715629,7.5677,0.0296,7.5104,7.6252,7.57 ± 0.03
-2016-2020,C61,Prostate Cancer,Prostate,County Economic Typology,Nonspecialized,36504,394764712,7.9666,0.0421,7.8851,8.0487,7.97 ± 0.04
-2016-2020,C61,Prostate Cancer,Prostate,County Economic Typology,National,156660,1633651785,7.7995,0.0199,7.761,7.8383,7.80 ± 0.02
-2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Farming,1190,21281587,4.2075,0.124,3.9719,4.4536,4.21 ± 0.12
-2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Mining,910,14757946,4.8744,0.1649,4.5628,5.2017,4.87 ± 0.16
-2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Manufacturing,15534,304258990,3.8731,0.0316,3.8125,3.9345,3.87 ± 0.03
-2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Government,8021,191872921,3.6321,0.0412,3.5531,3.7125,3.63 ± 0.04
-2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Services,26926,706715629,3.0769,0.019,3.0402,3.1138,3.08 ± 0.02
-2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Nonspecialized,17731,394764712,3.79,0.0289,3.7345,3.8463,3.79 ± 0.03
-2016-2020,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,National,70312,1633651785,3.495,0.0134,3.4692,3.5209,3.49 ± 0.01
-2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Farming,1402,21281587,4.9549,0.1342,4.6989,5.2212,4.95 ± 0.13
-2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Mining,1013,14757946,5.5225,0.1765,5.1876,5.8733,5.52 ± 0.18
-2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Manufacturing,21892,304258990,5.5496,0.0381,5.4764,5.6236,5.55 ± 0.04
-2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Government,11001,191872921,5.0903,0.0492,4.9957,5.1864,5.09 ± 0.05
-2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Services,42314,706715629,4.8848,0.0241,4.8384,4.9316,4.88 ± 0.02
-2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Nonspecialized,23760,394764712,5.2031,0.0342,5.1371,5.2697,5.20 ± 0.03
-2016-2020,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,National,101382,1633651785,5.1209,0.0163,5.0894,5.1525,5.12 ± 0.02
-2016-2020,C91_C95,Leukemia,Leukemia,County Economic Typology,Farming,1624,21281587,5.832,0.1474,5.5518,6.1227,5.83 ± 0.15
-2016-2020,C91_C95,Leukemia,Leukemia,County Economic Typology,Mining,1149,14757946,6.3652,0.1912,6.0024,6.7442,6.37 ± 0.19
-2016-2020,C91_C95,Leukemia,Leukemia,County Economic Typology,Manufacturing,24542,304258990,6.3059,0.041,6.2273,6.3853,6.31 ± 0.04
-2016-2020,C91_C95,Leukemia,Leukemia,County Economic Typology,Government,12754,191872921,5.97,0.0536,5.8668,6.0745,5.97 ± 0.05
-2016-2020,C91_C95,Leukemia,Leukemia,County Economic Typology,Services,48861,706715629,5.7264,0.0263,5.6757,5.7774,5.73 ± 0.03
-2016-2020,C91_C95,Leukemia,Leukemia,County Economic Typology,Nonspecialized,27091,394764712,6.0216,0.0371,5.9501,6.0937,6.02 ± 0.04
-2016-2020,C91_C95,Leukemia,Leukemia,County Economic Typology,National,116021,1633651785,5.9447,0.0177,5.9105,5.979,5.94 ± 0.02
-2016-2020,G10,Huntington's Disease (HD),HD,County Economic Typology,Farming,89,21281587,0.3451,0.038,0.2771,0.4246,0.35 ± 0.04
-2016-2020,G10,Huntington's Disease (HD),HD,County Economic Typology,Mining,60,14757946,0.3336,0.0444,0.2546,0.4294,0.33 ± 0.04
-2016-2020,G10,Huntington's Disease (HD),HD,County Economic Typology,Manufacturing,1436,304258990,0.3882,0.0106,0.3684,0.4088,0.39 ± 0.01
-2016-2020,G10,Huntington's Disease (HD),HD,County Economic Typology,Government,610,191872921,0.2891,0.012,0.2667,0.313,0.29 ± 0.01
-2016-2020,G10,Huntington's Disease (HD),HD,County Economic Typology,Services,2038,706715629,0.245,0.0056,0.2345,0.2559,0.25 ± 0.01
-2016-2020,G10,Huntington's Disease (HD),HD,County Economic Typology,Nonspecialized,1420,394764712,0.3127,0.0085,0.2966,0.3294,0.31 ± 0.01
-2016-2020,G10,Huntington's Disease (HD),HD,County Economic Typology,National,5653,1633651785,0.2955,0.004,0.2879,0.3033,0.30 ± 0.00
-2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Farming,428,21281587,1.5551,0.0769,1.4113,1.7097,1.56 ± 0.08
-2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Mining,307,14757946,1.592,0.0932,1.4188,1.7804,1.59 ± 0.09
-2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Manufacturing,7455,304258990,1.8473,0.0219,1.8056,1.8898,1.85 ± 0.02
-2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Government,3785,191872921,1.683,0.0279,1.6298,1.7375,1.68 ± 0.03
-2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Services,14523,706715629,1.6536,0.0139,1.6268,1.6807,1.65 ± 0.01
-2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Nonspecialized,8273,394764712,1.7432,0.0195,1.7059,1.7812,1.74 ± 0.02
-2016-2020,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,National,34771,1633651785,1.7138,0.0094,1.6958,1.7319,1.71 ± 0.01
-2016-2020,G20,Parkinson's Disease (PD),PD,County Economic Typology,Farming,2205,21281587,7.6812,0.1646,7.3639,8.0087,7.68 ± 0.16
-2016-2020,G20,Parkinson's Disease (PD),PD,County Economic Typology,Mining,1464,14757946,8.2497,0.2168,7.8324,8.6833,8.25 ± 0.22
-2016-2020,G20,Parkinson's Disease (PD),PD,County Economic Typology,Manufacturing,36041,304258990,9.2392,0.049,9.1441,9.3351,9.24 ± 0.05
-2016-2020,G20,Parkinson's Disease (PD),PD,County Economic Typology,Government,18543,191872921,8.8956,0.0658,8.768,9.0246,8.90 ± 0.07
-2016-2020,G20,Parkinson's Disease (PD),PD,County Economic Typology,Services,72168,706715629,8.3683,0.0314,8.3073,8.4296,8.37 ± 0.03
-2016-2020,G20,Parkinson's Disease (PD),PD,County Economic Typology,Nonspecialized,39501,394764712,8.9655,0.0454,8.8773,9.0543,8.97 ± 0.05
-2016-2020,G20,Parkinson's Disease (PD),PD,County Economic Typology,National,169922,1633651785,8.7255,0.0213,8.684,8.7671,8.73 ± 0.02
-2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Farming,20202,21281587,68.134,0.4824,67.1976,69.0801,68.13 ± 0.48
-2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Mining,13812,14757946,78.0409,0.6666,76.7448,79.3535,78.04 ± 0.67
-2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Manufacturing,322099,304258990,81.172,0.1437,80.892,81.4529,81.17 ± 0.14
-2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Government,154301,191872921,73.1165,0.1871,72.7521,73.4822,73.12 ± 0.19
-2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Services,570676,706715629,63.8027,0.0851,63.6372,63.9684,63.80 ± 0.09
-2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Nonspecialized,335641,394764712,75.3661,0.1307,75.1114,75.6215,75.37 ± 0.13
-2016-2020,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,National,1416731,1633651785,71.0443,0.06,70.9274,71.1614,71.04 ± 0.06
-2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Farming,17480,21281587,58.5526,0.4453,57.6878,59.4271,58.55 ± 0.45
-2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Mining,11981,14757946,67.8657,0.6218,66.6559,69.092,67.87 ± 0.62
-2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Manufacturing,277167,304258990,69.6973,0.1329,69.438,69.9572,69.70 ± 0.13
-2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Government,131363,191872921,62.2488,0.1725,61.9126,62.5863,62.25 ± 0.17
-2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Services,481947,706715629,53.5358,0.0777,53.3848,53.6872,53.54 ± 0.08
-2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Nonspecialized,286447,394764712,64.3448,0.1207,64.1094,64.5809,64.34 ± 0.12
-2016-2020,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,National,1206385,1633651785,60.3095,0.0552,60.2019,60.4172,60.31 ± 0.06
+2016-2020,C00_C97,C00_C97,Cancer,County Economic Typology,Farming,42029,21281587,149.0612,0.7397,147.6395,150.4932,149.06 ± 0.74
+2016-2020,C00_C97,C00_C97,Cancer,County Economic Typology,Mining,32066,14757946,171.5684,0.9773,169.6956,173.4567,171.57 ± 0.98
+2016-2020,C00_C97,C00_C97,Cancer,County Economic Typology,Manufacturing,648387,304258990,161.9684,0.2048,161.5744,162.3632,161.97 ± 0.20
+2016-2020,C00_C97,C00_C97,Cancer,County Economic Typology,Government,334121,191872921,151.9698,0.2672,151.455,152.486,151.97 ± 0.27
+2016-2020,C00_C97,C00_C97,Cancer,County Economic Typology,Services,1228652,706715629,140.4571,0.1286,140.2089,140.7057,140.46 ± 0.13
+2016-2020,C00_C97,C00_C97,Cancer,County Economic Typology,Nonspecialized,709435,394764712,152.2514,0.1836,151.8973,152.6061,152.25 ± 0.18
+2016-2020,C00_C97,C00_C97,Cancer,County Economic Typology,National,2994690,1633651785,149.1678,0.0875,148.9989,149.3368,149.17 ± 0.09
+2016-2020,C18_C21,C18_C21,Colorectal,County Economic Typology,Farming,4185,21281587,15.0451,0.2377,14.5927,15.5079,15.05 ± 0.24
+2016-2020,C18_C21,C18_C21,Colorectal,County Economic Typology,Mining,3049,14757946,16.6146,0.3075,16.03,17.215,16.61 ± 0.31
+2016-2020,C18_C21,C18_C21,Colorectal,County Economic Typology,Manufacturing,56111,304258990,14.2541,0.0614,14.1364,14.3725,14.25 ± 0.06
+2016-2020,C18_C21,C18_C21,Colorectal,County Economic Typology,Government,29495,191872921,13.5962,0.0806,13.4414,13.7522,13.60 ± 0.08
+2016-2020,C18_C21,C18_C21,Colorectal,County Economic Typology,Services,108946,706715629,12.5382,0.0386,12.4639,12.6129,12.54 ± 0.04
+2016-2020,C18_C21,C18_C21,Colorectal,County Economic Typology,Nonspecialized,63802,394764712,13.8444,0.0557,13.7372,13.9523,13.84 ± 0.06
+2016-2020,C18_C21,C18_C21,Colorectal,County Economic Typology,National,265588,1633651785,13.3734,0.0264,13.3226,13.4244,13.37 ± 0.03
+2016-2020,C22,C22,Liver,County Economic Typology,Farming,1855,21281587,6.5113,0.1537,6.2184,6.8146,6.51 ± 0.15
+2016-2020,C22,C22,Liver,County Economic Typology,Mining,1528,14757946,7.8135,0.2039,7.4266,8.2153,7.81 ± 0.20
+2016-2020,C22,C22,Liver,County Economic Typology,Manufacturing,26600,304258990,6.4587,0.0403,6.3813,6.5368,6.46 ± 0.04
+2016-2020,C22,C22,Liver,County Economic Typology,Government,16187,191872921,7.0875,0.0567,6.9787,7.1975,7.09 ± 0.06
+2016-2020,C22,C22,Liver,County Economic Typology,Services,58012,706715629,6.4673,0.0272,6.4148,6.5202,6.47 ± 0.03
+2016-2020,C22,C22,Liver,County Economic Typology,Nonspecialized,33272,394764712,6.8788,0.0383,6.805,6.9531,6.88 ± 0.04
+2016-2020,C22,C22,Liver,County Economic Typology,National,137454,1633651785,6.6438,0.0182,6.6087,6.679,6.64 ± 0.02
+2016-2020,C25,C25,Pancreatic,County Economic Typology,Farming,3040,21281587,10.7335,0.1977,10.3553,11.1219,10.73 ± 0.20
+2016-2020,C25,C25,Pancreatic,County Economic Typology,Mining,2150,14757946,11.3655,0.2498,10.8901,11.8563,11.37 ± 0.25
+2016-2020,C25,C25,Pancreatic,County Economic Typology,Manufacturing,47024,304258990,11.6079,0.0544,11.5032,11.7133,11.61 ± 0.05
+2016-2020,C25,C25,Pancreatic,County Economic Typology,Government,25063,191872921,11.2718,0.0723,11.1327,11.4123,11.27 ± 0.07
+2016-2020,C25,C25,Pancreatic,County Economic Typology,Services,95521,706715629,10.8236,0.0355,10.755,10.8924,10.82 ± 0.04
+2016-2020,C25,C25,Pancreatic,County Economic Typology,Nonspecialized,51449,394764712,10.9019,0.0488,10.8079,10.9965,10.90 ± 0.05
+2016-2020,C25,C25,Pancreatic,County Economic Typology,National,224247,1633651785,11.0527,0.0237,11.007,11.0986,11.05 ± 0.02
+2016-2020,C34,C34,Lung,County Economic Typology,Farming,10451,21281587,36.4658,0.3609,35.77,37.1718,36.47 ± 0.36
+2016-2020,C34,C34,Lung,County Economic Typology,Mining,8603,14757946,44.8961,0.4925,43.9523,45.855,44.90 ± 0.49
+2016-2020,C34,C34,Lung,County Economic Typology,Manufacturing,171321,304258990,41.856,0.1026,41.658,42.0547,41.86 ± 0.10
+2016-2020,C34,C34,Lung,County Economic Typology,Government,78709,191872921,35.1922,0.1274,34.9467,35.4389,35.19 ± 0.13
+2016-2020,C34,C34,Lung,County Economic Typology,Services,272173,706715629,30.7564,0.0597,30.6409,30.8722,30.76 ± 0.06
+2016-2020,C34,C34,Lung,County Economic Typology,Nonspecialized,171044,394764712,36.0709,0.0885,35.9002,36.2423,36.07 ± 0.09
+2016-2020,C34,C34,Lung,County Economic Typology,National,712301,1633651785,34.9149,0.0419,34.8339,34.9961,34.91 ± 0.04
+2016-2020,C50,C50,Breast,County Economic Typology,Farming,2668,21281587,9.7779,0.1944,9.4104,10.1562,9.78 ± 0.19
+2016-2020,C50,C50,Breast,County Economic Typology,Mining,2093,14757946,11.6001,0.26,11.1084,12.108,11.60 ± 0.26
+2016-2020,C50,C50,Breast,County Economic Typology,Manufacturing,42693,304258990,10.9865,0.0545,10.8826,11.0913,10.99 ± 0.05
+2016-2020,C50,C50,Breast,County Economic Typology,Government,24143,191872921,11.1978,0.0735,11.057,11.3399,11.20 ± 0.07
+2016-2020,C50,C50,Breast,County Economic Typology,Services,91682,706715629,10.6755,0.0359,10.6065,10.7448,10.68 ± 0.04
+2016-2020,C50,C50,Breast,County Economic Typology,Nonspecialized,49471,394764712,10.7931,0.0494,10.6982,10.8887,10.79 ± 0.05
+2016-2020,C50,C50,Breast,County Economic Typology,National,212750,1633651785,10.818,0.0239,10.7721,10.864,10.82 ± 0.02
+2016-2020,C56,C56,Ovarian,County Economic Typology,Farming,822,21281587,2.992,0.1066,2.791,3.2038,2.99 ± 0.11
+2016-2020,C56,C56,Ovarian,County Economic Typology,Mining,643,14757946,3.4591,0.1395,3.1969,3.7371,3.46 ± 0.14
+2016-2020,C56,C56,Ovarian,County Economic Typology,Manufacturing,13637,304258990,3.4177,0.0298,3.3606,3.4756,3.42 ± 0.03
+2016-2020,C56,C56,Ovarian,County Economic Typology,Government,7446,191872921,3.3938,0.04,3.3171,3.4718,3.39 ± 0.04
+2016-2020,C56,C56,Ovarian,County Economic Typology,Services,30460,706715629,3.4892,0.0203,3.4501,3.5286,3.49 ± 0.02
+2016-2020,C56,C56,Ovarian,County Economic Typology,Nonspecialized,16003,394764712,3.4306,0.0276,3.3776,3.4842,3.43 ± 0.03
+2016-2020,C56,C56,Ovarian,County Economic Typology,National,69011,1633651785,3.4434,0.0133,3.4177,3.4691,3.44 ± 0.01
+2016-2020,C61,C61,Prostate,County Economic Typology,Farming,2381,21281587,8.1712,0.1687,7.8463,8.5062,8.17 ± 0.17
+2016-2020,C61,C61,Prostate,County Economic Typology,Mining,1501,14757946,8.141,0.2122,7.7343,8.5635,8.14 ± 0.21
+2016-2020,C61,C61,Prostate,County Economic Typology,Manufacturing,31312,304258990,7.7841,0.0444,7.6981,7.8708,7.78 ± 0.04
+2016-2020,C61,C61,Prostate,County Economic Typology,Government,18116,191872921,8.3448,0.0626,8.2237,8.4672,8.34 ± 0.06
+2016-2020,C61,C61,Prostate,County Economic Typology,Services,66846,706715629,7.5677,0.0296,7.5104,7.6252,7.57 ± 0.03
+2016-2020,C61,C61,Prostate,County Economic Typology,Nonspecialized,36504,394764712,7.9666,0.0421,7.8851,8.0487,7.97 ± 0.04
+2016-2020,C61,C61,Prostate,County Economic Typology,National,156660,1633651785,7.7995,0.0199,7.761,7.8383,7.80 ± 0.02
+2016-2020,C64_C65,C64_C65,Kidney,County Economic Typology,Farming,1190,21281587,4.2075,0.124,3.9719,4.4536,4.21 ± 0.12
+2016-2020,C64_C65,C64_C65,Kidney,County Economic Typology,Mining,910,14757946,4.8744,0.1649,4.5628,5.2017,4.87 ± 0.16
+2016-2020,C64_C65,C64_C65,Kidney,County Economic Typology,Manufacturing,15534,304258990,3.8731,0.0316,3.8125,3.9345,3.87 ± 0.03
+2016-2020,C64_C65,C64_C65,Kidney,County Economic Typology,Government,8021,191872921,3.6321,0.0412,3.5531,3.7125,3.63 ± 0.04
+2016-2020,C64_C65,C64_C65,Kidney,County Economic Typology,Services,26926,706715629,3.0769,0.019,3.0402,3.1138,3.08 ± 0.02
+2016-2020,C64_C65,C64_C65,Kidney,County Economic Typology,Nonspecialized,17731,394764712,3.79,0.0289,3.7345,3.8463,3.79 ± 0.03
+2016-2020,C64_C65,C64_C65,Kidney,County Economic Typology,National,70312,1633651785,3.495,0.0134,3.4692,3.5209,3.49 ± 0.01
+2016-2020,C82_C85,C82_C85,NHL,County Economic Typology,Farming,1402,21281587,4.9549,0.1342,4.6989,5.2212,4.95 ± 0.13
+2016-2020,C82_C85,C82_C85,NHL,County Economic Typology,Mining,1013,14757946,5.5225,0.1765,5.1876,5.8733,5.52 ± 0.18
+2016-2020,C82_C85,C82_C85,NHL,County Economic Typology,Manufacturing,21892,304258990,5.5496,0.0381,5.4764,5.6236,5.55 ± 0.04
+2016-2020,C82_C85,C82_C85,NHL,County Economic Typology,Government,11001,191872921,5.0903,0.0492,4.9957,5.1864,5.09 ± 0.05
+2016-2020,C82_C85,C82_C85,NHL,County Economic Typology,Services,42314,706715629,4.8848,0.0241,4.8384,4.9316,4.88 ± 0.02
+2016-2020,C82_C85,C82_C85,NHL,County Economic Typology,Nonspecialized,23760,394764712,5.2031,0.0342,5.1371,5.2697,5.20 ± 0.03
+2016-2020,C82_C85,C82_C85,NHL,County Economic Typology,National,101382,1633651785,5.1209,0.0163,5.0894,5.1525,5.12 ± 0.02
+2016-2020,C91_C95,C91_C95,Leukemia,County Economic Typology,Farming,1624,21281587,5.832,0.1474,5.5518,6.1227,5.83 ± 0.15
+2016-2020,C91_C95,C91_C95,Leukemia,County Economic Typology,Mining,1149,14757946,6.3652,0.1912,6.0024,6.7442,6.37 ± 0.19
+2016-2020,C91_C95,C91_C95,Leukemia,County Economic Typology,Manufacturing,24542,304258990,6.3059,0.041,6.2273,6.3853,6.31 ± 0.04
+2016-2020,C91_C95,C91_C95,Leukemia,County Economic Typology,Government,12754,191872921,5.97,0.0536,5.8668,6.0745,5.97 ± 0.05
+2016-2020,C91_C95,C91_C95,Leukemia,County Economic Typology,Services,48861,706715629,5.7264,0.0263,5.6757,5.7774,5.73 ± 0.03
+2016-2020,C91_C95,C91_C95,Leukemia,County Economic Typology,Nonspecialized,27091,394764712,6.0216,0.0371,5.9501,6.0937,6.02 ± 0.04
+2016-2020,C91_C95,C91_C95,Leukemia,County Economic Typology,National,116021,1633651785,5.9447,0.0177,5.9105,5.979,5.94 ± 0.02
+2016-2020,G10,G10,HD,County Economic Typology,Farming,89,21281587,0.3451,0.038,0.2771,0.4246,0.35 ± 0.04
+2016-2020,G10,G10,HD,County Economic Typology,Mining,60,14757946,0.3336,0.0444,0.2546,0.4294,0.33 ± 0.04
+2016-2020,G10,G10,HD,County Economic Typology,Manufacturing,1436,304258990,0.3882,0.0106,0.3684,0.4088,0.39 ± 0.01
+2016-2020,G10,G10,HD,County Economic Typology,Government,610,191872921,0.2891,0.012,0.2667,0.313,0.29 ± 0.01
+2016-2020,G10,G10,HD,County Economic Typology,Services,2038,706715629,0.245,0.0056,0.2345,0.2559,0.25 ± 0.01
+2016-2020,G10,G10,HD,County Economic Typology,Nonspecialized,1420,394764712,0.3127,0.0085,0.2966,0.3294,0.31 ± 0.01
+2016-2020,G10,G10,HD,County Economic Typology,National,5653,1633651785,0.2955,0.004,0.2879,0.3033,0.30 ± 0.00
+2016-2020,G12.2,G12.2,ALS,County Economic Typology,Farming,428,21281587,1.5551,0.0769,1.4113,1.7097,1.56 ± 0.08
+2016-2020,G12.2,G12.2,ALS,County Economic Typology,Mining,307,14757946,1.592,0.0932,1.4188,1.7804,1.59 ± 0.09
+2016-2020,G12.2,G12.2,ALS,County Economic Typology,Manufacturing,7455,304258990,1.8473,0.0219,1.8056,1.8898,1.85 ± 0.02
+2016-2020,G12.2,G12.2,ALS,County Economic Typology,Government,3785,191872921,1.683,0.0279,1.6298,1.7375,1.68 ± 0.03
+2016-2020,G12.2,G12.2,ALS,County Economic Typology,Services,14523,706715629,1.6536,0.0139,1.6268,1.6807,1.65 ± 0.01
+2016-2020,G12.2,G12.2,ALS,County Economic Typology,Nonspecialized,8273,394764712,1.7432,0.0195,1.7059,1.7812,1.74 ± 0.02
+2016-2020,G12.2,G12.2,ALS,County Economic Typology,National,34771,1633651785,1.7138,0.0094,1.6958,1.7319,1.71 ± 0.01
+2016-2020,G20,G20,PD,County Economic Typology,Farming,2205,21281587,7.6812,0.1646,7.3639,8.0087,7.68 ± 0.16
+2016-2020,G20,G20,PD,County Economic Typology,Mining,1464,14757946,8.2497,0.2168,7.8324,8.6833,8.25 ± 0.22
+2016-2020,G20,G20,PD,County Economic Typology,Manufacturing,36041,304258990,9.2392,0.049,9.1441,9.3351,9.24 ± 0.05
+2016-2020,G20,G20,PD,County Economic Typology,Government,18543,191872921,8.8956,0.0658,8.768,9.0246,8.90 ± 0.07
+2016-2020,G20,G20,PD,County Economic Typology,Services,72168,706715629,8.3683,0.0314,8.3073,8.4296,8.37 ± 0.03
+2016-2020,G20,G20,PD,County Economic Typology,Nonspecialized,39501,394764712,8.9655,0.0454,8.8773,9.0543,8.97 ± 0.05
+2016-2020,G20,G20,PD,County Economic Typology,National,169922,1633651785,8.7255,0.0213,8.684,8.7671,8.73 ± 0.02
+2016-2020,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Farming,20202,21281587,68.134,0.4824,67.1976,69.0801,68.13 ± 0.48
+2016-2020,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Mining,13812,14757946,78.0409,0.6666,76.7448,79.3535,78.04 ± 0.67
+2016-2020,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Manufacturing,322099,304258990,81.172,0.1437,80.892,81.4529,81.17 ± 0.14
+2016-2020,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Government,154301,191872921,73.1165,0.1871,72.7521,73.4822,73.12 ± 0.19
+2016-2020,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Services,570676,706715629,63.8027,0.0851,63.6372,63.9684,63.80 ± 0.09
+2016-2020,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Nonspecialized,335641,394764712,75.3661,0.1307,75.1114,75.6215,75.37 ± 0.13
+2016-2020,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,National,1416731,1633651785,71.0443,0.06,70.9274,71.1614,71.04 ± 0.06
+2016-2020,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Farming,17480,21281587,58.5526,0.4453,57.6878,59.4271,58.55 ± 0.45
+2016-2020,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Mining,11981,14757946,67.8657,0.6218,66.6559,69.092,67.87 ± 0.62
+2016-2020,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Manufacturing,277167,304258990,69.6973,0.1329,69.438,69.9572,69.70 ± 0.13
+2016-2020,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Government,131363,191872921,62.2488,0.1725,61.9126,62.5863,62.25 ± 0.17
+2016-2020,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Services,481947,706715629,53.5358,0.0777,53.3848,53.6872,53.54 ± 0.08
+2016-2020,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Nonspecialized,286447,394764712,64.3448,0.1207,64.1094,64.5809,64.34 ± 0.12
+2016-2020,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,National,1206385,1633651785,60.3095,0.0552,60.2019,60.4172,60.31 ± 0.06
 2016-2020,I00_I99,I00_I99,CVD,County Economic Typology,Farming,66300,21281587,231.5037,0.9139,229.7448,233.2727,231.50 ± 0.91
 2016-2020,I00_I99,I00_I99,CVD,County Economic Typology,Mining,47808,14757946,263.9574,1.2265,261.5965,266.3342,263.96 ± 1.23
 2016-2020,I00_I99,I00_I99,CVD,County Economic Typology,Manufacturing,946901,304258990,239.0442,0.2492,238.563,239.5262,239.04 ± 0.25
@@ -804,13 +804,13 @@ Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata
 2016-2020,J40_J47,J40_J47,J40_J47,County Economic Typology,Services,285745,706715629,32.4817,0.0614,32.3627,32.601,32.48 ± 0.06
 2016-2020,J40_J47,J40_J47,J40_J47,County Economic Typology,Nonspecialized,196192,394764712,42.6717,0.0975,42.4831,42.861,42.67 ± 0.10
 2016-2020,J40_J47,J40_J47,J40_J47,County Economic Typology,National,783466,1633651785,39.0642,0.0446,38.9778,39.1508,39.06 ± 0.04
-2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Farming,16691,21281587,58.1489,0.455,57.27,59.0379,58.15 ± 0.45
-2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Mining,13639,14757946,73.5356,0.6379,72.3066,74.7802,73.54 ± 0.64
-2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Manufacturing,234225,304258990,58.4456,0.1222,58.2092,58.6828,58.45 ± 0.12
-2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Government,111056,191872921,51.2143,0.1555,50.9135,51.5164,51.21 ± 0.16
-2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Services,368450,706715629,41.9045,0.0698,41.7693,42.04,41.90 ± 0.07
-2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Nonspecialized,245315,394764712,53.5228,0.1093,53.3112,53.735,53.52 ± 0.11
-2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,National,989376,1633651785,49.4327,0.0502,49.3353,49.5302,49.43 ± 0.05
+2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Farming,16691,21281587,58.1489,0.455,57.27,59.0379,58.15 ± 0.45
+2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Mining,13639,14757946,73.5356,0.6379,72.3066,74.7802,73.54 ± 0.64
+2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Manufacturing,234225,304258990,58.4456,0.1222,58.2092,58.6828,58.45 ± 0.12
+2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Government,111056,191872921,51.2143,0.1555,50.9135,51.5164,51.21 ± 0.16
+2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Services,368450,706715629,41.9045,0.0698,41.7693,42.04,41.90 ± 0.07
+2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Nonspecialized,245315,394764712,53.5228,0.1093,53.3112,53.735,53.52 ± 0.11
+2016-2020,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,National,989376,1633651785,49.4327,0.0502,49.3353,49.5302,49.43 ± 0.05
 2016-2020,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Farming,27142,21281587,94.6147,0.5807,93.4924,95.7471,94.61 ± 0.58
 2016-2020,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Mining,22242,14757946,118.4316,0.8059,116.8802,119.9984,118.43 ± 0.81
 2016-2020,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Manufacturing,405546,304258990,100.3016,0.1595,99.9932,100.6108,100.30 ± 0.16
@@ -972,118 +972,118 @@ Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata
 2016-2020,Y87.0,Y87.0,SI,County Economic Typology,Services,117,706715629,0.0153,0.0014,0.0126,0.0183,0.02 ± 0.00
 2016-2020,Y87.0,Y87.0,SI,County Economic Typology,Nonspecialized,69,394764712,0.017,0.0021,0.0132,0.0215,0.02 ± 0.00
 2016-2020,Y87.0,Y87.0,SI,County Economic Typology,National,254,1633651785,0.0147,0.0009,0.013,0.0167,0.01 ± 0.00
-2021-2024,C00_C97,All-site Cancer,Cancer,County Economic Typology,Farming,33768,17073603,172.7811,0.9965,170.9431,174.6339,172.78 ± 1.00
-2021-2024,C00_C97,All-site Cancer,Cancer,County Economic Typology,Mining,25766,11577354,199.8324,1.3136,197.3998,202.2876,199.83 ± 1.31
-2021-2024,C00_C97,All-site Cancer,Cancer,County Economic Typology,Manufacturing,528802,244655529,183.2287,0.2633,182.7351,183.7232,183.23 ± 0.26
-2021-2024,C00_C97,All-site Cancer,Cancer,County Economic Typology,Government,276551,156292967,170.4154,0.3384,169.7809,171.0518,170.42 ± 0.34
-2021-2024,C00_C97,All-site Cancer,Cancer,County Economic Typology,Services,989607,564187663,153.7532,0.1607,153.4504,154.0564,153.75 ± 0.16
-2021-2024,C00_C97,All-site Cancer,Cancer,County Economic Typology,Nonspecialized,588963,324533178,170.6068,0.2308,170.1714,171.0431,170.61 ± 0.23
-2021-2024,C00_C97,All-site Cancer,Cancer,County Economic Typology,National,2443457,1318320294,166.0285,0.1106,165.8204,166.2368,166.03 ± 0.11
-2021-2024,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Farming,3326,17073603,17.8328,0.3279,17.2318,18.4493,17.83 ± 0.33
-2021-2024,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Mining,2569,11577354,20.4206,0.4245,19.6385,21.2259,20.42 ± 0.42
-2021-2024,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Manufacturing,46463,244655529,16.7491,0.0811,16.5971,16.9021,16.75 ± 0.08
-2021-2024,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Government,24802,156292967,15.8801,0.1052,15.683,16.0789,15.88 ± 0.11
-2021-2024,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Services,88578,564187663,14.2727,0.0499,14.1788,14.367,14.27 ± 0.05
-2021-2024,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,Nonspecialized,53475,324533178,16.0245,0.0719,15.889,16.1609,16.02 ± 0.07
-2021-2024,C18_C21,Colorectal Cancer,Colorectal,County Economic Typology,National,219213,1318320294,15.4481,0.0343,15.3835,15.5129,15.45 ± 0.03
-2021-2024,C22,Liver Cancer,Liver,County Economic Typology,Farming,1652,17073603,8.7753,0.2308,8.3572,9.2089,8.78 ± 0.23
-2021-2024,C22,Liver Cancer,Liver,County Economic Typology,Mining,1293,11577354,10.0895,0.2991,9.547,10.6548,10.09 ± 0.30
-2021-2024,C22,Liver Cancer,Liver,County Economic Typology,Manufacturing,23388,244655529,8.0314,0.0552,7.9288,8.135,8.03 ± 0.06
-2021-2024,C22,Liver Cancer,Liver,County Economic Typology,Government,13843,156292967,8.4844,0.076,8.3437,8.6269,8.48 ± 0.08
-2021-2024,C22,Liver Cancer,Liver,County Economic Typology,Services,48229,564187663,7.5085,0.0358,7.4417,7.5758,7.51 ± 0.04
-2021-2024,C22,Liver Cancer,Liver,County Economic Typology,Nonspecialized,29619,324533178,8.5868,0.0522,8.4893,8.6852,8.59 ± 0.05
-2021-2024,C22,Liver Cancer,Liver,County Economic Typology,National,118024,1318320294,8.015,0.0245,7.9693,8.0608,8.01 ± 0.02
-2021-2024,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Farming,2559,17073603,13.0763,0.2745,12.5745,13.593,13.08 ± 0.27
-2021-2024,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Mining,1824,11577354,14.1319,0.3501,13.4907,14.7957,14.13 ± 0.35
-2021-2024,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Manufacturing,41003,244655529,14.1166,0.073,13.9803,14.2539,14.12 ± 0.07
-2021-2024,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Government,21760,156292967,13.3061,0.0944,13.1298,13.484,13.31 ± 0.09
-2021-2024,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Services,83402,564187663,12.8503,0.0463,12.7632,12.9378,12.85 ± 0.05
-2021-2024,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,Nonspecialized,46367,324533178,13.317,0.0644,13.1961,13.4388,13.32 ± 0.06
-2021-2024,C25,Pancreatic Cancer,Pancreatic,County Economic Typology,National,196915,1318320294,13.2751,0.0312,13.2166,13.3339,13.28 ± 0.03
-2021-2024,C34,Lung Cancer,Lung,County Economic Typology,Farming,7552,17073603,38.1475,0.4668,37.2919,39.0177,38.15 ± 0.47
-2021-2024,C34,Lung Cancer,Lung,County Economic Typology,Mining,6300,11577354,47.9979,0.6414,46.8199,49.198,48.00 ± 0.64
-2021-2024,C34,Lung Cancer,Lung,County Economic Typology,Manufacturing,127934,244655529,43.7679,0.1284,43.5284,44.0084,43.77 ± 0.13
-2021-2024,C34,Lung Cancer,Lung,County Economic Typology,Government,59102,156292967,35.8714,0.1546,35.5828,36.1618,35.87 ± 0.15
-2021-2024,C34,Lung Cancer,Lung,County Economic Typology,Services,197871,564187663,30.1592,0.0706,30.0264,30.2923,30.16 ± 0.07
-2021-2024,C34,Lung Cancer,Lung,County Economic Typology,Nonspecialized,127708,324533178,36.3259,0.1059,36.1269,36.5256,36.33 ± 0.11
-2021-2024,C34,Lung Cancer,Lung,County Economic Typology,National,526467,1318320294,35.1988,0.0506,35.1038,35.2941,35.20 ± 0.05
-2021-2024,C50,Breast Cancer,Breast,County Economic Typology,Farming,2180,17073603,11.7581,0.2667,11.2696,12.2622,11.76 ± 0.27
-2021-2024,C50,Breast Cancer,Breast,County Economic Typology,Mining,1628,11577354,13.1329,0.3418,12.5026,13.7867,13.13 ± 0.34
-2021-2024,C50,Breast Cancer,Breast,County Economic Typology,Manufacturing,34546,244655529,12.4852,0.0701,12.3539,12.6176,12.49 ± 0.07
-2021-2024,C50,Breast Cancer,Breast,County Economic Typology,Government,19568,156292967,12.5494,0.0935,12.3741,12.7265,12.55 ± 0.09
-2021-2024,C50,Breast Cancer,Breast,County Economic Typology,Services,73120,564187663,11.898,0.0458,11.812,11.9846,11.90 ± 0.05
-2021-2024,C50,Breast Cancer,Breast,County Economic Typology,Nonspecialized,40924,324533178,12.3268,0.0631,12.2077,12.4468,12.33 ± 0.06
-2021-2024,C50,Breast Cancer,Breast,County Economic Typology,National,171966,1318320294,12.1939,0.0306,12.1363,12.2517,12.19 ± 0.03
-2021-2024,C56,Ovary Cancer,Ovarian,County Economic Typology,Farming,619,17073603,3.3124,0.1415,3.0565,3.5839,3.31 ± 0.14
-2021-2024,C56,Ovary Cancer,Ovarian,County Economic Typology,Mining,456,11577354,3.5871,0.1775,3.2654,3.932,3.59 ± 0.18
-2021-2024,C56,Ovary Cancer,Ovarian,County Economic Typology,Manufacturing,10095,244655529,3.5826,0.0373,3.5131,3.6532,3.58 ± 0.04
-2021-2024,C56,Ovary Cancer,Ovarian,County Economic Typology,Government,5841,156292967,3.6634,0.0502,3.5701,3.7586,3.66 ± 0.05
-2021-2024,C56,Ovary Cancer,Ovarian,County Economic Typology,Services,22930,564187663,3.6805,0.0253,3.633,3.7284,3.68 ± 0.03
-2021-2024,C56,Ovary Cancer,Ovarian,County Economic Typology,Nonspecialized,12213,324533178,3.6074,0.034,3.5437,3.6719,3.61 ± 0.03
-2021-2024,C56,Ovary Cancer,Ovarian,County Economic Typology,National,52154,1318320294,3.6367,0.0166,3.6056,3.6681,3.64 ± 0.02
-2021-2024,C61,Prostate Cancer,Prostate,County Economic Typology,Farming,2024,17073603,9.3319,0.215,8.9297,9.7475,9.33 ± 0.22
-2021-2024,C61,Prostate Cancer,Prostate,County Economic Typology,Mining,1264,11577354,8.9898,0.2614,8.501,9.4994,8.99 ± 0.26
-2021-2024,C61,Prostate Cancer,Prostate,County Economic Typology,Manufacturing,26879,244655529,8.6479,0.0542,8.5448,8.7519,8.65 ± 0.05
-2021-2024,C61,Prostate Cancer,Prostate,County Economic Typology,Government,16004,156292967,9.2394,0.0751,9.0968,9.3837,9.24 ± 0.08
-2021-2024,C61,Prostate Cancer,Prostate,County Economic Typology,Services,56530,564187663,8.1512,0.0351,8.0842,8.2187,8.15 ± 0.04
-2021-2024,C61,Prostate Cancer,Prostate,County Economic Typology,Nonspecialized,31888,324533178,8.7368,0.0501,8.6412,8.8332,8.74 ± 0.05
-2021-2024,C61,Prostate Cancer,Prostate,County Economic Typology,National,134589,1318320294,8.5272,0.0238,8.4817,8.5729,8.53 ± 0.02
-2021-2024,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Farming,1032,17073603,5.3889,0.1784,5.0651,5.728,5.39 ± 0.18
-2021-2024,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Mining,694,11577354,5.4535,0.2185,5.0552,5.8748,5.45 ± 0.22
-2021-2024,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Manufacturing,12910,244655529,4.4883,0.0413,4.4112,4.5664,4.49 ± 0.04
-2021-2024,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Government,6836,156292967,4.2378,0.0535,4.138,4.3395,4.24 ± 0.05
-2021-2024,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Services,22001,564187663,3.4198,0.024,3.3747,3.4652,3.42 ± 0.02
-2021-2024,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,Nonspecialized,15085,324533178,4.4002,0.0372,4.3303,4.471,4.40 ± 0.04
-2021-2024,C64_C65,Kidney and Renal Pelvis Cancer,Kidney,County Economic Typology,National,58558,1318320294,3.9959,0.0172,3.9636,4.0284,4.00 ± 0.02
-2021-2024,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Farming,1022,17073603,4.9499,0.1622,4.651,5.2629,4.95 ± 0.16
-2021-2024,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Mining,782,11577354,5.8918,0.2204,5.486,6.3196,5.89 ± 0.22
-2021-2024,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Manufacturing,17106,244655529,5.7091,0.0452,5.6239,5.7953,5.71 ± 0.05
-2021-2024,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Government,8692,156292967,5.2209,0.058,5.1117,5.3318,5.22 ± 0.06
-2021-2024,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Services,32469,564187663,4.8944,0.028,4.8413,4.9479,4.89 ± 0.03
-2021-2024,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,Nonspecialized,19357,324533178,5.4816,0.0406,5.4046,5.5594,5.48 ± 0.04
-2021-2024,C82_C85,Non-Hodgkin Lymphoma,NHL,County Economic Typology,National,79428,1318320294,5.2395,0.0192,5.2031,5.276,5.24 ± 0.02
-2021-2024,C91_C95,Leukemia,Leukemia,County Economic Typology,Farming,1296,17073603,6.3826,0.1856,6.0398,6.7398,6.38 ± 0.19
-2021-2024,C91_C95,Leukemia,Leukemia,County Economic Typology,Mining,913,11577354,6.9941,0.2419,6.5477,7.4629,6.99 ± 0.24
-2021-2024,C91_C95,Leukemia,Leukemia,County Economic Typology,Manufacturing,19818,244655529,6.6432,0.0488,6.551,6.7364,6.64 ± 0.05
-2021-2024,C91_C95,Leukemia,Leukemia,County Economic Typology,Government,10275,156292967,6.1473,0.0627,6.029,6.2673,6.15 ± 0.06
-2021-2024,C91_C95,Leukemia,Leukemia,County Economic Typology,Services,38740,564187663,5.8706,0.0308,5.8123,5.9293,5.87 ± 0.03
-2021-2024,C91_C95,Leukemia,Leukemia,County Economic Typology,Nonspecialized,22311,324533178,6.3149,0.0435,6.2323,6.3983,6.31 ± 0.04
-2021-2024,C91_C95,Leukemia,Leukemia,County Economic Typology,National,93353,1318320294,6.1727,0.0208,6.1332,6.2125,6.17 ± 0.02
-2021-2024,G10,Huntington's Disease (HD),HD,County Economic Typology,Farming,76,17073603,0.4822,0.0585,0.38,0.6036,0.48 ± 0.06
-2021-2024,G10,Huntington's Disease (HD),HD,County Economic Typology,Mining,50,11577354,0.5006,0.0728,0.3715,0.66,0.50 ± 0.07
-2021-2024,G10,Huntington's Disease (HD),HD,County Economic Typology,Manufacturing,1210,244655529,0.4979,0.0149,0.4702,0.5267,0.50 ± 0.01
-2021-2024,G10,Huntington's Disease (HD),HD,County Economic Typology,Government,526,156292967,0.3666,0.0167,0.3359,0.3993,0.37 ± 0.02
-2021-2024,G10,Huntington's Disease (HD),HD,County Economic Typology,Services,1684,564187663,0.2956,0.0075,0.2816,0.3101,0.30 ± 0.01
-2021-2024,G10,Huntington's Disease (HD),HD,County Economic Typology,Nonspecialized,1116,324533178,0.3621,0.0112,0.3412,0.384,0.36 ± 0.01
-2021-2024,G10,Huntington's Disease (HD),HD,County Economic Typology,National,4662,1318320294,0.3622,0.0055,0.3519,0.3727,0.36 ± 0.01
-2021-2024,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Farming,334,17073603,1.7196,0.1004,1.5401,1.9143,1.72 ± 0.10
-2021-2024,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Mining,276,11577354,2.1583,0.1383,1.9111,2.4285,2.16 ± 0.14
-2021-2024,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Manufacturing,6353,244655529,2.2522,0.0298,2.1971,2.3083,2.25 ± 0.03
-2021-2024,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Government,3240,156292967,2.0331,0.0376,1.9637,2.1044,2.03 ± 0.04
-2021-2024,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Services,12281,564187663,1.967,0.0186,1.9324,2.0021,1.97 ± 0.02
-2021-2024,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,Nonspecialized,7289,324533178,2.155,0.0264,2.1058,2.205,2.15 ± 0.03
-2021-2024,G12.2,Amyotrophic Lateral Sclerosis (ALS),ALS,County Economic Typology,National,29773,1318320294,2.0733,0.0126,2.0498,2.097,2.07 ± 0.01
-2021-2024,G20,Parkinson's Disease (PD),PD,County Economic Typology,Farming,1992,17073603,8.8737,0.2017,8.4882,9.2721,8.87 ± 0.20
-2021-2024,G20,Parkinson's Disease (PD),PD,County Economic Typology,Mining,1409,11577354,9.9022,0.2683,9.3919,10.4331,9.90 ± 0.27
-2021-2024,G20,Parkinson's Disease (PD),PD,County Economic Typology,Manufacturing,33363,244655529,10.4729,0.0579,10.3608,10.5859,10.47 ± 0.06
-2021-2024,G20,Parkinson's Disease (PD),PD,County Economic Typology,Government,17549,156292967,9.9244,0.0757,9.7781,10.0723,9.92 ± 0.08
-2021-2024,G20,Parkinson's Disease (PD),PD,County Economic Typology,Services,66416,564187663,9.3397,0.0365,9.2688,9.411,9.34 ± 0.04
-2021-2024,G20,Parkinson's Disease (PD),PD,County Economic Typology,Nonspecialized,37680,324533178,10.1995,0.0531,10.0968,10.303,10.20 ± 0.05
-2021-2024,G20,Parkinson's Disease (PD),PD,County Economic Typology,National,158409,1318320294,9.8244,0.0249,9.7761,9.8729,9.82 ± 0.02
-2021-2024,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Farming,16150,17073603,71.6319,0.5696,70.5313,72.7453,71.63 ± 0.57
-2021-2024,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Mining,11220,11577354,80.9681,0.7727,79.4768,82.4804,80.97 ± 0.77
-2021-2024,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Manufacturing,246750,244655529,79.0996,0.1605,78.7878,79.4123,79.10 ± 0.16
-2021-2024,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Government,125091,156292967,72.2147,0.2059,71.815,72.616,72.21 ± 0.21
-2021-2024,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Services,439181,564187663,61.9841,0.0942,61.8009,62.1677,61.98 ± 0.09
-2021-2024,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,Nonspecialized,267398,324533178,74.2472,0.1447,73.966,74.5291,74.25 ± 0.14
-2021-2024,G20_G30_G12.2_F01_F03,Neurodegenerative Disease (NDD),NDD,County Economic Typology,National,1105790,1318320294,69.5421,0.0666,69.4125,69.6718,69.54 ± 0.07
-2021-2024,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Farming,13748,17073603,60.5563,0.5198,59.5483,61.5772,60.56 ± 0.52
-2021-2024,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Mining,9485,11577354,68.407,0.7076,67.0372,69.7978,68.41 ± 0.71
-2021-2024,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Manufacturing,205824,244655529,65.8766,0.146,65.5923,66.1619,65.88 ± 0.15
-2021-2024,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Government,103776,156292967,59.8905,0.1869,59.5267,60.2561,59.89 ± 0.19
-2021-2024,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Services,358800,564187663,50.3818,0.0845,50.2171,50.5469,50.38 ± 0.08
-2021-2024,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,Nonspecialized,221313,324533178,61.5306,0.1315,61.2745,61.7875,61.53 ± 0.13
-2021-2024,G30_F01_F03,Dementia (AD+VD+UD),Dementia,County Economic Typology,National,912946,1318320294,57.2822,0.0602,57.1648,57.3998,57.28 ± 0.06
+2021-2024,C00_C97,C00_C97,Cancer,County Economic Typology,Farming,33768,17073603,172.7811,0.9965,170.9431,174.6339,172.78 ± 1.00
+2021-2024,C00_C97,C00_C97,Cancer,County Economic Typology,Mining,25766,11577354,199.8324,1.3136,197.3998,202.2876,199.83 ± 1.31
+2021-2024,C00_C97,C00_C97,Cancer,County Economic Typology,Manufacturing,528802,244655529,183.2287,0.2633,182.7351,183.7232,183.23 ± 0.26
+2021-2024,C00_C97,C00_C97,Cancer,County Economic Typology,Government,276551,156292967,170.4154,0.3384,169.7809,171.0518,170.42 ± 0.34
+2021-2024,C00_C97,C00_C97,Cancer,County Economic Typology,Services,989607,564187663,153.7532,0.1607,153.4504,154.0564,153.75 ± 0.16
+2021-2024,C00_C97,C00_C97,Cancer,County Economic Typology,Nonspecialized,588963,324533178,170.6068,0.2308,170.1714,171.0431,170.61 ± 0.23
+2021-2024,C00_C97,C00_C97,Cancer,County Economic Typology,National,2443457,1318320294,166.0285,0.1106,165.8204,166.2368,166.03 ± 0.11
+2021-2024,C18_C21,C18_C21,Colorectal,County Economic Typology,Farming,3326,17073603,17.8328,0.3279,17.2318,18.4493,17.83 ± 0.33
+2021-2024,C18_C21,C18_C21,Colorectal,County Economic Typology,Mining,2569,11577354,20.4206,0.4245,19.6385,21.2259,20.42 ± 0.42
+2021-2024,C18_C21,C18_C21,Colorectal,County Economic Typology,Manufacturing,46463,244655529,16.7491,0.0811,16.5971,16.9021,16.75 ± 0.08
+2021-2024,C18_C21,C18_C21,Colorectal,County Economic Typology,Government,24802,156292967,15.8801,0.1052,15.683,16.0789,15.88 ± 0.11
+2021-2024,C18_C21,C18_C21,Colorectal,County Economic Typology,Services,88578,564187663,14.2727,0.0499,14.1788,14.367,14.27 ± 0.05
+2021-2024,C18_C21,C18_C21,Colorectal,County Economic Typology,Nonspecialized,53475,324533178,16.0245,0.0719,15.889,16.1609,16.02 ± 0.07
+2021-2024,C18_C21,C18_C21,Colorectal,County Economic Typology,National,219213,1318320294,15.4481,0.0343,15.3835,15.5129,15.45 ± 0.03
+2021-2024,C22,C22,Liver,County Economic Typology,Farming,1652,17073603,8.7753,0.2308,8.3572,9.2089,8.78 ± 0.23
+2021-2024,C22,C22,Liver,County Economic Typology,Mining,1293,11577354,10.0895,0.2991,9.547,10.6548,10.09 ± 0.30
+2021-2024,C22,C22,Liver,County Economic Typology,Manufacturing,23388,244655529,8.0314,0.0552,7.9288,8.135,8.03 ± 0.06
+2021-2024,C22,C22,Liver,County Economic Typology,Government,13843,156292967,8.4844,0.076,8.3437,8.6269,8.48 ± 0.08
+2021-2024,C22,C22,Liver,County Economic Typology,Services,48229,564187663,7.5085,0.0358,7.4417,7.5758,7.51 ± 0.04
+2021-2024,C22,C22,Liver,County Economic Typology,Nonspecialized,29619,324533178,8.5868,0.0522,8.4893,8.6852,8.59 ± 0.05
+2021-2024,C22,C22,Liver,County Economic Typology,National,118024,1318320294,8.015,0.0245,7.9693,8.0608,8.01 ± 0.02
+2021-2024,C25,C25,Pancreatic,County Economic Typology,Farming,2559,17073603,13.0763,0.2745,12.5745,13.593,13.08 ± 0.27
+2021-2024,C25,C25,Pancreatic,County Economic Typology,Mining,1824,11577354,14.1319,0.3501,13.4907,14.7957,14.13 ± 0.35
+2021-2024,C25,C25,Pancreatic,County Economic Typology,Manufacturing,41003,244655529,14.1166,0.073,13.9803,14.2539,14.12 ± 0.07
+2021-2024,C25,C25,Pancreatic,County Economic Typology,Government,21760,156292967,13.3061,0.0944,13.1298,13.484,13.31 ± 0.09
+2021-2024,C25,C25,Pancreatic,County Economic Typology,Services,83402,564187663,12.8503,0.0463,12.7632,12.9378,12.85 ± 0.05
+2021-2024,C25,C25,Pancreatic,County Economic Typology,Nonspecialized,46367,324533178,13.317,0.0644,13.1961,13.4388,13.32 ± 0.06
+2021-2024,C25,C25,Pancreatic,County Economic Typology,National,196915,1318320294,13.2751,0.0312,13.2166,13.3339,13.28 ± 0.03
+2021-2024,C34,C34,Lung,County Economic Typology,Farming,7552,17073603,38.1475,0.4668,37.2919,39.0177,38.15 ± 0.47
+2021-2024,C34,C34,Lung,County Economic Typology,Mining,6300,11577354,47.9979,0.6414,46.8199,49.198,48.00 ± 0.64
+2021-2024,C34,C34,Lung,County Economic Typology,Manufacturing,127934,244655529,43.7679,0.1284,43.5284,44.0084,43.77 ± 0.13
+2021-2024,C34,C34,Lung,County Economic Typology,Government,59102,156292967,35.8714,0.1546,35.5828,36.1618,35.87 ± 0.15
+2021-2024,C34,C34,Lung,County Economic Typology,Services,197871,564187663,30.1592,0.0706,30.0264,30.2923,30.16 ± 0.07
+2021-2024,C34,C34,Lung,County Economic Typology,Nonspecialized,127708,324533178,36.3259,0.1059,36.1269,36.5256,36.33 ± 0.11
+2021-2024,C34,C34,Lung,County Economic Typology,National,526467,1318320294,35.1988,0.0506,35.1038,35.2941,35.20 ± 0.05
+2021-2024,C50,C50,Breast,County Economic Typology,Farming,2180,17073603,11.7581,0.2667,11.2696,12.2622,11.76 ± 0.27
+2021-2024,C50,C50,Breast,County Economic Typology,Mining,1628,11577354,13.1329,0.3418,12.5026,13.7867,13.13 ± 0.34
+2021-2024,C50,C50,Breast,County Economic Typology,Manufacturing,34546,244655529,12.4852,0.0701,12.3539,12.6176,12.49 ± 0.07
+2021-2024,C50,C50,Breast,County Economic Typology,Government,19568,156292967,12.5494,0.0935,12.3741,12.7265,12.55 ± 0.09
+2021-2024,C50,C50,Breast,County Economic Typology,Services,73120,564187663,11.898,0.0458,11.812,11.9846,11.90 ± 0.05
+2021-2024,C50,C50,Breast,County Economic Typology,Nonspecialized,40924,324533178,12.3268,0.0631,12.2077,12.4468,12.33 ± 0.06
+2021-2024,C50,C50,Breast,County Economic Typology,National,171966,1318320294,12.1939,0.0306,12.1363,12.2517,12.19 ± 0.03
+2021-2024,C56,C56,Ovarian,County Economic Typology,Farming,619,17073603,3.3124,0.1415,3.0565,3.5839,3.31 ± 0.14
+2021-2024,C56,C56,Ovarian,County Economic Typology,Mining,456,11577354,3.5871,0.1775,3.2654,3.932,3.59 ± 0.18
+2021-2024,C56,C56,Ovarian,County Economic Typology,Manufacturing,10095,244655529,3.5826,0.0373,3.5131,3.6532,3.58 ± 0.04
+2021-2024,C56,C56,Ovarian,County Economic Typology,Government,5841,156292967,3.6634,0.0502,3.5701,3.7586,3.66 ± 0.05
+2021-2024,C56,C56,Ovarian,County Economic Typology,Services,22930,564187663,3.6805,0.0253,3.633,3.7284,3.68 ± 0.03
+2021-2024,C56,C56,Ovarian,County Economic Typology,Nonspecialized,12213,324533178,3.6074,0.034,3.5437,3.6719,3.61 ± 0.03
+2021-2024,C56,C56,Ovarian,County Economic Typology,National,52154,1318320294,3.6367,0.0166,3.6056,3.6681,3.64 ± 0.02
+2021-2024,C61,C61,Prostate,County Economic Typology,Farming,2024,17073603,9.3319,0.215,8.9297,9.7475,9.33 ± 0.22
+2021-2024,C61,C61,Prostate,County Economic Typology,Mining,1264,11577354,8.9898,0.2614,8.501,9.4994,8.99 ± 0.26
+2021-2024,C61,C61,Prostate,County Economic Typology,Manufacturing,26879,244655529,8.6479,0.0542,8.5448,8.7519,8.65 ± 0.05
+2021-2024,C61,C61,Prostate,County Economic Typology,Government,16004,156292967,9.2394,0.0751,9.0968,9.3837,9.24 ± 0.08
+2021-2024,C61,C61,Prostate,County Economic Typology,Services,56530,564187663,8.1512,0.0351,8.0842,8.2187,8.15 ± 0.04
+2021-2024,C61,C61,Prostate,County Economic Typology,Nonspecialized,31888,324533178,8.7368,0.0501,8.6412,8.8332,8.74 ± 0.05
+2021-2024,C61,C61,Prostate,County Economic Typology,National,134589,1318320294,8.5272,0.0238,8.4817,8.5729,8.53 ± 0.02
+2021-2024,C64_C65,C64_C65,Kidney,County Economic Typology,Farming,1032,17073603,5.3889,0.1784,5.0651,5.728,5.39 ± 0.18
+2021-2024,C64_C65,C64_C65,Kidney,County Economic Typology,Mining,694,11577354,5.4535,0.2185,5.0552,5.8748,5.45 ± 0.22
+2021-2024,C64_C65,C64_C65,Kidney,County Economic Typology,Manufacturing,12910,244655529,4.4883,0.0413,4.4112,4.5664,4.49 ± 0.04
+2021-2024,C64_C65,C64_C65,Kidney,County Economic Typology,Government,6836,156292967,4.2378,0.0535,4.138,4.3395,4.24 ± 0.05
+2021-2024,C64_C65,C64_C65,Kidney,County Economic Typology,Services,22001,564187663,3.4198,0.024,3.3747,3.4652,3.42 ± 0.02
+2021-2024,C64_C65,C64_C65,Kidney,County Economic Typology,Nonspecialized,15085,324533178,4.4002,0.0372,4.3303,4.471,4.40 ± 0.04
+2021-2024,C64_C65,C64_C65,Kidney,County Economic Typology,National,58558,1318320294,3.9959,0.0172,3.9636,4.0284,4.00 ± 0.02
+2021-2024,C82_C85,C82_C85,NHL,County Economic Typology,Farming,1022,17073603,4.9499,0.1622,4.651,5.2629,4.95 ± 0.16
+2021-2024,C82_C85,C82_C85,NHL,County Economic Typology,Mining,782,11577354,5.8918,0.2204,5.486,6.3196,5.89 ± 0.22
+2021-2024,C82_C85,C82_C85,NHL,County Economic Typology,Manufacturing,17106,244655529,5.7091,0.0452,5.6239,5.7953,5.71 ± 0.05
+2021-2024,C82_C85,C82_C85,NHL,County Economic Typology,Government,8692,156292967,5.2209,0.058,5.1117,5.3318,5.22 ± 0.06
+2021-2024,C82_C85,C82_C85,NHL,County Economic Typology,Services,32469,564187663,4.8944,0.028,4.8413,4.9479,4.89 ± 0.03
+2021-2024,C82_C85,C82_C85,NHL,County Economic Typology,Nonspecialized,19357,324533178,5.4816,0.0406,5.4046,5.5594,5.48 ± 0.04
+2021-2024,C82_C85,C82_C85,NHL,County Economic Typology,National,79428,1318320294,5.2395,0.0192,5.2031,5.276,5.24 ± 0.02
+2021-2024,C91_C95,C91_C95,Leukemia,County Economic Typology,Farming,1296,17073603,6.3826,0.1856,6.0398,6.7398,6.38 ± 0.19
+2021-2024,C91_C95,C91_C95,Leukemia,County Economic Typology,Mining,913,11577354,6.9941,0.2419,6.5477,7.4629,6.99 ± 0.24
+2021-2024,C91_C95,C91_C95,Leukemia,County Economic Typology,Manufacturing,19818,244655529,6.6432,0.0488,6.551,6.7364,6.64 ± 0.05
+2021-2024,C91_C95,C91_C95,Leukemia,County Economic Typology,Government,10275,156292967,6.1473,0.0627,6.029,6.2673,6.15 ± 0.06
+2021-2024,C91_C95,C91_C95,Leukemia,County Economic Typology,Services,38740,564187663,5.8706,0.0308,5.8123,5.9293,5.87 ± 0.03
+2021-2024,C91_C95,C91_C95,Leukemia,County Economic Typology,Nonspecialized,22311,324533178,6.3149,0.0435,6.2323,6.3983,6.31 ± 0.04
+2021-2024,C91_C95,C91_C95,Leukemia,County Economic Typology,National,93353,1318320294,6.1727,0.0208,6.1332,6.2125,6.17 ± 0.02
+2021-2024,G10,G10,HD,County Economic Typology,Farming,76,17073603,0.4822,0.0585,0.38,0.6036,0.48 ± 0.06
+2021-2024,G10,G10,HD,County Economic Typology,Mining,50,11577354,0.5006,0.0728,0.3715,0.66,0.50 ± 0.07
+2021-2024,G10,G10,HD,County Economic Typology,Manufacturing,1210,244655529,0.4979,0.0149,0.4702,0.5267,0.50 ± 0.01
+2021-2024,G10,G10,HD,County Economic Typology,Government,526,156292967,0.3666,0.0167,0.3359,0.3993,0.37 ± 0.02
+2021-2024,G10,G10,HD,County Economic Typology,Services,1684,564187663,0.2956,0.0075,0.2816,0.3101,0.30 ± 0.01
+2021-2024,G10,G10,HD,County Economic Typology,Nonspecialized,1116,324533178,0.3621,0.0112,0.3412,0.384,0.36 ± 0.01
+2021-2024,G10,G10,HD,County Economic Typology,National,4662,1318320294,0.3622,0.0055,0.3519,0.3727,0.36 ± 0.01
+2021-2024,G12.2,G12.2,ALS,County Economic Typology,Farming,334,17073603,1.7196,0.1004,1.5401,1.9143,1.72 ± 0.10
+2021-2024,G12.2,G12.2,ALS,County Economic Typology,Mining,276,11577354,2.1583,0.1383,1.9111,2.4285,2.16 ± 0.14
+2021-2024,G12.2,G12.2,ALS,County Economic Typology,Manufacturing,6353,244655529,2.2522,0.0298,2.1971,2.3083,2.25 ± 0.03
+2021-2024,G12.2,G12.2,ALS,County Economic Typology,Government,3240,156292967,2.0331,0.0376,1.9637,2.1044,2.03 ± 0.04
+2021-2024,G12.2,G12.2,ALS,County Economic Typology,Services,12281,564187663,1.967,0.0186,1.9324,2.0021,1.97 ± 0.02
+2021-2024,G12.2,G12.2,ALS,County Economic Typology,Nonspecialized,7289,324533178,2.155,0.0264,2.1058,2.205,2.15 ± 0.03
+2021-2024,G12.2,G12.2,ALS,County Economic Typology,National,29773,1318320294,2.0733,0.0126,2.0498,2.097,2.07 ± 0.01
+2021-2024,G20,G20,PD,County Economic Typology,Farming,1992,17073603,8.8737,0.2017,8.4882,9.2721,8.87 ± 0.20
+2021-2024,G20,G20,PD,County Economic Typology,Mining,1409,11577354,9.9022,0.2683,9.3919,10.4331,9.90 ± 0.27
+2021-2024,G20,G20,PD,County Economic Typology,Manufacturing,33363,244655529,10.4729,0.0579,10.3608,10.5859,10.47 ± 0.06
+2021-2024,G20,G20,PD,County Economic Typology,Government,17549,156292967,9.9244,0.0757,9.7781,10.0723,9.92 ± 0.08
+2021-2024,G20,G20,PD,County Economic Typology,Services,66416,564187663,9.3397,0.0365,9.2688,9.411,9.34 ± 0.04
+2021-2024,G20,G20,PD,County Economic Typology,Nonspecialized,37680,324533178,10.1995,0.0531,10.0968,10.303,10.20 ± 0.05
+2021-2024,G20,G20,PD,County Economic Typology,National,158409,1318320294,9.8244,0.0249,9.7761,9.8729,9.82 ± 0.02
+2021-2024,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Farming,16150,17073603,71.6319,0.5696,70.5313,72.7453,71.63 ± 0.57
+2021-2024,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Mining,11220,11577354,80.9681,0.7727,79.4768,82.4804,80.97 ± 0.77
+2021-2024,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Manufacturing,246750,244655529,79.0996,0.1605,78.7878,79.4123,79.10 ± 0.16
+2021-2024,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Government,125091,156292967,72.2147,0.2059,71.815,72.616,72.21 ± 0.21
+2021-2024,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Services,439181,564187663,61.9841,0.0942,61.8009,62.1677,61.98 ± 0.09
+2021-2024,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,Nonspecialized,267398,324533178,74.2472,0.1447,73.966,74.5291,74.25 ± 0.14
+2021-2024,G20_G30_G12.2_F01_F03,G20_G30_G12.2_F01_F03,NDD,County Economic Typology,National,1105790,1318320294,69.5421,0.0666,69.4125,69.6718,69.54 ± 0.07
+2021-2024,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Farming,13748,17073603,60.5563,0.5198,59.5483,61.5772,60.56 ± 0.52
+2021-2024,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Mining,9485,11577354,68.407,0.7076,67.0372,69.7978,68.41 ± 0.71
+2021-2024,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Manufacturing,205824,244655529,65.8766,0.146,65.5923,66.1619,65.88 ± 0.15
+2021-2024,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Government,103776,156292967,59.8905,0.1869,59.5267,60.2561,59.89 ± 0.19
+2021-2024,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Services,358800,564187663,50.3818,0.0845,50.2171,50.5469,50.38 ± 0.08
+2021-2024,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,Nonspecialized,221313,324533178,61.5306,0.1315,61.2745,61.7875,61.53 ± 0.13
+2021-2024,G30_F01_F03,G30_F01_F03,Dementia,County Economic Typology,National,912946,1318320294,57.2822,0.0602,57.1648,57.3998,57.28 ± 0.06
 2021-2024,I00_I99,I00_I99,CVD,County Economic Typology,Farming,54737,17073603,269.8771,1.2092,267.6209,272.1475,269.88 ± 1.21
 2021-2024,I00_I99,I00_I99,CVD,County Economic Typology,Mining,40860,11577354,315.1416,1.6234,312.0932,318.2123,315.14 ± 1.62
 2021-2024,I00_I99,I00_I99,CVD,County Economic Typology,Manufacturing,812392,244655529,277.3435,0.3178,276.7407,277.9472,277.34 ± 0.32
@@ -1119,13 +1119,13 @@ Time_Period,ICD-10 Code,Outcome_Fullname,Outcome_Shortname,Stratification,Strata
 2021-2024,I60_I69,I60_I69,Stroke,County Economic Typology,Services,274809,564187663,40.5722,0.0792,40.4206,40.7241,40.57 ± 0.08
 2021-2024,I60_I69,I60_I69,Stroke,County Economic Typology,Nonspecialized,153755,324533178,43.8411,0.1143,43.6222,44.0608,43.84 ± 0.11
 2021-2024,I60_I69,I60_I69,Stroke,County Economic Typology,National,657358,1318320294,43.0596,0.0544,42.9555,43.1638,43.06 ± 0.05
-2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Farming,12769,17073603,61.5434,0.5703,60.4805,62.6202,61.54 ± 0.57
-2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Mining,10668,11577354,79.0149,0.8002,77.5226,80.5288,79.01 ± 0.80
-2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Manufacturing,181465,244655529,59.9928,0.1458,59.7171,60.2695,59.99 ± 0.15
-2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Government,86952,156292967,51.3785,0.18,51.0376,51.7212,51.38 ± 0.18
-2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Services,274183,564187663,40.2969,0.0791,40.1462,40.448,40.30 ± 0.08
-2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,Nonspecialized,188544,324533178,52.6493,0.1247,52.412,52.8875,52.65 ± 0.12
-2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,CRD-lung,County Economic Typology,National,754581,1318320294,48.9213,0.058,48.811,49.0318,48.92 ± 0.06
+2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Farming,12769,17073603,61.5434,0.5703,60.4805,62.6202,61.54 ± 0.57
+2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Mining,10668,11577354,79.0149,0.8002,77.5226,80.5288,79.01 ± 0.80
+2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Manufacturing,181465,244655529,59.9928,0.1458,59.7171,60.2695,59.99 ± 0.15
+2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Government,86952,156292967,51.3785,0.18,51.0376,51.7212,51.38 ± 0.18
+2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Services,274183,564187663,40.2969,0.0791,40.1462,40.448,40.30 ± 0.08
+2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,Nonspecialized,188544,324533178,52.6493,0.1247,52.412,52.8875,52.65 ± 0.12
+2021-2024,J40_J47_J60_J70_J84_D86,J40_J47_J60_J70_J84_D86,Non-cancer CRD,County Economic Typology,National,754581,1318320294,48.9213,0.058,48.811,49.0318,48.92 ± 0.06
 2021-2024,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Farming,20321,17073603,99.6909,0.737,98.3249,101.0711,99.69 ± 0.74
 2021-2024,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Mining,16968,11577354,127.0128,1.0255,125.1088,128.9385,127.01 ± 1.03
 2021-2024,J40_J47_J60_J70_J84_D86_C34,J40_J47_J60_J70_J84_D86_C34,CRD,County Economic Typology,Manufacturing,309399,244655529,103.7607,0.1943,103.3954,104.127,103.76 ± 0.19
