@@ -91,10 +91,14 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
 SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
+# 这里的参数会覆盖 R 脚本中的默认值
 Rscript "$RUNNER" \
   --outcomes "$OUTCOME" \
-  --chains 4 --iter 2000 --warmup 1000 \
-  --adapt-delta 0.95 --max-treedepth 12 \
+  --chains 16 \
+  --iter 1500 \
+  --warmup 1000 \
+  --adapt-delta 0.95 \
+  --max-treedepth 12 \
   --seed "$SEED"
 
 log INFO "✅ 完成: Outcome=$OUTCOME"
