@@ -19,31 +19,20 @@ utils::globalVariables(c(
 ))
 
 option_list <- list(
-  make_option(c("--data"),           type = "character", default = "Data/Processed/df.csv"),
-  make_option(c("--output-dir"),     type = "character", default = "Result/brms_RL"),
-  make_option(c("--outcomes"),       type = "character", default = NA, help = "Comma-separated ICD codes"),
-  make_option(c("--chains"),         type = "integer",   default = 4),
-  make_option(c("--iter"),           type = "integer",   default = 2000),
-  make_option(c("--warmup"),         type = "integer",   default = 1000),
-  make_option(c("--adapt-delta"),    type = "double",    default = 0.95),
-  make_option(c("--max-treedepth"), type = "integer",   default = 12),
-  make_option(c("--min-n"),          type = "integer",   default = 50),
-  make_option(c("--seed"),           type = "integer",   default = 1234),
-  make_option(c("--test"),           action = "store_true", default = FALSE)
+  make_option(c("--data"), type = "character", default = "Data/Processed/df.csv"),
+  make_option(c("--output-dir"), type = "character", default = "Result/brms_RL"),
+  make_option(c("--outcomes"), type = "character", default = NA, help = "Comma-separated ICD codes"),
+  make_option(c("--chains"), type = "integer", default = 16),
+  make_option(c("--iter"), type = "integer", default = 1500),
+  make_option(c("--warmup"), type = "integer", default = 1000),
+  make_option(c("--adapt-delta"), type = "double", default = 0.95),
+  make_option(c("--max-treedepth"), type = "integer", default = 12),
+  make_option(c("--min-n"), type = "integer", default = 50),
+  make_option(c("--seed"), type = "integer", default = 1234),
+  make_option(c("--test"), action = "store_true", default = FALSE)
 )
 opt <- parse_args(OptionParser(option_list = option_list))
 
-if (opt$test) {
-  opt$iter   <- min(opt$iter, 800)
-  opt$warmup <- min(opt$warmup, 300)
-  message("[TEST MODE] iter=", opt$iter, " warmup=", opt$warmup)
-}
-set.seed(opt$seed)
-
-cores_avail <- parallel::detectCores(logical = TRUE)
-cores_used  <- max(1, floor(cores_avail * 0.8))
-options(mc.cores = cores_used)
-message("Detected cores: ", cores_avail, " | Using: ", cores_used)
 
 # ── Stan model ─────────────────────────────────────────────────────────────────
 stan_code <- "data {
@@ -90,13 +79,13 @@ message("Model compiled.")
 
 # ── Main diseases only (same as brms_Stratified_Demo.R) ───────────────────────
 icd_to_name <- c(
-  "I00_I99"                      = "CVD",
+  "I00_I99" = "CVD",
   "J40_J47_J60_J70_J84_D86_C34" = "CRD",
-  "K70_K76_C22"                  = "CLD",
-  "N00_N29_C64_C65"              = "CKD",
-  "X60_X84_Y87.0"                = "Suicide",
-  "G20_G30_G12.2_F01_F03"        = "NDD",
-  "C00_C97"                      = "Cancer"
+  "K70_K76_C22" = "CLD",
+  "N00_N29_C64_C65" = "CKD",
+  "X60_X84_Y87.0" = "Suicide",
+  "G20_G30_G12.2_F01_F03" = "NDD",
+  "C00_C97" = "Cancer"
 )
 
 get_shortname <- function(outcome) {
@@ -135,8 +124,10 @@ all_outcomes <- sort(unique(dt$Outcome))
 selected <- if (is.na(opt$`outcomes`)) {
   intersect(names(icd_to_name), all_outcomes)
 } else {
-  reqc <- str_split(opt$`outcomes`, ",", simplify = TRUE) |> as.vector() |> str_trim()
-  inv  <- setdiff(reqc, all_outcomes)
+  reqc <- str_split(opt$`outcomes`, ",", simplify = TRUE) |>
+    as.vector() |>
+    str_trim()
+  inv <- setdiff(reqc, all_outcomes)
   if (length(inv)) stop("Invalid outcomes: ", paste(inv, collapse = ","))
   reqc
 }
@@ -162,9 +153,9 @@ build_design_overall <- function(d) {
 
 build_design_multi <- function(d) {
   d <- d %>% mutate(
-    EQI_Air_factor   = factor(EQI_Air,   levels = 1:5),
+    EQI_Air_factor = factor(EQI_Air, levels = 1:5),
     EQI_Water_factor = factor(EQI_Water, levels = 1:5),
-    EQI_Land_factor  = factor(EQI_Land,  levels = 1:5),
+    EQI_Land_factor = factor(EQI_Land, levels = 1:5),
     EQI_Built_factor = factor(EQI_Built, levels = 1:5),
     EQI_Social_factor = factor(EQI_Social, levels = 1:5)
   )
@@ -178,8 +169,8 @@ build_design_multi <- function(d) {
     EQI_Air_factor + EQI_Water_factor + EQI_Land_factor + EQI_Built_factor + EQI_Social_factor")
   mm <- model.matrix(form, d,
     contrasts.arg = list(
-      EQI_Air_factor   = contr.treatment(5), EQI_Water_factor = contr.treatment(5),
-      EQI_Land_factor  = contr.treatment(5), EQI_Built_factor = contr.treatment(5),
+      EQI_Air_factor = contr.treatment(5), EQI_Water_factor = contr.treatment(5),
+      EQI_Land_factor = contr.treatment(5), EQI_Built_factor = contr.treatment(5),
       EQI_Social_factor = contr.treatment(5)
     )
   )
@@ -191,11 +182,13 @@ build_design_multi <- function(d) {
 # Extracts Q2-Q5 posterior draws for a given design prefix and packages them
 # into the standard ridgeline format consumed by check scripts and plot code.
 build_ridge_rds <- function(draws_df, design_names, summ, prefix, model_label,
-                             outcome, eqi_p, aamr_p, lagv, n_obs, n_states) {
+                            outcome, eqi_p, aamr_p, lagv, n_obs, n_states) {
   q_list <- lapply(2:5, function(q) {
-    nm  <- paste0(prefix, q)
+    nm <- paste0(prefix, q)
     idx <- which(design_names == nm)
-    if (length(idx) == 0) return(NULL)
+    if (length(idx) == 0) {
+      return(NULL)
+    }
     list(draws = draws_df[[paste0("beta[", idx, "]")]], idx = idx)
   })
 
@@ -213,7 +206,7 @@ build_ridge_rds <- function(draws_df, design_names, summ, prefix, model_label,
   )
 
   draws_long <- data.frame(
-    draw_id  = rep(seq_len(n_draws), 4),
+    draw_id = rep(seq_len(n_draws), 4),
     quintile = factor(
       rep(c("Q2", "Q3", "Q4", "Q5"), each = n_draws),
       levels = c("Q2", "Q3", "Q4", "Q5")
@@ -225,25 +218,25 @@ build_ridge_rds <- function(draws_df, design_names, summ, prefix, model_label,
   )
 
   summary_df <- do.call(rbind, lapply(seq_along(q_list), function(i) {
-    q   <- i + 1
-    d   <- q_list[[i]]$draws
+    q <- i + 1
+    d <- q_list[[i]]$draws
     col <- paste0("beta[", q_list[[i]]$idx, "]")
-    sr  <- summ[summ$variable == col, , drop = FALSE]
+    sr <- summ[summ$variable == col, , drop = FALSE]
     data.frame(
-      quintile  = paste0("Q", q),
-      mean      = mean(d, na.rm = TRUE),
-      sd        = sd(d,   na.rm = TRUE),
-      q025      = quantile(d, 0.025, na.rm = TRUE),
-      q975      = quantile(d, 0.975, na.rm = TRUE),
-      rhat      = if (nrow(sr)) sr$rhat      else NA_real_,
-      ess_bulk  = if (nrow(sr)) sr$ess_bulk  else NA_real_,
-      ess_tail  = if (nrow(sr)) sr$ess_tail  else NA_real_,
+      quintile = paste0("Q", q),
+      mean = mean(d, na.rm = TRUE),
+      sd = sd(d, na.rm = TRUE),
+      q025 = quantile(d, 0.025, na.rm = TRUE),
+      q975 = quantile(d, 0.975, na.rm = TRUE),
+      rhat = if (nrow(sr)) sr$rhat else NA_real_,
+      ess_bulk = if (nrow(sr)) sr$ess_bulk else NA_real_,
+      ess_tail = if (nrow(sr)) sr$ess_tail else NA_real_,
       stringsAsFactors = FALSE
     )
   }))
 
-  max_rhat <- max(summary_df$rhat,     na.rm = TRUE)
-  min_ess  <- min(summary_df$ess_bulk, na.rm = TRUE)
+  max_rhat <- max(summary_df$rhat, na.rm = TRUE)
+  min_ess <- min(summary_df$ess_bulk, na.rm = TRUE)
 
   list(
     metadata = list(
@@ -260,14 +253,14 @@ build_ridge_rds <- function(draws_df, design_names, summ, prefix, model_label,
     ),
     draws_wide = draws_wide,
     draws_long = draws_long,
-    summary    = summary_df
+    summary = summary_df
   )
 }
 
 # ── Helper: run Stan and return draws + summarize_draws ───────────────────────
 run_stan <- function(des, scen_key, label) {
   states <- sort(unique(des$df$State_FIPS))
-  si     <- match(des$df$State_FIPS, states)
+  si <- match(des$df$State_FIPS, states)
   dl <- list(
     N = nrow(des$df), S = length(states), state = si,
     y_lower = des$df$AAMR_Lower, y_upper = des$df$AAMR_Upper, cens = des$df$cens,
@@ -295,7 +288,7 @@ run_stan <- function(des, scen_key, label) {
 
   draws <- as_draws_df(fit$draws("beta"))
   colnames(draws) <- paste0("beta[", seq_len(ncol(draws)), "]")
-  summ  <- posterior::summarize_draws(fit$draws("beta"))
+  summ <- posterior::summarize_draws(fit$draws("beta"))
   list(draws = draws, summ = summ, n_states = length(states))
 }
 
@@ -306,9 +299,9 @@ for (outcome in selected) {
 
   for (sc in scenario_list) {
     scen_key <- sc$key
-    eqi_p    <- sc$eqi
-    aamr_p   <- sc$aamr
-    lagv     <- sc$lag
+    eqi_p <- sc$eqi
+    aamr_p <- sc$aamr
+    lagv <- sc$lag
 
     scen_dt <- dt[EQI_Period == eqi_p & Time_Period == aamr_p & Outcome == outcome]
     if (nrow(scen_dt) < opt$`min-n`) {
