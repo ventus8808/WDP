@@ -3,7 +3,7 @@
 # One task per overall outcome (from outcome_overall.list); each task runs all
 # 64 covariate combinations × 4 EQI-2000-2005 scenarios internally.
 # Usage:
-#   bash Code/brms/submit_Sensitivity_Combination.sh
+#   bash Code/brms_submit/submit_Sensitivity_Combination.sh
 
 #SBATCH --partition=wzhctest
 #SBATCH --job-name=brms_Sensitivity_Combination

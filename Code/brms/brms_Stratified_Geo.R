@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # Interval-censored mixed model pipeline stratified by geographic/contextual factors.
-# Stratification variables: Census_Region, koppen_major, doe_zone, Economic_type, Homeownership_tertile
+# Stratification variables: Census_Region, koppen_major, Economic_type, Homeownership_tertile
 # EQI 2000-2005 only (4 lag scenarios: 5, 10, 15, 20 years).
 
 suppressPackageStartupMessages({
@@ -57,7 +57,7 @@ req <- c(
   "COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Outcome", "AAMR_Lower", "AAMR_Upper",
   "EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social",
   "Smoking_rate", "Physical_Activities_rate", "Obesity_rate",
-  "Census_Region", "koppen_major", "doe_zone", "Economic_type", "Homeownership_tertile"
+  "Census_Region", "koppen_major", "Economic_type", "Homeownership_tertile"
 )
 miss <- setdiff(req, names(dt))
 if (length(miss)) stop("Missing cols: ", paste(miss, collapse = ","))
@@ -75,7 +75,7 @@ scenario_list <- list(
   list(key = "EQI0005_AAMR2021_2024", eqi = "2000-2005", aamr = "2021-2024", lag = 20)
 )
 
-strat_vars <- c("Census_Region", "koppen_major", "doe_zone", "Economic_type", "Homeownership_tertile")
+strat_vars <- c("Census_Region", "koppen_major", "Economic_type", "Homeownership_tertile")
 
 icd_to_name <- c(
   "I00_I99"                      = "CVD",

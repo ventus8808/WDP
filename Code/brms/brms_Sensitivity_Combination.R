@@ -92,12 +92,9 @@ disease_label <- function(icd) {
   if (is.na(nm)) icd else unname(nm)
 }
 
-# EQI 2000-2005 scenarios only (2006-2010 EQI removed)
+# EQI 2000-2005, lag 5 (2006-2010) and lag 10 (2011-2015) only
 scenario_list <- list(
-  list(key = "EQI0005_AAMR2006_2010", eqi = "2000-2005", aamr = "2006-2010", lag = 5),
-  list(key = "EQI0005_AAMR2011_2015", eqi = "2000-2005", aamr = "2011-2015", lag = 10),
-  list(key = "EQI0005_AAMR2016_2020", eqi = "2000-2005", aamr = "2016-2020", lag = 15),
-  list(key = "EQI0005_AAMR2021_2024", eqi = "2000-2005", aamr = "2021-2024", lag = 20)
+  list(key = "EQI0005_AAMR2011_2015", eqi = "2000-2005", aamr = "2011-2015", lag = 10)
 )
 
 # 6 control covariates and their abbreviations for model labels
@@ -206,14 +203,16 @@ extract_quintiles <- function(draw_df, names_vec, prefix) {
 
 extract_covariate <- function(draw_df, names_vec, col_name, summ_df) {
   idx <- match(col_name, names_vec)
-  if (is.na(idx)) return(list(est = "", p = NA_character_, rhat = NA_real_, ess_bulk = NA_real_, ess_tail = NA_real_))
+  if (is.na(idx)) {
+    return(list(est = "", p = NA_character_, rhat = NA_real_, ess_bulk = NA_real_, ess_tail = NA_real_))
+  }
   col <- paste0("beta[", idx, "]")
   draws_col <- draw_df[[col]]
   sr <- summ_df[summ_df$variable == col, , drop = FALSE]
   list(
     est      = format_cell(draws_col),
     p        = compute_p(draws_col),
-    rhat     = if (nrow(sr)) sr$rhat     else NA_real_,
+    rhat     = if (nrow(sr)) sr$rhat else NA_real_,
     ess_bulk = if (nrow(sr)) sr$ess_bulk else NA_real_,
     ess_tail = if (nrow(sr)) sr$ess_tail else NA_real_
   )
