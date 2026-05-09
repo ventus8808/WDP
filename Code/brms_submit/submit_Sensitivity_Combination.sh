@@ -9,8 +9,8 @@
 #SBATCH --job-name=brms_Sensitivity_Combination
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=48G
+#SBATCH --cpus-per-task=6
+#SBATCH --mem=18G
 #SBATCH --time=2-00:00:00
 #SBATCH --output=Sensitivity_Combination_%A_%a.out
 #SBATCH --error=Sensitivity_Combination_%A_%a.err
@@ -52,9 +52,6 @@ if [ -z "${CONDA_DEFAULT_ENV-}" ] || [ "${CONDA_DEFAULT_ENV}" != "$ENV_NAME" ]; 
 fi
 set -u
 
-# Load devtoolset for newer g++ on CentOS
-module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
-
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
 
@@ -92,9 +89,6 @@ export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 SEED=$((1234 + SLURM_ARRAY_TASK_ID))
 
 Rscript "$RUNNER" \
-  --outcomes "$OUTCOME" \
-  --chains 4 --iter 2000 --warmup 1000 \
-  --adapt-delta 0.95 --max-treedepth 12 \
-  --seed "$SEED"
+  --outcomes "$OUTCOME"
 
 log INFO "✅ 完成: Outcome=$OUTCOME"

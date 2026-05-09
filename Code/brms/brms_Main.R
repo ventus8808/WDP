@@ -14,15 +14,17 @@ suppressPackageStartupMessages({
   library(cmdstanr)
   library(posterior)
 })
-utils::globalVariables(c("EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social", "State_FIPS",
-                         "Smoking_rate", "Physical_Activities_rate", "Obesity_rate"))
+utils::globalVariables(c(
+  "EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social", "State_FIPS",
+  "Smoking_rate", "Physical_Activities_rate", "Obesity_rate"
+))
 
 option_list <- list(
-  make_option(c("--data"), type = "character", default = "Data/Processed/df.csv", help = "Input interval data"),
-  make_option(c("--output-dir"), type = "character", default = "Result/brms_Main", help = "Output directory"),
-  make_option(c("--outcomes"), type = "character", default = NA, help = "Comma separated ICD codes"),
-  make_option(c("--chains"), type = "integer", default = 4),
-  make_option(c("--iter"), type = "integer", default = 2000),
+  make_option(c("--data"), type = "character", default = "Data/Processed/df.csv"),
+  make_option(c("--output-dir"), type = "character", default = "Result/brms_Main"),
+  make_option(c("--outcomes"), type = "character", default = NA),
+  make_option(c("--chains"), type = "integer", default = 6),
+  make_option(c("--iter"), type = "integer", default = 1800),
   make_option(c("--warmup"), type = "integer", default = 1000),
   make_option(c("--adapt-delta"), type = "double", default = 0.95),
   make_option(c("--max-treedepth"), type = "integer", default = 12),
@@ -31,19 +33,22 @@ option_list <- list(
   make_option(c("--test"), action = "store_true", default = FALSE)
 )
 opt <- parse_args(OptionParser(option_list = option_list))
-if (opt$test) {
-  opt$iter <- min(opt$iter, 800)
-  opt$warmup <- min(opt$warmup, 300)
-  message("[TEST MODE] iter=", opt$iter, " warmup=", opt$warmup)
-}
-set.seed(opt$seed)
 
 cores_avail <- parallel::detectCores(logical = TRUE)
-cores_used <- max(1, floor(cores_avail * 0.8))
+slurm_cpus <- suppressWarnings(as.integer(Sys.getenv("SLURM_CPUS_PER_TASK", NA)))
+cores_used <- opt$chains
 options(mc.cores = cores_used)
-message("Detected cores: ", cores_avail, " | Using: ", cores_used)
 
-# Stan model (generic design matrix X, group random intercept u)
+message("--- CPU Resource Report ---")
+message("Environment: ", if (!is.na(slurm_cpus)) "Slurm (HPC)" else "Local Machine")
+message("Total Cores Available: ", cores_avail)
+message("Setting mc.cores to:   ", cores_used)
+message("---------------------------")
+
+# 种子设置保留
+set.seed(opt$seed)
+
+# ── Stan model ─────────────────────────────────────────────────────────────────
 stan_code <- "data {\n  int<lower=1> N;\n  int<lower=1> S;\n  array[N] int<lower=1,upper=S> state;\n  vector[N] y_lower;\n  vector[N] y_upper;\n  array[N] int<lower=0,upper=2> cens;\n  int<lower=1> K;\n  matrix[N,K] X;\n} \nparameters {\n  vector[K] beta;\n  vector[S] z_u;\n  real<lower=0> sigma;\n  real<lower=0> sigma_u;\n} \ntransformed parameters {\n  vector[S] u = sigma_u * z_u;\n} \nmodel {\n  beta ~ normal(0,5);\n  z_u ~ normal(0,1);\n  sigma ~ exponential(1);\n  sigma_u ~ exponential(1);\n  for (i in 1:N) {\n    real mu = X[i] * beta + u[state[i]];\n    if (cens[i]==0) {\n      target += normal_lpdf(y_lower[i] | mu, sigma);\n    } else {\n      real p_up = normal_cdf(y_upper[i] | mu, sigma);\n      real p_lo = normal_cdf(y_lower[i] | mu, sigma);\n      real diff = fmax(p_up - p_lo, 1e-12);\n      target += log(diff);\n    }\n  }\n}"
 stan_file <- file.path(tempdir(), "interval_mixed_model.stan")
 writeLines(stan_code, stan_file)
@@ -55,9 +60,11 @@ path <- file.path(project_root, opt$data)
 if (!file.exists(path)) stop("Data not found: ", path)
 dt <- fread(path)
 
-req <- c("COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Outcome", "AAMR_Lower", "AAMR_Upper",
-         "EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social",
-         "Smoking_rate", "Physical_Activities_rate", "Obesity_rate")
+req <- c(
+  "COUNTY_FIPS", "EQI_Period", "Time_Period", "Lag_Years", "Outcome", "AAMR_Lower", "AAMR_Upper",
+  "EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social",
+  "Smoking_rate", "Physical_Activities_rate", "Obesity_rate"
+)
 miss <- setdiff(req, names(dt))
 if (length(miss)) stop("Missing cols: ", paste(miss, collapse = ","))
 
@@ -156,14 +163,16 @@ extract_quintile_metrics <- function(draw_df, names_vec, prefix, summ_df) {
 
 extract_covariate <- function(draw_df, names_vec, col_name, summ_df) {
   idx <- match(col_name, names_vec)
-  if (is.na(idx)) return(list(est = "", p = NA_character_, rhat = NA_real_, ess_bulk = NA_real_, ess_tail = NA_real_))
+  if (is.na(idx)) {
+    return(list(est = "", p = NA_character_, rhat = NA_real_, ess_bulk = NA_real_, ess_tail = NA_real_))
+  }
   col <- paste0("beta[", idx, "]")
   draws_col <- draw_df[[col]]
   sr <- summ_df[summ_df$variable == col, , drop = FALSE]
   list(
     est      = format_cell(draws_col),
     p        = compute_p(draws_col),
-    rhat     = if (nrow(sr)) sr$rhat     else NA_real_,
+    rhat     = if (nrow(sr)) sr$rhat else NA_real_,
     ess_bulk = if (nrow(sr)) sr$ess_bulk else NA_real_,
     ess_tail = if (nrow(sr)) sr$ess_tail else NA_real_
   )
@@ -171,10 +180,13 @@ extract_covariate <- function(draw_df, names_vec, col_name, summ_df) {
 
 build_design_overall <- function(d) {
   d <- d %>% mutate(EQI_factor = factor(EQI, levels = 1:5))
-  d <- d[complete.cases(d[, c("EQI_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS",
-                               "Smoking_rate", "Physical_Activities_rate", "Obesity_rate")]), ]
+  d <- d[complete.cases(d[, c(
+    "EQI_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS",
+    "Smoking_rate", "Physical_Activities_rate", "Obesity_rate"
+  )]), ]
   mm <- model.matrix(~ Smoking_rate + Physical_Activities_rate + Obesity_rate + EQI_factor, d,
-                     contrasts.arg = list(EQI_factor = contr.treatment(5)))
+    contrasts.arg = list(EQI_factor = contr.treatment(5))
+  )
   colnames(mm) <- make.names(colnames(mm))
   list(X = mm, names = colnames(mm), df = d)
 }
@@ -187,9 +199,11 @@ build_design_multi <- function(d) {
     EQI_Built_factor = factor(EQI_Built, levels = 1:5),
     EQI_Social_factor = factor(EQI_Social, levels = 1:5)
   )
-  d <- d[complete.cases(d[, c("EQI_Air_factor", "EQI_Water_factor", "EQI_Land_factor", "EQI_Built_factor", "EQI_Social_factor",
-                               "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS",
-                               "Smoking_rate", "Physical_Activities_rate", "Obesity_rate")]), ]
+  d <- d[complete.cases(d[, c(
+    "EQI_Air_factor", "EQI_Water_factor", "EQI_Land_factor", "EQI_Built_factor", "EQI_Social_factor",
+    "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS",
+    "Smoking_rate", "Physical_Activities_rate", "Obesity_rate"
+  )]), ]
   form <- as.formula("~ Smoking_rate + Physical_Activities_rate + Obesity_rate + EQI_Air_factor + EQI_Water_factor + EQI_Land_factor + EQI_Built_factor + EQI_Social_factor")
   mm <- model.matrix(form, d,
     contrasts.arg = list(
@@ -254,7 +268,7 @@ for (outcome in selected) {
       init_fun <- function() list(beta = rep(0, data_list$K), z_u = rep(0, data_list$S), sigma = 50, sigma_u = 10)
       fit_overall <- try(mod$sample(
         data = data_list, chains = opt$chains, iter_sampling = opt$iter - opt$warmup, iter_warmup = opt$warmup,
-        adapt_delta = opt$`adapt-delta`, max_treedepth = opt$`max-treedepth`, parallel_chains = min(opt$chains, cores_used), refresh = 0, seed = opt$seed,
+        adapt_delta = opt$`adapt-delta`, max_treedepth = opt$`max-treedepth`, parallel_chains = opt$chains, refresh = 0, seed = opt$seed,
         init = rep(list(init_fun()), opt$chains)
       ), silent = TRUE)
       if (inherits(fit_overall, "try-error")) {
@@ -295,7 +309,7 @@ for (outcome in selected) {
       init_fun2 <- function() list(beta = rep(0, data_list2$K), z_u = rep(0, data_list2$S), sigma = 50, sigma_u = 10)
       fit_multi <- try(mod$sample(
         data = data_list2, chains = opt$chains, iter_sampling = opt$iter - opt$warmup, iter_warmup = opt$warmup,
-        adapt_delta = opt$`adapt-delta`, max_treedepth = opt$`max-treedepth`, parallel_chains = min(opt$chains, cores_used), refresh = 0, seed = opt$seed,
+        adapt_delta = opt$`adapt-delta`, max_treedepth = opt$`max-treedepth`, parallel_chains = opt$chains, refresh = 0, seed = opt$seed,
         init = rep(list(init_fun2()), opt$chains)
       ), silent = TRUE)
       if (inherits(fit_multi, "try-error")) {

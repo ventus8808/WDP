@@ -10,9 +10,9 @@
 #SBATCH --job-name=brms_Main_RL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=48G
-#SBATCH --time=2-00:00:00
+#SBATCH --cpus-per-task=6
+#SBATCH --mem=18G
+#SBATCH --time=1-00:00:00
 #SBATCH --output=Sensitivity_%A_%a.out
 #SBATCH --error=Sensitivity_%A_%a.err
 #SBATCH --gres=dcu:1
@@ -89,16 +89,8 @@ log INFO "处理outcome: $OUTCOME"
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
-SEED=$((1234 + SLURM_ARRAY_TASK_ID))
-
-# 这里的参数会覆盖 R 脚本中的默认值
+# 仅传入本任务 outcome，其他参数使用 R 脚本默认值
 Rscript "$RUNNER" \
-  --outcomes "$OUTCOME" \
-  --chains 16 \
-  --iter 1500 \
-  --warmup 1000 \
-  --adapt-delta 0.95 \
-  --max-treedepth 12 \
-  --seed "$SEED"
+  --outcomes "$OUTCOME"
 
 log INFO "✅ 完成: Outcome=$OUTCOME"

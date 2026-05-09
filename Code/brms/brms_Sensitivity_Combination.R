@@ -27,11 +27,11 @@ utils::globalVariables(c(
 ))
 
 option_list <- list(
-  make_option(c("--data"), type = "character", default = "Data/Processed/df.csv", help = "Input interval data"),
-  make_option(c("--output-dir"), type = "character", default = "Result/brms_Sensitivity_Combination", help = "Output directory"),
-  make_option(c("--outcomes"), type = "character", default = NA, help = "Comma separated ICD codes"),
-  make_option(c("--chains"), type = "integer", default = 4),
-  make_option(c("--iter"), type = "integer", default = 2000),
+  make_option(c("--data"), type = "character", default = "Data/Processed/df.csv"),
+  make_option(c("--output-dir"), type = "character", default = "Result/brms_Sensitivity_Combination"),
+  make_option(c("--outcomes"), type = "character", default = NA),
+  make_option(c("--chains"), type = "integer", default = 6),
+  make_option(c("--iter"), type = "integer", default = 1800),
   make_option(c("--warmup"), type = "integer", default = 1000),
   make_option(c("--adapt-delta"), type = "double", default = 0.95),
   make_option(c("--max-treedepth"), type = "integer", default = 12),
@@ -40,19 +40,22 @@ option_list <- list(
   make_option(c("--test"), action = "store_true", default = FALSE)
 )
 opt <- parse_args(OptionParser(option_list = option_list))
-if (opt$test) {
-  opt$iter <- min(opt$iter, 800)
-  opt$warmup <- min(opt$warmup, 300)
-  message("[TEST MODE] iter=", opt$iter, " warmup=", opt$warmup)
-}
-set.seed(opt$seed)
 
 cores_avail <- parallel::detectCores(logical = TRUE)
-cores_used <- max(1, floor(cores_avail * 0.8))
+slurm_cpus <- suppressWarnings(as.integer(Sys.getenv("SLURM_CPUS_PER_TASK", NA)))
+cores_used <- opt$chains
 options(mc.cores = cores_used)
-message("Detected cores: ", cores_avail, " | Using: ", cores_used)
 
-# Stan model (generic design matrix X, group random intercept u)
+message("--- CPU Resource Report ---")
+message("Environment: ", if (!is.na(slurm_cpus)) "Slurm (HPC)" else "Local Machine")
+message("Total Cores Available: ", cores_avail)
+message("Setting mc.cores to:   ", cores_used)
+message("---------------------------")
+
+# 种子设置保留
+set.seed(opt$seed)
+
+# ── Stan model ─────────────────────────────────────────────────────────────────
 stan_code <- "data {\n  int<lower=1> N;\n  int<lower=1> S;\n  array[N] int<lower=1,upper=S> state;\n  vector[N] y_lower;\n  vector[N] y_upper;\n  array[N] int<lower=0,upper=2> cens;\n  int<lower=1> K;\n  matrix[N,K] X;\n} \nparameters {\n  vector[K] beta;\n  vector[S] z_u;\n  real<lower=0> sigma;\n  real<lower=0> sigma_u;\n} \ntransformed parameters {\n  vector[S] u = sigma_u * z_u;\n} \nmodel {\n  beta ~ normal(0,5);\n  z_u ~ normal(0,1);\n  sigma ~ exponential(1);\n  sigma_u ~ exponential(1);\n  for (i in 1:N) {\n    real mu = X[i] * beta + u[state[i]];\n    if (cens[i]==0) {\n      target += normal_lpdf(y_lower[i] | mu, sigma);\n    } else {\n      real p_up = normal_cdf(y_upper[i] | mu, sigma);\n      real p_lo = normal_cdf(y_lower[i] | mu, sigma);\n      real diff = fmax(p_up - p_lo, 1e-12);\n      target += log(diff);\n    }\n  }\n}"
 stan_file <- file.path(tempdir(), "interval_mixed_model.stan")
 writeLines(stan_code, stan_file)
@@ -271,7 +274,7 @@ for (outcome in selected) {
       fit <- try(mod$sample(
         data = data_list, chains = opt$chains, iter_sampling = opt$iter - opt$warmup, iter_warmup = opt$warmup,
         adapt_delta = opt$`adapt-delta`, max_treedepth = opt$`max-treedepth`,
-        parallel_chains = min(opt$chains, cores_used), refresh = 0, seed = opt$seed,
+        parallel_chains = opt$chains, refresh = 0, seed = opt$seed,
         init = rep(list(init_fn()), opt$chains)
       ), silent = TRUE)
 

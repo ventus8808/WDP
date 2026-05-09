@@ -20,10 +20,10 @@ utils::globalVariables(c(
 
 option_list <- list(
   make_option(c("--data"), type = "character", default = "Data/Processed/df.csv"),
-  make_option(c("--output-dir"), type = "character", default = "Result/brms_RL"),
-  make_option(c("--outcomes"), type = "character", default = NA, help = "Comma-separated ICD codes"),
-  make_option(c("--chains"), type = "integer", default = 16),
-  make_option(c("--iter"), type = "integer", default = 1500),
+  make_option(c("--output-dir"), type = "character", default = "Result/brms_Main_RL"),
+  make_option(c("--outcomes"), type = "character", default = NA),
+  make_option(c("--chains"), type = "integer", default = 6),
+  make_option(c("--iter"), type = "integer", default = 1800),
   make_option(c("--warmup"), type = "integer", default = 1000),
   make_option(c("--adapt-delta"), type = "double", default = 0.95),
   make_option(c("--max-treedepth"), type = "integer", default = 12),
@@ -33,25 +33,11 @@ option_list <- list(
 )
 opt <- parse_args(OptionParser(option_list = option_list))
 
-# --- 核心检测与分配逻辑 (优化版) ---
-
-# 1. 优先尝试从 Slurm 环境变量获取申请的核心数 (SBATCH --cpus-per-task)
-slurm_cpus <- as.numeric(Sys.getenv("SLURM_CPUS_PER_TASK"))
-
-# 2. 如果在 Slurm 环境，就用申请的数；否则探测本地核心数
-cores_avail <- if (!is.na(slurm_cpus)) {
-  slurm_cpus
-} else {
-  parallel::detectCores(logical = TRUE)
-}
-
-# 3. 设置核心使用量
-cores_used <- cores_avail
-
-# 4. 更新 R 的全局并行配置
+cores_avail <- parallel::detectCores(logical = TRUE)
+slurm_cpus <- suppressWarnings(as.integer(Sys.getenv("SLURM_CPUS_PER_TASK", NA)))
+cores_used <- opt$chains
 options(mc.cores = cores_used)
 
-# 打印信息方便在日志中对账
 message("--- CPU Resource Report ---")
 message("Environment: ", if (!is.na(slurm_cpus)) "Slurm (HPC)" else "Local Machine")
 message("Total Cores Available: ", cores_avail)
