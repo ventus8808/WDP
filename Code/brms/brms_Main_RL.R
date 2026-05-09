@@ -33,6 +33,33 @@ option_list <- list(
 )
 opt <- parse_args(OptionParser(option_list = option_list))
 
+# --- 核心检测与分配逻辑 (优化版) ---
+
+# 1. 优先尝试从 Slurm 环境变量获取申请的核心数 (SBATCH --cpus-per-task)
+slurm_cpus <- as.numeric(Sys.getenv("SLURM_CPUS_PER_TASK"))
+
+# 2. 如果在 Slurm 环境，就用申请的数；否则探测本地核心数
+cores_avail <- if (!is.na(slurm_cpus)) {
+  slurm_cpus
+} else {
+  parallel::detectCores(logical = TRUE)
+}
+
+# 3. 设置核心使用量
+cores_used <- cores_avail
+
+# 4. 更新 R 的全局并行配置
+options(mc.cores = cores_used)
+
+# 打印信息方便在日志中对账
+message("--- CPU Resource Report ---")
+message("Environment: ", if (!is.na(slurm_cpus)) "Slurm (HPC)" else "Local Machine")
+message("Total Cores Available: ", cores_avail)
+message("Setting mc.cores to:   ", cores_used)
+message("---------------------------")
+
+# 种子设置保留
+set.seed(opt$seed)
 
 # ── Stan model ─────────────────────────────────────────────────────────────────
 stan_code <- "data {

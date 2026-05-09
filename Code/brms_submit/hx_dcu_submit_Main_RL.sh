@@ -7,7 +7,7 @@
 
 
 #SBATCH --partition=hx1hdnormal
-#SBATCH --job-name=brms_Sensitivity
+#SBATCH --job-name=brms_Main_RL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
