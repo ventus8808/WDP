@@ -4,7 +4,7 @@
 # Usage:
 #   bash Code/brms_submit/submit_Stratified_Geo.sh
 
-#SBATCH --partition=wzhctest
+#SBATCH --partition=kshctest02
 #SBATCH --job-name=WDP_Stratified_Geo
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
