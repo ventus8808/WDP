@@ -302,7 +302,7 @@ run_stan <- function(des, scen_key, label) {
     iter_warmup     = opt$warmup,
     adapt_delta     = opt$`adapt-delta`,
     max_treedepth   = opt$`max-treedepth`,
-    parallel_chains = min(opt$chains, cores_used),
+    parallel_chains = opt$chains,
     refresh         = 0,
     seed            = opt$seed,
     init            = rep(list(init_fn()), opt$chains)
