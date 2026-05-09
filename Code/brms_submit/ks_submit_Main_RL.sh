@@ -1,19 +1,19 @@
 #!/bin/bash
-# Slurm array launcher for sensitivity analysis (single/add-all sensitivity covariates).
+# Slurm array launcher for ridgeline posterior extraction pipeline.
 # One task per outcome (from outcome_overall.list); each task runs all
-# sensitivity specs × EQI 2000-2005 lag scenarios internally.
+# EQI 2000-2005 lag scenarios (5/10/15/20) and saves Overall + domain RDS files.
 # Usage:
-#   bash Code/brms_submit/submit_Sensitivity.sh
+#   bash Code/brms_submit/ks_submit_Main_RL.sh
 
 #SBATCH --partition=kshctest02
-#SBATCH --job-name=brms_Sensitivity
+#SBATCH --job-name=brms_Main_RL
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
-#SBATCH --time=2-00:00:00
-#SBATCH --output=Sensitivity_%A_%a.out
-#SBATCH --error=Sensitivity_%A_%a.err
+#SBATCH --time=1-00:00:00
+#SBATCH --output=Main_RL_%A_%a.out
+#SBATCH --error=Main_RL_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -58,7 +58,7 @@ module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, u
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/brms_Sensitivity.R"
+RUNNER="Code/brms/brms_Main_RL.R"
 
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1

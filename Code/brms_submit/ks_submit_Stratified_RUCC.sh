@@ -1,19 +1,19 @@
 #!/bin/bash
-# Slurm array launcher for ridgeline posterior extraction pipeline.
+# Slurm array launcher for RUCC-stratified interval-censored mixed model pipeline.
 # One task per outcome (from outcome_overall.list); each task runs all
-# EQI 2000-2005 lag scenarios (5/10/15/20) and saves Overall + domain RDS files.
+# RUCC strata × EQI 2000-2005 lag scenarios internally.
 # Usage:
-#   bash Code/brms_submit/submit_Main_RL.sh
+#   bash Code/brms_submit/ks_submit_Stratified_RUCC.sh
 
 #SBATCH --partition=kshctest02
-#SBATCH --job-name=brms_Main_RL
+#SBATCH --job-name=brms_Stratified_RUCC
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=48G
-#SBATCH --time=1-00:00:00
-#SBATCH --output=Main_RL_%A_%a.out
-#SBATCH --error=Main_RL_%A_%a.err
+#SBATCH --time=2-00:00:00
+#SBATCH --output=Stratified_RUCC_%A_%a.out
+#SBATCH --error=Stratified_RUCC_%A_%a.err
 
 set -eo pipefail
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] [$1] - $2"; }
@@ -58,7 +58,7 @@ module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, u
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
 
-RUNNER="Code/brms/brms_Main_RL.R"
+RUNNER="Code/brms/brms_Stratified_RUCC.R"
 
 if [ ! -f "$RUNNER" ]; then
   log ERROR "找不到R脚本: $RUNNER"; exit 1
