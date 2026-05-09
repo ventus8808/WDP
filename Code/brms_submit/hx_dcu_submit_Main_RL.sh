@@ -54,8 +54,6 @@ if [ -z "${CONDA_DEFAULT_ENV-}" ] || [ "${CONDA_DEFAULT_ENV}" != "$ENV_NAME" ]; 
 fi
 set -u
 
-# Load devtoolset for newer g++ on CentOS
-module load devtoolset-8 2>/dev/null || log WARN "Could not load devtoolset-8, using system g++"
 
 # Set environment variables for CmdStan
 export TBB_CXX_TYPE=gcc
