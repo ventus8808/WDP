@@ -2,7 +2,7 @@
 # Slurm array launcher for the geographic-stratified interval-censored mixed model pipeline.
 # One task per outcome; each task runs all strat-vars × strat-vals × scenarios inside the R runner.
 # Usage:
-#   bash Code/brms_submit/submit_Stratified_Geo.sh
+#   bash Code/brms_submit/ks_submit_Stratified_Geo.sh
 
 #SBATCH --partition=kshctest02
 #SBATCH --job-name=WDP_Stratified_Geo

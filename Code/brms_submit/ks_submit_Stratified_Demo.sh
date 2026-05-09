@@ -2,7 +2,7 @@
 # Slurm array launcher for the demographic-stratified interval-censored mixed model pipeline.
 # One task per outcome; each task runs all strata (Male, Female, White, Black, Others) × scenarios inside the R runner.
 # Usage:
-#   bash Code/brms_submit/submit_Stratified_Demo.sh
+#   bash Code/brms_submit/ks_submit_Stratified_Demo.sh
 
 #SBATCH --partition=kshctest02
 #SBATCH --job-name=WDP_Stratified_Demo
