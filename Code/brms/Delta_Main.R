@@ -209,13 +209,21 @@ build_ridge_rds <- function(draws_df, design_names, summ, pattern, model_label,
 
 # ── Design & fitting ──────────────────────────────────────────────────────────
 build_design <- function(d, cat_col) {
+  original_n <- nrow(d)
   d[[cat_col]] <- factor(d[[cat_col]], levels = c("S", "I", "W"))
   keep <- c(
     "delta_AAMR_lower", "delta_AAMR_upper", "cens", "State_FIPS",
     "delta_Smoking_Rate", cat_col
   )
   d <- d[complete.cases(d[, keep, with = FALSE])]
-  mm <- model.matrix(as.formula(paste0("~ delta_Smoking_Rate + ", cat_col)), d)
+  
+  if (nrow(d) == 0) {
+    warning("build_design: No complete cases after filtering. Original n=", original_n,
+            ". Check if ", cat_col, " has unexpected values.")
+    return(NULL)
+  }
+  
+  mm <- model.matrix(as.formula(paste0("~ delta_Smoking_Rate + `", cat_col, "`")), d)
   colnames(mm) <- make.names(colnames(mm))
   list(X = mm, names = colnames(mm), df = d)
 }
@@ -271,7 +279,7 @@ make_row <- function(outcome, lag, model_name, eff, n) {
 
 fit_one <- function(d, cat_col) {
   des <- build_design(d, cat_col)
-  if (nrow(des$df) < opt$`min-n`) {
+  if (is.null(des) || nrow(des$df) < opt$`min-n`) {
     return(NULL)
   }
   states <- sort(unique(des$df$State_FIPS))
@@ -293,8 +301,9 @@ fit_one <- function(d, cat_col) {
     adapt_delta = opt$`adapt-delta`, max_treedepth = opt$`max-treedepth`,
     parallel_chains = opt$chains, refresh = 0, seed = opt$seed,
     init = rep(list(init_fn()), opt$chains)
-  ), silent = TRUE)
+  ), silent = FALSE)
   if (inherits(fit, "try-error")) {
+    message("    [Stan Error] ", attr(fit, "condition")$message)
     return(NULL)
   }
   list(fit = fit, des = des)
