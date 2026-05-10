@@ -7,7 +7,7 @@
 #   LagRef  — per-lag Q1 mu denominator (within-lag relative comparison).
 #              Q1 = 1.0 at every lag.
 #
-# Output files per disease (Result/brms_MRR/):
+# Output files per disease:
 #   {dlabel}_MRD.csv                   — wide, MRD (beta coefficients), one row per lag
 #   {dlabel}_MRR_SameRef.csv           — wide, MRR vs universal Lag5 Q1, one row per lag
 #   {dlabel}_MRR_LagRef.csv            — wide, MRR vs per-lag Q1, one row per lag

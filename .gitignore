@@ -16,3 +16,9 @@ Result/Cluster_Method
 Result/EQI_Map
 
 Result/log
+
+# 忽略rds文件
+*.rds
+
+# 忽略cluster里面的大量分析结果
+Result/Cluster

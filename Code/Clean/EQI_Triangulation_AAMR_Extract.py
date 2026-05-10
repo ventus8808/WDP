@@ -1,24 +1,3 @@
-"""
-Stratified AAMR Calculator for RUCC, Climate, Cluster, Typology, and LandUse
-
-This script calculates national and stratum-level Age-Adjusted Mortality Rates (AAMRs)
-with confidence intervals using triangulated death data, stratified by RUCC, climate zones,
-EQI clusters, county economic typology, and land use clusters.
-
-Stratifications:
-- RUCC: Rural-Urban Continuum Codes from EQI data
-- Climate: census_region, koppen_major, doe_major
-- Cluster: cluster_3, cluster_4, cluster_5
-- Typology: econdep (USDA ERS County Economic Typology 2004)
-- LandUse: cluster_4 (Land Use Cluster from NLCD/JRC analysis)
-
-Input: Data/Original/CDC Triangulation/Subtracted/*.csv
-Output:
-    - Result/Tables/Stratified_AAMR_{RUCC,Climate,Cluster,Typology,LandUse}.csv
-    - Result/Tables/Top5_Cancer_AAMR_{RUCC,Climate,Cluster,Typology,LandUse}.csv (summary tables)
-    - Result/Tables/Top5_NDD_AAMR_{RUCC,Climate,Cluster,Typology,LandUse}.csv (summary tables)
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -45,9 +24,9 @@ AGE_WEIGHTS = {
 
 AGE_GROUPS = list(AGE_WEIGHTS.keys())
 
-CLUSTER_COLS = ["cluster_3", "cluster_4", "cluster_5"]
+CLUSTER_COLS = ["Cluster_EQI", "Cluster_NLCD"]
 
-CLIMATE_COLS = ["census_region", "koppen_major"]
+CLIMATE_COLS = ["census_region", "Climate_Zone"]
 
 TYPOLOGY_COLS = ["econdep"]
 
@@ -109,11 +88,19 @@ def apply_stratification_labels(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
 
     df = df.copy()
 
+    # Load mapping labels from mapping.yaml
+    mapping_labels = config.get("mapping_labels", {})
+
     strat_type_to_map: Dict = {
         strat_type: name_map
         for _, strat_type, name_map in STRATA_DISPLAY_CONFIG
         if name_map is not None
     }
+
+    # Enhance maps with mapping.yaml values
+    for strat_type in ["Cluster_EQI", "Cluster_NLCD"]:
+        if strat_type in mapping_labels and strat_type in strat_type_to_map:
+            strat_type_to_map[strat_type].update(mapping_labels[strat_type])
 
     stratification_col = []
     label_col = []
@@ -239,26 +226,42 @@ def load_stratification_data(
         avail_cols = [col for col in CLIMATE_COLS if col in temp_df.columns]
         if avail_cols:
             climate_df = temp_df[["COUNTY_FIPS"] + avail_cols].copy()
+            # Merge A→B and E→D if Climate_Zone exists
+            if "Climate_Zone" in climate_df.columns:
+                climate_df["Climate_Zone"] = climate_df["Climate_Zone"].replace(
+                    {"A": "B", "E": "D"}
+                )
     else:
         print(f"Warning: Climate file not found at {climate_path}")
 
-    # Cluster, only specified columns
-    cluster_path = (
-        get_path(
-            ["result_directories", "cluster_visualization"],
-            "Result/Cluster_Visualization",
-        )
-        / "EQI_Clusters_All_K.csv"
+    # Cluster, canonical outputs from clustering scripts
+    cluster_dir = (
+        get_path(["data_directories", "processed"], "Data/Processed") / "Cluster"
     )
     cluster_df = pd.DataFrame()
-    if cluster_path.exists():
-        temp_df = pd.read_csv(cluster_path, dtype={"COUNTY_FIPS": str})
+    cluster_frames: List[pd.DataFrame] = []
+    cluster_eqi_path = cluster_dir / "Cluster_EQI.csv"
+    cluster_nlcd_path = cluster_dir / "Cluster_NLCD.csv"
+    if cluster_eqi_path.exists():
+        temp_df = pd.read_csv(cluster_eqi_path, dtype={"COUNTY_FIPS": str})
         temp_df["COUNTY_FIPS"] = temp_df["COUNTY_FIPS"].str.zfill(5)
-        avail_cols = [col for col in CLUSTER_COLS if col in temp_df.columns]
-        if avail_cols:
-            cluster_df = temp_df[["COUNTY_FIPS"] + avail_cols].copy()
+        if "Cluster_EQI" in temp_df.columns:
+            cluster_frames.append(temp_df[["COUNTY_FIPS", "Cluster_EQI"]].copy())
     else:
-        print(f"Warning: Cluster file not found at {cluster_path}")
+        print(f"Warning: EQI cluster file not found at {cluster_eqi_path}")
+
+    if cluster_nlcd_path.exists():
+        temp_df = pd.read_csv(cluster_nlcd_path, dtype={"COUNTY_FIPS": str})
+        temp_df["COUNTY_FIPS"] = temp_df["COUNTY_FIPS"].str.zfill(5)
+        if "Cluster_NLCD" in temp_df.columns:
+            cluster_frames.append(temp_df[["COUNTY_FIPS", "Cluster_NLCD"]].copy())
+    else:
+        print(f"Warning: NLCD cluster file not found at {cluster_nlcd_path}")
+
+    if cluster_frames:
+        cluster_df = cluster_frames[0]
+        for frame in cluster_frames[1:]:
+            cluster_df = cluster_df.merge(frame, on="COUNTY_FIPS", how="outer")
 
     # Typology, only specified columns
     typology_path = (
@@ -362,10 +365,12 @@ def process_file(
             }
         )
 
+    cluster_sub_cols = [c for c in CLUSTER_COLS if c in strat_data["Cluster"].columns]
+
     for strat_key, sub_cols in [
         ("RUCC", ["RUCC"]),
         ("Climate", CLIMATE_COLS),
-        ("Cluster", CLUSTER_COLS),
+        ("Cluster", cluster_sub_cols),
         ("Typology", TYPOLOGY_COLS),
     ]:
         if strat_data[strat_key].empty:
@@ -390,8 +395,7 @@ def process_file(
             elif strat_key == "Climate":
                 s_type = col  # e.g., 'census_region'
             elif strat_key == "Cluster":
-                k = col.split("_")[1]
-                s_type = f"Cluster_k{k}"
+                s_type = col
             elif strat_key == "Typology":
                 s_type = "Typology"
 
@@ -507,7 +511,9 @@ def _build_disease_groups(config: Dict) -> Dict:
 STRAT_TYPE_TO_CATEGORY: Dict[str, str] = {
     "RUCC": "RUCC",
     "census_region": "Census Region",
-    "koppen_major": "Köppen-Geiger Climate Zone",
+    "Climate_Zone": "Climate Zone",
+    "Cluster_EQI": "EQI Cluster",
+    "Cluster_NLCD": "Land Use Cluster",
     "Typology": "County Economic Typology",
     "EQI": "EQI Quintile",
 }
@@ -536,11 +542,30 @@ STRATA_DISPLAY_CONFIG = [
     ),
     (
         "Climate",
-        "koppen_major",
+        "Climate_Zone",
         {
             "B": "Dry",
             "C": "Temperate",
             "D": "Continental",
+        },
+    ),
+    (
+        "Cluster",
+        "Cluster_EQI",
+        {
+            "A": "Low-burden",
+            "B": "Mixed-burden",
+            "C": "High-burden",
+        },
+    ),
+    (
+        "Cluster",
+        "Cluster_NLCD",
+        {
+            "A": "Natural",
+            "B": "Water-sensitive",
+            "C": "Agricultural",
+            "D": "Urban",
         },
     ),
     (
@@ -559,11 +584,11 @@ STRATA_DISPLAY_CONFIG = [
         "EQI",
         "EQI",
         {
-            "Q1": "Q1 (best)",
+            "Q1": "Q1",
             "Q2": "Q2",
             "Q3": "Q3",
             "Q4": "Q4",
-            "Q5": "Q5 (worst)",
+            "Q5": "Q5",
         },
     ),
 ]
@@ -621,7 +646,11 @@ def create_disease_aamr_table(
                     stratum_df["Time_Period"] == "2006-2010"
                 )
                 period_data = stratum_df[mask]
-                return float(period_data["AAMR"].iloc[0]) if not period_data.empty else -1.0
+                return (
+                    float(period_data["AAMR"].iloc[0])
+                    if not period_data.empty
+                    else -1.0
+                )
 
             sorted_codes = sorted(codes_to_use, key=get_aamr_2006, reverse=True)
             rows.append({"Outcome": header})
@@ -653,11 +682,17 @@ def create_disease_aamr_table(
                 & (nat_df["ICD-10 Code"].isin(codes_to_use))
             ]
             if not national_df.empty:
+
                 def _get_nat_aamr_2006(code: str) -> float:
-                    mask = (national_df["ICD-10 Code"] == code) & (national_df["Time_Period"] == "2006-2010")
+                    mask = (national_df["ICD-10 Code"] == code) & (
+                        national_df["Time_Period"] == "2006-2010"
+                    )
                     d = national_df[mask]
                     return float(d["AAMR"].iloc[0]) if not d.empty else -1.0
-                sorted_codes = sorted(codes_to_use, key=_get_nat_aamr_2006, reverse=True)
+
+                sorted_codes = sorted(
+                    codes_to_use, key=_get_nat_aamr_2006, reverse=True
+                )
 
         def _make_period_cells(code_data: pd.DataFrame, row_out: Dict) -> None:
             for period in time_periods:
@@ -709,7 +744,11 @@ def create_disease_aamr_table(
             if not race_filtered.empty:
                 rows.append({"Outcome": "Race"})
                 for code in sorted_codes:
-                    for race_val, suffix in (("White", "(White)"), ("Black", "(Black)"), ("Others", "(Others)")):
+                    for race_val, suffix in (
+                        ("White", "(White)"),
+                        ("Black", "(Black)"),
+                        ("Others", "(Others)"),
+                    ):
                         race_code = race_filtered[
                             (race_filtered["ICD-10 Code"] == code)
                             & (race_filtered["Stratum_Value"] == race_val)
@@ -726,7 +765,8 @@ def create_disease_aamr_table(
                 continue
             df = pd.DataFrame(all_results[strat_key])
             filtered = df[
-                (df["Stratum_Type"] == strat_type) & (df["ICD-10 Code"].isin(codes_to_use))
+                (df["Stratum_Type"] == strat_type)
+                & (df["ICD-10 Code"].isin(codes_to_use))
             ]
             if filtered.empty:
                 continue
@@ -1115,7 +1155,9 @@ def process_race_stratified_all_codes(
                 df = pd.read_csv(file_path, dtype={"County Code": str})
                 df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
                 df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
-                df["Population"] = pd.to_numeric(df["Population"], errors="coerce").fillna(0)
+                df["Population"] = pd.to_numeric(
+                    df["Population"], errors="coerce"
+                ).fillna(0)
                 df = df.rename(columns={"Ten-Year Age Groups": "Age_Group"})
                 agg_df = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
                 aamr, stats = calculate_aamr_point(agg_df)
@@ -1256,9 +1298,9 @@ def main():
     )
 
     # Write raw stratified AAMR data
-    # Cluster, Sex, and Race are not written as separate files.
-    # Climate is split: census_region → Region, koppen_major → Climate.
-    SKIP_STRAT = {"Cluster", "Sex", "Race"}
+    # Sex and Race are not written as separate files.
+    # Climate is split: census_region → Census Region, Climate_Zone → Climate Zone.
+    SKIP_STRAT = {"Sex", "Race"}
     for strat_key, results_list in all_results.items():
         if strat_key in SKIP_STRAT or not results_list:
             continue
@@ -1291,7 +1333,7 @@ def main():
 
         if strat_key == "Climate":
             region_df = df[df["Stratification"] == "Census Region"].copy()
-            climate_df = df[df["Stratification"] == "Köppen-Geiger Climate Zone"].copy()
+            climate_df = df[df["Stratification"] == "Climate Zone"].copy()
             if not region_df.empty:
                 region_df.to_csv(output_dir / "Stratified_AAMR_Region.csv", index=False)
                 print("Saved Region stratified AAMR")

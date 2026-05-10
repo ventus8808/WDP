@@ -7,7 +7,8 @@ df_Stratified.csv: AAMR + Stratum + EQI + RUCC-stratified EQI + all covariates (
 Strata: Male, Female (=Total-Male), White, Black, Others (=Total-White-Black)
 
 Covariate period-matching rules:
-  Static   (no period): Census_Region, Climate_Zone (koppen_major, doe_zone)
+  Static   (no period): Census_Region, Climate_Zone,
+                        Cluster_EQI, Cluster_NLCD
   EQI-period matched:   Smoking_rate, Heavy_Drinking_rate, Physical_Activities_rate,
                         Obesity_rate, Diabetes_Prevalence_rate,
                         Physician_Density_per100k, Forest_Coverage,
@@ -33,6 +34,7 @@ OUTPUT_DF  = OUTPUT_DIR / "df_Stratified.csv"
 EQI_DIR       = PROJECT_ROOT / CFG["data_sources"]["epa_eqi"]["processed"]
 COVARIATE_DIR = PROJECT_ROOT / "Data/Processed/Covariate"
 IHME_DIR      = PROJECT_ROOT / "Data/Processed/IHME"
+CLUSTER_DIR   = PROJECT_ROOT / CFG["data_directories"]["processed"] / "Cluster"
 
 EQI_COLS      = ["RUCC", "EQI", "EQI_Air", "EQI_Water", "EQI_Land", "EQI_Built", "EQI_Social"]
 RUCC_EQI_COLS = ["RUCC_EQI", "RUCC_EQI_Air", "RUCC_EQI_Water", "RUCC_EQI_Land", "RUCC_EQI_Built", "RUCC_EQI_Social"]
@@ -51,7 +53,7 @@ EQI_COL_RENAMES = {
 }
 
 INT_COLS = (EQI_COLS + RUCC_EQI_COLS +
-            ["Deaths", "Population", "Census_Region", "doe_zone",
+            ["Deaths", "Population", "Census_Region",
              "Economic_type", "Homeownership_tertile"])
 
 
@@ -110,16 +112,32 @@ def _load_eqi() -> dict:
 def _load_static() -> pd.DataFrame | None:
     census  = _load_csv(COVARIATE_DIR / "Census_Region.csv", "Census_Region")
     climate = _load_csv(COVARIATE_DIR / "Climate_Zone.csv",  "Climate_Zone")
-    if census is None and climate is None:
+    cluster_eqi = _load_csv(CLUSTER_DIR / "Cluster_EQI.csv", "Cluster_EQI")
+    cluster_nlcd = _load_csv(CLUSTER_DIR / "Cluster_NLCD.csv", "Cluster_NLCD")
+
+    if census is None and climate is None and cluster_eqi is None and cluster_nlcd is None:
         return None
-    if census is None:
-        return climate[["COUNTY_FIPS", "koppen_major", "doe_zone"]]
-    if climate is None:
-        return census[["COUNTY_FIPS", "Census_Region"]]
-    return census[["COUNTY_FIPS", "Census_Region"]].merge(
-        climate[["COUNTY_FIPS", "koppen_major", "doe_zone"]],
-        on="COUNTY_FIPS", how="outer"
-    )
+
+    static_df = None
+    if census is not None:
+        static_df = census[["COUNTY_FIPS", "Census_Region"]].copy()
+    if climate is not None:
+        climate_df = climate[["COUNTY_FIPS", "Climate_Zone"]].copy()
+        static_df = climate_df if static_df is None else static_df.merge(
+            climate_df, on="COUNTY_FIPS", how="outer"
+        )
+    if cluster_eqi is not None:
+        eqi_df = cluster_eqi[["COUNTY_FIPS", "Cluster_EQI"]].copy()
+        static_df = eqi_df if static_df is None else static_df.merge(
+            eqi_df, on="COUNTY_FIPS", how="outer"
+        )
+    if cluster_nlcd is not None:
+        nlcd_df = cluster_nlcd[["COUNTY_FIPS", "Cluster_NLCD"]].copy()
+        static_df = nlcd_df if static_df is None else static_df.merge(
+            nlcd_df, on="COUNTY_FIPS", how="outer"
+        )
+
+    return static_df
 
 
 # ─── filename parser ───────────────────────────────────────────────────────────

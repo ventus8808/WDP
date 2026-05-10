@@ -13,22 +13,21 @@ Census_Region:
   3: "South"
   4: "West"
 
-koppen_major:
-  A: "Tropical"
+Climate_Zone:
   B: "Dry"
   C: "Temperate"
   D: "Continental"
-  E: "Polar"
 
-doe_zone:
-  1: "Very Hot"
-  2: "Hot"
-  3: "Warm"
-  4: "Mixed"
-  5: "Cool"
-  6: "Cold"
-  7: "Very Cold"
-  8: "Subarctic"
+Cluster_EQI:
+  A: "Low-burden"
+  B: "Mixed-burden"
+  C: "High-burden"
+
+Cluster_NLCD:
+  A: "Natural"
+  B: "Water-sensitive"
+  C: "Agricultural"
+  D: "Urban"
 
 Economic_type:
   1: "Farming-dependent"
