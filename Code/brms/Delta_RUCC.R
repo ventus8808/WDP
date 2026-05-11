@@ -251,9 +251,9 @@ extract_effects <- function(fit, names_vec) {
     list(rhat = sr$rhat, ess_bulk = sr$ess_bulk, ess_tail = sr$ess_tail)
   }
   list(
-    imp = get_draws("Improved"), wor = get_draws("Worsened"),
+    imp = get_draws("I$"), wor = get_draws("W$"),
     inter = get_draws("Intercept"), sm = get_draws("delta_Smoking_Rate"),
-    imp_d = get_diag("Improved"), wor_d = get_diag("Worsened"),
+    imp_d = get_diag("I$"), wor_d = get_diag("W$"),
     rhat_max = max(summ$rhat, na.rm = TRUE)
   )
 }
