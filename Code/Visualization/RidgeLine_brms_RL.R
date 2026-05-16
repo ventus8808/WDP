@@ -107,6 +107,11 @@ OVERALL_GRADIENTS <- list(
 
 
 FONT_FAMILY <- "Helvetica"
+DOMAIN_ORDER <- c("Air", "Water", "Land", "Built", "Social")
+MIN_SUBPLOT_WIDTH_PX <- 1600
+MIN_SUBPLOT_HEIGHT_PX <- 1000
+SUBPLOT_GAP_X_IN <- MIN_SUBPLOT_WIDTH_PX  / 10 / 300
+SUBPLOT_GAP_Y_IN <- MIN_SUBPLOT_HEIGHT_PX / 10 / 300
 
 # ============================================================================
 # Utility Functions
@@ -132,6 +137,21 @@ theme_publication <- function(base_size = 14, base_family = FONT_FAMILY) {
       legend.position = "none",
       plot.margin = margin(15, 15, 10, 10)
     )
+}
+
+save_plot_px <- function(plot_obj, output_file, panel_cols, panel_rows) {
+  width_px <- panel_cols * MIN_SUBPLOT_WIDTH_PX
+  height_px <- panel_rows * MIN_SUBPLOT_HEIGHT_PX
+  ggsave(
+    output_file,
+    plot = plot_obj,
+    width = width_px,
+    height = height_px,
+    units = "px",
+    dpi = 300,
+    bg = "white",
+    limitsize = FALSE
+  )
 }
 
 # ============================================================================
@@ -165,15 +185,13 @@ load_ridgeline_data <- function(files) {
 # Plot Functions
 # ============================================================================
 
-plot_lag_all_domains <- function(data, lag, output_file) {
-  cat(sprintf("  Processing Lag %d with all domains...\n", lag))
-
+build_lag_all_domains_plot <- function(data, lag) {
   combined <- data %>%
     filter(lag == !!lag, domain != "Overall") %>%
     mutate(
       quintile_label = factor(quintile, levels = c("Q5", "Q4", "Q3", "Q2")),
       quintile_num = as.numeric(factor(quintile, levels = c("Q2", "Q3", "Q4", "Q5"))),
-      domain = factor(domain, levels = c("Air", "Water", "Land", "Built", "Social"))
+      domain = factor(domain, levels = DOMAIN_ORDER)
     )
 
   # Add colors using vectorized approach
@@ -216,14 +234,42 @@ plot_lag_all_domains <- function(data, lag, output_file) {
     theme(
       strip.text.y = element_text(size = 14, face = "bold", margin = margin(t = 5, r = 5, b = 5, l = 5)),
       strip.background = element_rect(fill = "#F5F5F5", color = "#CCCCCC", linewidth = 0.3),
-      panel.spacing.y = unit(1, "lines"),
+      panel.spacing.x = unit(SUBPLOT_GAP_X_IN, "in"),
+      panel.spacing.y = unit(SUBPLOT_GAP_Y_IN, "in"),
       panel.grid.major.x = element_line(color = "grey90", linewidth = 0.3),
       panel.grid.minor.x = element_blank(),
-      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.3)
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.3),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
     )
 
+  p
+}
+
+plot_lag_all_domains <- function(data, lag, output_file) {
+  cat(sprintf("  Processing Lag %d with all domains...\n", lag))
+  p <- build_lag_all_domains_plot(data, lag)
   cat(sprintf("    Saving to: %s\n", output_file))
-  ggsave(output_file, plot = p, width = 7, height = 12, dpi = 300, bg = "white")
+  save_plot_px(
+    plot_obj = p,
+    output_file = output_file,
+    panel_cols = 1,
+    panel_rows = length(DOMAIN_ORDER)
+  )
+}
+
+plot_lags_all_domains_horizontal <- function(data, lags, output_file) {
+  cat(sprintf("  Processing combined all-domain lags: %s\n", paste(lags, collapse = ", ")))
+  lag_plots <- lapply(lags, function(current_lag) {
+    build_lag_all_domains_plot(data, current_lag) + ggtitle(sprintf("Lag %d", current_lag))
+  })
+  combined_plot <- wrap_plots(lag_plots, nrow = 1)
+  cat(sprintf("    Saving to: %s\n", output_file))
+  save_plot_px(
+    plot_obj = combined_plot,
+    output_file = output_file,
+    panel_cols = length(lags),
+    panel_rows = length(DOMAIN_ORDER)
+  )
 }
 
 plot_overall_lags <- function(data, lags, output_file, gradient_colors = NULL) {
@@ -267,13 +313,86 @@ plot_overall_lags <- function(data, lags, output_file, gradient_colors = NULL) {
       panel.grid.major.x = element_line(color = "grey90", linewidth = 0.3),
       panel.grid.minor.x = element_blank(),
       panel.grid.major.y = element_line(color = "grey90", linewidth = 0.3),
-      panel.spacing = unit(4, "lines"),
+      panel.spacing.x = unit(SUBPLOT_GAP_X_IN, "in"),
+      panel.spacing.y = unit(SUBPLOT_GAP_Y_IN, "in"),
       strip.background = element_rect(fill = "#F5F5F5", color = "#CCCCCC", linewidth = 0.3),
       strip.text = element_text(size = 14, face = "bold", margin = margin(t = 5, b = 5))
     )
 
   cat(sprintf("    Saving to: %s\n", output_file))
-  ggsave(output_file, plot = p, width = 7, height = 12, dpi = 300, bg = "white")
+  save_plot_px(
+    plot_obj = p,
+    output_file = output_file,
+    panel_cols = 1,
+    panel_rows = length(lags)
+  )
+}
+
+build_single_domain_panel <- function(data, domain_name, lags, show_y_axis = TRUE) {
+  domain_data <- data %>%
+    filter(domain == domain_name, lag %in% lags) %>%
+    mutate(
+      quintile_label = factor(quintile, levels = c("Q5", "Q4", "Q3", "Q2")),
+      lag_label = factor(sprintf("Lag %d", lag), levels = sprintf("Lag %d", lags))
+    )
+
+  palette <- DOMAIN_PALETTES[[domain_name]][1:4]
+  quintile_colors <- c("Q5" = palette[4], "Q4" = palette[3], "Q3" = palette[2], "Q2" = palette[1])
+
+  ggplot(domain_data, aes(x = effect, y = quintile_label, fill = quintile_label)) +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5) +
+    geom_density_ridges(
+      alpha = 0.85, scale = 1.35, rel_min_height = 0.005,
+      color = "black", linewidth = 0.45, quantile_lines = FALSE
+    ) +
+    scale_fill_manual(values = quintile_colors, guide = "none") +
+    scale_x_continuous(
+      name = "MRD with Posterior Probability Distribution",
+      breaks = pretty_breaks(n = 5),
+      expand = expansion(mult = c(0.05, 0.05))
+    ) +
+    scale_y_discrete(
+      name = if (show_y_axis) NULL else "",
+      labels = c("Q5", "Q4", "Q3", "Q2"),
+      expand = expansion(add = c(0.1, 1.6))
+    ) +
+    facet_wrap(~lag_label, ncol = 1) +
+    ggtitle(domain_name) +
+    theme_publication() +
+    theme(
+      panel.grid.major.x = element_line(color = "grey90", linewidth = 0.3),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_line(color = "grey90", linewidth = 0.3),
+      panel.spacing.x = unit(SUBPLOT_GAP_X_IN, "in"),
+      panel.spacing.y = unit(SUBPLOT_GAP_Y_IN, "in"),
+      strip.background = element_rect(fill = "#F5F5F5", color = "#CCCCCC", linewidth = 0.3),
+      strip.text = element_text(size = 14, face = "bold", margin = margin(t = 5, b = 5)),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+      axis.title.y = if (show_y_axis) element_text() else element_blank(),
+      axis.text.y = if (show_y_axis) element_text() else element_blank(),
+      axis.ticks.y = if (show_y_axis) element_line() else element_blank()
+    )
+}
+
+plot_domain_indices_horizontal <- function(data, lags, output_file) {
+  cat(sprintf("  Processing domain indices for lags: %s\n", paste(lags, collapse = ", ")))
+  domain_plots <- lapply(seq_along(DOMAIN_ORDER), function(i) {
+    build_single_domain_panel(
+      data = data,
+      domain_name = DOMAIN_ORDER[i],
+      lags = lags,
+      show_y_axis = (i == 1)
+    )
+  })
+  combined_plot <- wrap_plots(domain_plots, nrow = 1) &
+    theme(plot.margin = unit(c(0.05, SUBPLOT_GAP_X_IN / 2, 0.05, SUBPLOT_GAP_X_IN / 2), "in"))
+  cat(sprintf("    Saving to: %s\n", output_file))
+  save_plot_px(
+    plot_obj = combined_plot,
+    output_file = output_file,
+    panel_cols = length(DOMAIN_ORDER),
+    panel_rows = length(lags)
+  )
 }
 
 # ============================================================================
@@ -307,6 +426,19 @@ process_outcome <- function(outcome_name, project_root) {
     plot_lag_all_domains(all_data, current_lag, output_file)
   }
 
+  # Combined all-domain lag plots (left to right)
+  output_file_lag_combined_3 <- file.path(output_dir, "Lag5_10_15_AllDomains_Horizontal.png")
+  plot_lags_all_domains_horizontal(all_data, c(5, 10, 15), output_file_lag_combined_3)
+
+  output_file_lag_combined <- file.path(output_dir, "Lag5_10_15_20_AllDomains_Horizontal.png")
+  plot_lags_all_domains_horizontal(all_data, c(5, 10, 15, 20), output_file_lag_combined)
+
+  # Domain-index horizontal plots (with and without Lag 20)
+  output_file_domain_4 <- file.path(output_dir, "DomainIndices_Lag5_10_15_20_Horizontal.png")
+  plot_domain_indices_horizontal(all_data, c(5, 10, 15, 20), output_file_domain_4)
+  output_file_domain_3 <- file.path(output_dir, "DomainIndices_Lag5_10_15_Horizontal.png")
+  plot_domain_indices_horizontal(all_data, c(5, 10, 15), output_file_domain_3)
+
   # Generate overall plots with different gradients
   cat("\nGenerating overall EQI plots with multiple color palettes:\n")
   for (palette_name in names(OVERALL_GRADIENTS)) {
@@ -321,7 +453,8 @@ process_outcome <- function(outcome_name, project_root) {
     plot_overall_lags(all_data, c(5, 10, 15, 20), output_file_4, gradient_colors = gradient)
   }
 
-  cat(sprintf("\n✓ Completed %s (4 lag + 8 overall plots = 12 plots)\n", outcome_name))
+  total_plots <- 4 + 2 + 2 + (length(OVERALL_GRADIENTS) * 2)
+  cat(sprintf("\n✓ Completed %s (%d plots)\n", outcome_name, total_plots))
   return(TRUE)
 }
 
@@ -331,8 +464,7 @@ main <- function() {
   cat("\n")
   cat("╔════════════════════════════════════════════════════════════╗\n")
   cat("║   RidgeLine Visualization - brms_RL Results                ║\n")
-  cat("║   7 Outcomes × 12 Plots = 84 PNG Files                    ║\n")
-  cat("║   (4 lag plots + 8 overall color variants)                ║\n")
+  cat("║   Includes lag, overall EQI, and domain-index panels       ║\n")
   cat("╚════════════════════════════════════════════════════════════╝\n")
 
   outcomes <- c("Cancer", "CKD", "CLD", "CRD", "CVD", "NDD", "Suicide")
@@ -353,13 +485,18 @@ main <- function() {
   cat("    │   ├── Lag10_AllDomains.png\n")
   cat("    │   ├── Lag15_AllDomains.png\n")
   cat("    │   ├── Lag20_AllDomains.png\n")
-  cat("    │   ├── Overall_Lag5_10_15_{Blue,Green,Purple,Blue2}.png\n")
-  cat("    │   └── Overall_Lag5_10_15_20_{Blue,Green,Purple,Blue2}.png\n")
+  cat("    │   ├── Lag5_10_15_AllDomains_Horizontal.png\n")
+  cat("    │   ├── Lag5_10_15_20_AllDomains_Horizontal.png\n")
+  cat("    │   ├── DomainIndices_Lag5_10_15_Horizontal.png\n")
+  cat("    │   ├── DomainIndices_Lag5_10_15_20_Horizontal.png\n")
+  cat("    │   ├── Overall_Lag5_10_15_{Palette}.png\n")
+  cat("    │   └── Overall_Lag5_10_15_20_{Palette}.png\n")
   cat("    └── ... (6 more outcomes)\n\n")
 
   total_success <- sum(unlist(results))
   cat(sprintf("Completed: %d/%d outcomes\n", total_success, length(outcomes)))
-  cat("Expected: 84 PNG files total\n\n")
+  plots_per_outcome <- 4 + 2 + 2 + (length(OVERALL_GRADIENTS) * 2)
+  cat(sprintf("Expected: %d PNG files total\n\n", plots_per_outcome * length(outcomes)))
 }
 
 if (!interactive()) {

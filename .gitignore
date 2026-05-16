@@ -17,6 +17,10 @@ Result/EQI_Map
 
 Result/log
 
+Delta_Ridgeline_Visualization
+
+Result/Map
+
 # 忽略rds文件
 *.rds
 

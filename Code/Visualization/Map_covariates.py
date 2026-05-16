@@ -153,15 +153,15 @@ def plot_covariate_map(
     )
 
     state_boundaries.boundary.plot(
-        ax=ax, color="#000000", linewidth=0.6, alpha=0.6, zorder=2
+        ax=ax, color="#000000", linewidth=0.3, alpha=0.6, zorder=2
     )
 
     ax.set_axis_off()
 
     # Create legend
-    if covariate == "koppen_major":
+    if covariate == "Climate_Zone":
         legend_keys = ["B", "C", "D"]
-    elif covariate == "econdep":
+    elif covariate == "Economic_type":
         legend_keys = [1, 2, 3, 4, 5, 6]
     else:
         legend_keys = [1, 2, 3, 4]
@@ -171,7 +171,7 @@ def plot_covariate_map(
     ]
 
     # Use 2 columns for typology legend (6 items)
-    ncol = 2 if covariate == "econdep" else 1
+    ncol = 2 if covariate == "Economic_type" else 1
     ax.legend(
         handles=legend_elements,
         bbox_to_anchor=(0.02, 0.02),
@@ -196,9 +196,9 @@ def main():
 
     # Paths
     shapefile_path = config["data_sources"]["tiger"]["shapefile"]
-    data_file = "Data/Processed/df_EQI_AAMR_Triangulation/EQI_AAMR_Cluster_Climate.csv"
-    output_dir = "/Users/ventus/Repository/WDP/Result/Map"
-    os.makedirs(output_dir, exist_ok=True)
+    data_file = project_root / "Data/Processed/df.csv"
+    output_dir = project_root / "Result/Map"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Load shapefile
     counties = gpd.read_file(shapefile_path)
@@ -213,7 +213,7 @@ def main():
 
     # Get unique counties with covariates (use first occurrence)
     df_unique = df.drop_duplicates(subset=["COUNTY_FIPS"])[
-        ["COUNTY_FIPS", "RUCC", "census_region", "koppen_major"]
+        ["COUNTY_FIPS", "RUCC", "Census_Region", "Climate_Zone"]
     ].copy()
 
     # Merge with shapefile
@@ -232,57 +232,58 @@ def main():
 
     # Plot Census Region map
     counties_merged["color"] = (
-        counties_merged["census_region"]
+        counties_merged["Census_Region"]
         .map(CENSUS_REGION_COLORS)
         .fillna(CENSUS_REGION_COLORS["No Data"])
     )
     plot_covariate_map(
         counties_merged,
         state_boundaries,
-        "census_region",
+        "Census_Region",
         CENSUS_REGION_COLORS,
         CENSUS_REGION_LABELS,
         output_dir,
     )
 
-    # Plot Koppen Major map
+    # Plot Climate Zone map
     counties_merged["color"] = (
-        counties_merged["koppen_major"]
+        counties_merged["Climate_Zone"]
         .map(KOPPEN_COLORS)
         .fillna(KOPPEN_COLORS["No Data"])
     )
     plot_covariate_map(
         counties_merged,
         state_boundaries,
-        "koppen_major",
+        "Climate_Zone",
         KOPPEN_COLORS,
         KOPPEN_LABELS,
         output_dir,
     )
 
-    # Load and plot County Typology data
-    typology_file = "Data/Processed/Socioeconomic/County_Typology_2004.csv"
-    df_typology = pd.read_csv(typology_file)
+    # Load and plot Economic Type data
+    typology_file = project_root / "Data/Processed/Covariate/Economic_type.csv"
+    df_typology = pd.read_csv(typology_file, dtype={"COUNTY_FIPS": str})
     df_typology["COUNTY_FIPS"] = df_typology["COUNTY_FIPS"].astype(str).str.zfill(5)
+    df_typology["Economic_type"] = df_typology["Economic_type_0005"]
 
     # Merge typology with shapefile
     counties_typology = counties_contiguous.merge(
-        df_typology[["COUNTY_FIPS", "econdep"]], on="COUNTY_FIPS", how="left"
+        df_typology[["COUNTY_FIPS", "Economic_type"]], on="COUNTY_FIPS", how="left"
     )
 
     # Prepare state boundaries for typology
     state_boundaries_typology = counties_typology.dissolve(by="STATEFP")
 
-    # Plot County Typology map
+    # Plot Economic Type map
     counties_typology["color"] = (
-        counties_typology["econdep"]
+        counties_typology["Economic_type"]
         .map(TYPOLOGY_COLORS)
         .fillna(TYPOLOGY_COLORS["No Data"])
     )
     plot_covariate_map(
         counties_typology,
         state_boundaries_typology,
-        "econdep",
+        "Economic_type",
         TYPOLOGY_COLORS,
         TYPOLOGY_LABELS,
         output_dir,
