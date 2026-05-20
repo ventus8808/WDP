@@ -25,7 +25,7 @@ Cluster_EQI:
 
 Cluster_NLCD:
   A: "Natural"
-  B: "Water-sensitive"
+  B: "Water"
   C: "Agricultural"
   D: "Urban"
 
