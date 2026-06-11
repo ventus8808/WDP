@@ -28,3 +28,6 @@ Result/Forest_Main
 
 # 忽略cluster里面的大量分析结果
 Result/Cluster
+
+
+Result/CDC_SVI_Trajectory
