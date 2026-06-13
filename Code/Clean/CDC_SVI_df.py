@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 """
-CDC SVI × AAMR long table builder
+CDC SVI (+ EQI-Air joint) × AAMR long table builder
 
-df_SVI.csv: AAMR + SVI trajectory exposure + covariates (period-matched)
+df_SVI.csv: AAMR + SVI trajectory exposure + EQI-Air×SVI joint exposure
+            + covariates (period-matched)
 
-The exposure here is the GBTM SVI trajectory category (A/B/C/D), produced by
-Code/Analysis/CDC_SVI_GBTM.py and extracted by Code/Clean/CDC_SVI_Extract.py
-into Data/Processed/SVI/SVI_Result.csv. Unlike EQI it is a single, static
-classification of each county's 2000-2022 trajectory, so there is no EQI-style
-lag dimension: every outcome period for a county carries the same SVI value.
+Exposures (all static county attributes; every outcome period for a county
+carries the same value, so there is no EQI-style lag dimension):
+  SVI            GBTM trajectory category A/B/C/D
+                 (Data/Processed/SVI/SVI_Result.csv, from CDC_SVI_Extract.py)
+  EQI_Air        continuous EPA air-domain EQI (2000-2005)
+  EQI_Air_2/3    binary (median split) / tertile of EQI_Air
+  SVI_Cont       continuous SVI = mean 2000-2022 percentile
+  SVI_Cont_2/3   binary (median split) / tertile of SVI_Cont
+  EQI_Air_SVI_2  2x2 joint  (a1s1 / a1s2 / a2s1 / a2s2)
+  EQI_Air_SVI_3  3x3 joint  (a1s1 ... a3s3)
+                 (the EQI-Air items come from CDC_SVI_Air_Extract.py ->
+                  Data/Processed/SVI/Air_SVI.csv; its continuous "SVI" column is
+                  renamed SVI_Cont here to avoid colliding with the A/B/C/D SVI)
 
 Covariate period-matching rules:
   Static    (no period): Census_Region, Climate_Zone, Cluster_EQI, Cluster_NLCD
@@ -36,9 +45,16 @@ OUTPUT_DIR = PROJECT_ROOT / "Data/Processed"
 OUTPUT_DF  = OUTPUT_DIR / "df_SVI.csv"
 
 SVI_PATH      = PROJECT_ROOT / "Data/Processed/SVI/SVI_Result.csv"
+AIR_SVI_PATH  = PROJECT_ROOT / "Data/Processed/SVI/Air_SVI.csv"
 COVARIATE_DIR = PROJECT_ROOT / "Data/Processed/Covariate"
 IHME_DIR      = PROJECT_ROOT / "Data/Processed/IHME"
 CLUSTER_DIR   = PROJECT_ROOT / CFG["data_directories"]["processed"] / "Cluster"
+
+# EQI-Air joint columns to keep (continuous SVI renamed to SVI_Cont on load)
+AIR_RENAME = {"SVI": "SVI_Cont", "SVI_2": "SVI_Cont_2", "SVI_3": "SVI_Cont_3"}
+AIR_COLS = ["EQI_Air", "EQI_Air_2", "EQI_Air_3",
+            "SVI_Cont", "SVI_Cont_2", "SVI_Cont_3",
+            "EQI_Air_SVI_2", "EQI_Air_SVI_3"]
 
 # Outcome-period suffixes (cover all four AAMR periods)
 OUTCOME_SUFFIX = {"2006-2010": "0610", "2011-2015": "1115",
@@ -47,7 +63,8 @@ OUTCOME_SUFFIX = {"2006-2010": "0610", "2011-2015": "1115",
 BASELINE_SUFFIXES = ("0610", "0005")
 
 INT_COLS = ["Deaths", "Population", "Census_Region",
-            "Economic_type", "Homeownership_tertile"]
+            "Economic_type", "Homeownership_tertile",
+            "EQI_Air_2", "EQI_Air_3", "SVI_Cont_2", "SVI_Cont_3"]
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
@@ -126,7 +143,7 @@ def _load_static():
 
 def main():
     print("=" * 70)
-    print("CDC SVI × AAMR — Long Table Builder")
+    print("CDC SVI (+ EQI-Air joint) × AAMR — Long Table Builder")
     print("=" * 70)
 
     if not AAMR_DIR.exists():
@@ -145,6 +162,18 @@ def main():
               f"(run CDC_SVI_Extract.py first)")
         sys.exit(1)
     svi = svi[["COUNTY_FIPS", "SVI"]]
+
+    air = _load_csv(AIR_SVI_PATH, "Air_SVI")
+    if air is None:
+        print(f"\nError: joint exposure not found at {AIR_SVI_PATH} "
+              f"(run CDC_SVI_Air_Extract.py first)")
+        sys.exit(1)
+    air = air.rename(columns=AIR_RENAME)
+    miss = set(AIR_COLS) - set(air.columns)
+    if miss:
+        print(f"\nError: Air_SVI.csv missing columns: {sorted(miss)}")
+        sys.exit(1)
+    air = air[["COUNTY_FIPS"] + AIR_COLS]
 
     static_df  = _load_static()
     homeown_df = _load_csv(COVARIATE_DIR / "Homeownership_rate.csv", "Homeownership")
@@ -182,8 +211,9 @@ def main():
             "AAMR_Upper":  df.get("AAMR_Upper"),
         })
 
-        # Exposure (static) + static covariates
+        # Exposures (static) + static covariates
         row = row.merge(svi, on="COUNTY_FIPS", how="left")
+        row = row.merge(air, on="COUNTY_FIPS", how="left")
         if static_df is not None:
             row = row.merge(static_df, on="COUNTY_FIPS", how="left")
 
@@ -221,13 +251,16 @@ def main():
     out = out.sort_values(["Time_Period", "Outcome", "COUNTY_FIPS"]).reset_index(drop=True)
     out.to_csv(OUTPUT_DF, index=False)
 
+    uniq = out.drop_duplicates("COUNTY_FIPS")
     print("\n" + "=" * 70)
     print(f"Output:   {len(out):,} rows  -> {OUTPUT_DF}")
     print(f"Columns:  {list(out.columns)}")
     print(f"Counties: {out['COUNTY_FIPS'].nunique():,}")
     print(f"Periods:  {sorted(out['Time_Period'].unique())}")
     print(f"Outcomes: {out['Outcome'].nunique()}")
-    print(f"SVI dist: {out.drop_duplicates('COUNTY_FIPS')['SVI'].value_counts(dropna=False).sort_index().to_dict()}")
+    print(f"SVI dist:  {uniq['SVI'].value_counts(dropna=False).sort_index().to_dict()}")
+    print(f"2x2 joint: {uniq['EQI_Air_SVI_2'].value_counts(dropna=False).sort_index().to_dict()}")
+    print(f"3x3 joint: {uniq['EQI_Air_SVI_3'].value_counts(dropna=False).sort_index().to_dict()}")
     print("\nDone.")
 
 
