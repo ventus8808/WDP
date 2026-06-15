@@ -8,7 +8,17 @@
 #   - SVI is a single static 2000-2022 trajectory class per county, so there is
 #     no EQI-style period; the four AAMR periods are treated as four lags
 #     (2006-2010 -> 2021-2024, lag = 5/10/15/20 years from baseline).
-#   - Multi-domain model removed (SVI is a single overall index).
+#   - DISEASE-SPECIFIC adjustment: each disease category uses its own covariate
+#     set (see DISEASE_COVSET below). The outcome's category is resolved from
+#     config.yaml (diseases -> overall/subtypes icd_code), so subtypes inherit
+#     their family's covariate set automatically.
+#         cancer / liver(CLD) / cvd / kidney(CKD) : SM + UN
+#         ndd                       : PA + UN
+#         suicide                   : UN + PD + DB
+#         respiratory(CRD)          : UN
+#     Cancer takes precedence: any (sub)type that is a cancer (belongs to the
+#     cancer family in config) uses the cancer set (SM + UN), even when it is
+#     also listed under an organ system (e.g. C34 lung cancer, C64_C65 RCC).
 # Interval likelihood: exact rows (cens=0) use point normal density; interval
 # rows (cens=2) use the CDF difference.
 
@@ -22,11 +32,31 @@ suppressPackageStartupMessages({
   library(purrr)
   library(cmdstanr)
   library(posterior)
+  library(yaml)
 })
 utils::globalVariables(c(
   "SVI", "State_FIPS",
-  "Smoking_rate", "Physical_Activities_rate", "Obesity_rate"
+  "Smoking_rate", "Physical_Activities_rate", "Obesity_rate",
+  "Uninsured_rate", "Physician_Density_per100k", "Diabetes_Prevalence_rate"
 ))
+
+# ── Disease-specific covariate adjustment sets ──────────────────────────────────
+# Covariate column names keyed by config.yaml disease-category key.
+# respiratory (CRD) is intentionally absent: no set provided -> skipped + warned.
+DISEASE_COVSET <- list(
+  cancer      = c("Smoking_rate", "Uninsured_rate"),
+  liver       = c("Smoking_rate", "Uninsured_rate"),
+  cvd         = c("Smoking_rate", "Uninsured_rate"),
+  ndd         = c("Physical_Activities_rate", "Uninsured_rate"),
+  suicide     = c("Uninsured_rate", "Physician_Density_per100k", "Diabetes_Prevalence_rate"),
+  kidney      = c("Smoking_rate", "Uninsured_rate"),
+  respiratory = c("Uninsured_rate")
+)
+covar_abbrev <- c(
+  Smoking_rate = "SM", Physical_Activities_rate = "PA", Obesity_rate = "OB",
+  Uninsured_rate = "UN", Physician_Density_per100k = "PD", Diabetes_Prevalence_rate = "DB"
+)
+ALL_COVS <- names(covar_abbrev)   # fixed output column order
 
 option_list <- list(
   make_option(c("--data"), type = "character", default = "Data/Processed/df_SVI.csv"),
@@ -69,8 +99,8 @@ if (!file.exists(path)) stop("Data not found: ", path)
 dt <- fread(path)
 
 req <- c(
-  "COUNTY_FIPS", "Time_Period", "Outcome", "AAMR_Lower", "AAMR_Upper",
-  "SVI", "Smoking_rate", "Physical_Activities_rate", "Obesity_rate"
+  "COUNTY_FIPS", "Time_Period", "Outcome", "AAMR_Lower", "AAMR_Upper", "SVI",
+  ALL_COVS
 )
 miss <- setdiff(req, names(dt))
 if (length(miss)) stop("Missing cols: ", paste(miss, collapse = ","))
@@ -80,6 +110,45 @@ if (!"State_FIPS" %in% names(dt)) dt[, State_FIPS := substr(sprintf("%05s", COUN
 # interval censoring code
 dt <- dt[!is.na(AAMR_Lower) & !is.na(AAMR_Upper)]
 dt[, cens := ifelse(AAMR_Lower == AAMR_Upper, 0, 2)]
+
+# ── ICD code -> disease category map from config.yaml ───────────────────────────
+cfg_path <- file.path(project_root, "config.yaml")
+if (!file.exists(cfg_path)) stop("config.yaml not found at ", cfg_path)
+cfg <- yaml::read_yaml(cfg_path)
+icd_to_cats <- list()   # icd_code -> character vector of category keys
+for (cat in names(cfg$diseases)) {
+  blk <- cfg$diseases[[cat]]
+  codes <- as.character(blk$overall$icd_code)
+  if (!is.null(blk$subtypes)) {
+    for (s in blk$subtypes) codes <- c(codes, as.character(s$icd_code))
+  }
+  for (code in codes) {
+    icd_to_cats[[code]] <- unique(c(icd_to_cats[[code]], cat))
+  }
+}
+
+# Resolve the covariate set for an outcome (ICD code), or report why it can't be.
+resolve_covset <- function(outcome) {
+  cats <- icd_to_cats[[outcome]]
+  if (is.null(cats)) {
+    return(list(ok = FALSE, reason = paste0("no category in config for '", outcome, "'")))
+  }
+  # Cancer takes precedence: any cancer (sub)type uses the cancer covariate set.
+  if ("cancer" %in% cats && "cancer" %in% names(DISEASE_COVSET)) {
+    return(list(ok = TRUE, covset = DISEASE_COVSET[["cancer"]], cat = "cancer"))
+  }
+  defined <- cats[cats %in% names(DISEASE_COVSET)]
+  if (length(defined) == 0) {
+    return(list(ok = FALSE, reason = paste0("no covariate set for category(ies): ",
+                                            paste(cats, collapse = "/"))))
+  }
+  uniq <- unique(lapply(defined, function(k) sort(DISEASE_COVSET[[k]])))
+  if (length(uniq) > 1) {
+    return(list(ok = FALSE, reason = paste0("ambiguous covariate sets across categories: ",
+                                            paste(defined, collapse = "/"))))
+  }
+  list(ok = TRUE, covset = DISEASE_COVSET[[defined[1]]], cat = defined[1])
+}
 
 # Four lags: SVI baseline trajectory -> each AAMR period (5/10/15/20 yr)
 scenario_list <- list(
@@ -147,26 +216,25 @@ extract_svi <- function(draw_df, names_vec) {
   out
 }
 
-extract_svi_metrics <- function(draw_df, names_vec, summ_df) {
-  out <- list(
-    B_p = NA_character_, C_p = NA_character_, D_p = NA_character_,
-    B_rhat = NA_real_, C_rhat = NA_real_, D_rhat = NA_real_,
-    B_ess_bulk = NA_real_, C_ess_bulk = NA_real_, D_ess_bulk = NA_real_,
-    B_ess_tail = NA_real_, C_ess_tail = NA_real_, D_ess_tail = NA_real_
-  )
+# Per-category (B/C/D) p / R-hat / ESS, flat & formatted (ready to splice into a row).
+svi_metrics_block <- function(draw_df, names_vec, summ_df) {
+  out <- list()
   for (lv in c("B", "C", "D")) {
+    p <- NA_character_; rhat <- NA_real_; eb <- NA_real_; et <- NA_real_
     nm <- paste0("SVI_factor", lv)
     idx <- match(nm, names_vec)
     if (!is.na(idx)) {
       col <- paste0("beta[", idx, "]")
-      out[[paste0(lv, "_p")]] <- compute_p(draw_df[[col]])
+      p <- compute_p(draw_df[[col]])
       sr <- summ_df[summ_df$variable == col, , drop = FALSE]
       if (nrow(sr)) {
-        out[[paste0(lv, "_rhat")]] <- sr$rhat
-        out[[paste0(lv, "_ess_bulk")]] <- sr$ess_bulk
-        out[[paste0(lv, "_ess_tail")]] <- sr$ess_tail
+        rhat <- sr$rhat; eb <- sr$ess_bulk; et <- sr$ess_tail
       }
     }
+    out[[paste0(lv, "_p")]]        <- p
+    out[[paste0(lv, "_rhat")]]     <- sprintf("%.4f", rhat)
+    out[[paste0(lv, "_ess_bulk")]] <- as.integer(round(eb))
+    out[[paste0(lv, "_ess_tail")]] <- as.integer(round(et))
   }
   out
 }
@@ -188,23 +256,48 @@ extract_covariate <- function(draw_df, names_vec, col_name, summ_df) {
   )
 }
 
-build_design_overall <- function(d) {
-  # SVI is unordered -> default treatment contrasts (A reference) -> names SVI_factorB/C/D
-  d <- d %>% mutate(SVI_factor = factor(SVI, levels = c("A", "B", "C", "D")))
-  d <- d[complete.cases(d[, c(
-    "SVI_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS",
-    "Smoking_rate", "Physical_Activities_rate", "Obesity_rate"
-  )]), ]
-  mm <- model.matrix(~ Smoking_rate + Physical_Activities_rate + Obesity_rate + SVI_factor, d,
-    contrasts.arg = list(SVI_factor = contr.treatment(c("A", "B", "C", "D")))
-  )
+# All 6 covariate blocks (only the adjusted ones are populated; others blank).
+covar_block <- function(draw_df, names_vec, summ_df) {
+  out <- list()
+  for (cn in ALL_COVS) {
+    ab <- unname(covar_abbrev[cn])
+    cc <- extract_covariate(draw_df, names_vec, cn, summ_df)
+    out[[ab]]                      <- cc$est
+    out[[paste0(ab, "_p")]]        <- cc$p
+    out[[paste0(ab, "_rhat")]]     <- sprintf("%.4f", cc$rhat)
+    out[[paste0(ab, "_ess_bulk")]] <- as.integer(round(cc$ess_bulk))
+    out[[paste0(ab, "_ess_tail")]] <- as.integer(round(cc$ess_tail))
+  }
+  out
+}
+
+# Build design: intercept + disease-specific covariates + SVI_factor (treatment, A ref).
+build_design <- function(d, covariates) {
+  d <- as.data.frame(d)
+  d$SVI_factor <- factor(d$SVI, levels = c("A", "B", "C", "D"))
+  needed <- c("SVI_factor", "AAMR_Lower", "AAMR_Upper", "cens", "State_FIPS", covariates)
+  d <- d[stats::complete.cases(d[, needed, drop = FALSE]), , drop = FALSE]
+  form <- if (length(covariates) == 0) {
+    ~SVI_factor
+  } else {
+    as.formula(paste("~", paste(c(covariates, "SVI_factor"), collapse = " + ")))
+  }
+  mm <- model.matrix(form, d, contrasts.arg = list(SVI_factor = contr.treatment(c("A", "B", "C", "D"))))
   colnames(mm) <- make.names(colnames(mm))
   list(X = mm, names = colnames(mm), df = d)
 }
 
 for (outcome in selected) {
-  message("===== Outcome: ", outcome, " =====")
+  rc <- resolve_covset(outcome)
+  if (!isTRUE(rc$ok)) {
+    message("[Skip] Outcome ", outcome, " -> ", rc$reason)
+    next
+  }
+  covset <- rc$covset
+  model_label <- paste(c("SVI", covar_abbrev[covset]), collapse = "+")
+  message("===== Outcome: ", outcome, "  [", rc$cat, "]  Model: ", model_label, " =====")
   outfile <- file.path(out_dir, paste0(outcome, "_SVI.csv"))
+
   for (sc in scenario_list) {
     scen_key <- sc$key
     aamr_p <- sc$aamr
@@ -216,18 +309,17 @@ for (outcome in selected) {
     }
     aamr_out <- gsub("-", "_", aamr_p)
 
-    # Overall SVI + SM + PA + OB model
-    des_overall <- build_design_overall(scen_dt)
-    if (nrow(des_overall$df) < opt$`min-n`) {
-      message("[Skip] ", scen_key, " SVI+SM+PA+OB n=", nrow(des_overall$df))
+    des <- build_design(scen_dt, covset)
+    if (nrow(des$df) < opt$`min-n`) {
+      message("[Skip] ", scen_key, " ", model_label, " n=", nrow(des$df))
       next
     }
-    states_o <- sort(unique(des_overall$df$State_FIPS))
-    state_index_o <- match(des_overall$df$State_FIPS, states_o)
+    states_o <- sort(unique(des$df$State_FIPS))
+    state_index_o <- match(des$df$State_FIPS, states_o)
     data_list <- list(
-      N = nrow(des_overall$df), S = length(states_o), state = state_index_o,
-      y_lower = des_overall$df$AAMR_Lower, y_upper = des_overall$df$AAMR_Upper, cens = des_overall$df$cens,
-      K = ncol(des_overall$X), X = des_overall$X
+      N = nrow(des$df), S = length(states_o), state = state_index_o,
+      y_lower = des$df$AAMR_Lower, y_upper = des$df$AAMR_Upper, cens = des$df$cens,
+      K = ncol(des$X), X = des$X
     )
     init_fun <- function() list(beta = rep(0, data_list$K), z_u = rep(0, data_list$S), sigma = 50, sigma_u = 10)
     fit_overall <- try(mod$sample(
@@ -236,30 +328,22 @@ for (outcome in selected) {
       init = rep(list(init_fun()), opt$chains)
     ), silent = TRUE)
     if (inherits(fit_overall, "try-error")) {
-      message("[Fail] SVI+SM+PA+OB model ", scen_key)
+      message("[Fail] ", model_label, " model ", scen_key)
       next
     }
     draws <- as_draws_df(fit_overall$draws("beta"))
     colnames(draws) <- paste0("beta[", seq_len(ncol(draws)), "]")
-    sv <- extract_svi(draws, des_overall$names)
     summ_over <- posterior::summarize_draws(fit_overall$draws("beta"))
-    met <- extract_svi_metrics(draws, des_overall$names, summ_over)
-    sm_o <- extract_covariate(draws, des_overall$names, "Smoking_rate", summ_over)
-    pa_o <- extract_covariate(draws, des_overall$names, "Physical_Activities_rate", summ_over)
-    ob_o <- extract_covariate(draws, des_overall$names, "Obesity_rate", summ_over)
-    row_over <- tibble(
-      ICD_Code = outcome, AAMR_Period = aamr_out, Lag = lagv, Model = "SVI+SM+PA+OB",
-      A = sv$A, B = sv$B, C = sv$C, D = sv$D,
-      B_p = met$B_p, C_p = met$C_p, D_p = met$D_p,
-      B_rhat = sprintf("%.4f", met$B_rhat), C_rhat = sprintf("%.4f", met$C_rhat), D_rhat = sprintf("%.4f", met$D_rhat),
-      B_ess_bulk = as.integer(round(met$B_ess_bulk)), C_ess_bulk = as.integer(round(met$C_ess_bulk)), D_ess_bulk = as.integer(round(met$D_ess_bulk)),
-      B_ess_tail = as.integer(round(met$B_ess_tail)), C_ess_tail = as.integer(round(met$C_ess_tail)), D_ess_tail = as.integer(round(met$D_ess_tail)),
-      SM = sm_o$est, SM_p = sm_o$p, SM_rhat = sprintf("%.4f", sm_o$rhat), SM_ess_bulk = as.integer(round(sm_o$ess_bulk)), SM_ess_tail = as.integer(round(sm_o$ess_tail)),
-      PA = pa_o$est, PA_p = pa_o$p, PA_rhat = sprintf("%.4f", pa_o$rhat), PA_ess_bulk = as.integer(round(pa_o$ess_bulk)), PA_ess_tail = as.integer(round(pa_o$ess_tail)),
-      OB = ob_o$est, OB_p = ob_o$p, OB_rhat = sprintf("%.4f", ob_o$rhat), OB_ess_bulk = as.integer(round(ob_o$ess_bulk)), OB_ess_tail = as.integer(round(ob_o$ess_tail))
+
+    row_list <- c(
+      list(ICD_Code = outcome, AAMR_Period = aamr_out, Lag = lagv, Model = model_label),
+      extract_svi(draws, des$names),
+      svi_metrics_block(draws, des$names, summ_over),
+      covar_block(draws, des$names, summ_over)
     )
-    append_rows(outfile, row_over)
-    message("[OK] ", scen_key, " SVI+SM+PA+OB")
+    row <- do.call(tibble, row_list)
+    append_rows(outfile, row)
+    message("[OK] ", scen_key, " ", model_label)
   }
   message("===== Completed: ", outcome, " =====")
 }
