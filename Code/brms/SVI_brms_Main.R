@@ -32,7 +32,6 @@ suppressPackageStartupMessages({
   library(purrr)
   library(cmdstanr)
   library(posterior)
-  library(yaml)
 })
 utils::globalVariables(c(
   "SVI", "State_FIPS",
@@ -111,18 +110,25 @@ if (!"State_FIPS" %in% names(dt)) dt[, State_FIPS := substr(sprintf("%05s", COUN
 dt <- dt[!is.na(AAMR_Lower) & !is.na(AAMR_Upper)]
 dt[, cens := ifelse(AAMR_Lower == AAMR_Upper, 0, 2)]
 
-# ── ICD code -> disease category map from config.yaml ───────────────────────────
-cfg_path <- file.path(project_root, "config.yaml")
-if (!file.exists(cfg_path)) stop("config.yaml not found at ", cfg_path)
-cfg <- yaml::read_yaml(cfg_path)
+# ── ICD code -> disease category map ────────────────────────────────────────────
+# Mirrors config.yaml `diseases` (overall + subtypes icd_code) but hardcoded so the
+# pipeline needs no extra R package (the `yaml` package is absent on the cluster).
+# If config.yaml disease definitions change, update this list to match.
+DISEASE_CODES <- list(
+  liver       = c("K70_K76_C22", "K70_K76", "K70", "K71", "K73", "K74",
+                  "K71_K73_K74", "K76", "K76.7", "C22"),
+  respiratory = c("J40_J47_J60_J70_J84_D86_C34", "J40_J47_J60_J70_J84_D86",
+                  "J43_J44", "J45", "J84_D86", "J60_J66", "C34"),
+  kidney      = c("N00_N29_C64_C65", "N00_N29", "N18_N19", "N00_N15", "C64_C65"),
+  cvd         = c("I00_I99", "I20_I25", "I60_I69", "I10_I15", "I50"),
+  suicide     = c("X60_X84_Y87.0", "X60_X69", "X70_X84", "Y87.0"),
+  ndd         = c("G20_G30_G12.2_F01_F03", "G30_F01_F03", "G20", "G10", "G12.2"),
+  cancer      = c("C00_C97", "C18_C21", "C22", "C25", "C34", "C50", "C56",
+                  "C61", "C64_C65", "C82_C85", "C91_C95")
+)
 icd_to_cats <- list()   # icd_code -> character vector of category keys
-for (cat in names(cfg$diseases)) {
-  blk <- cfg$diseases[[cat]]
-  codes <- as.character(blk$overall$icd_code)
-  if (!is.null(blk$subtypes)) {
-    for (s in blk$subtypes) codes <- c(codes, as.character(s$icd_code))
-  }
-  for (code in codes) {
+for (cat in names(DISEASE_CODES)) {
+  for (code in DISEASE_CODES[[cat]]) {
     icd_to_cats[[code]] <- unique(c(icd_to_cats[[code]], cat))
   }
 }
