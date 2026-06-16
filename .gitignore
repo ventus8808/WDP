@@ -22,6 +22,7 @@ Delta_Ridgeline_Visualization
 Result/Map
 
 Result/Forest_Main
+Result/Forest_SVI_Main
 
 # 忽略rds文件
 *.rds
