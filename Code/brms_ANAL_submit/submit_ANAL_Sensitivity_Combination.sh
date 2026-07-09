@@ -5,7 +5,7 @@
 # internally for pooled 10-year lag.
 #
 # Usage:
-#   bash Code/brms_submit/submit_ANAL_Sensitivity_Combination.sh
+#   bash Code/brms_ANAL_submit/submit_ANAL_Sensitivity_Combination.sh
 #
 # Optional overrides:
 #   ENV_NAME=brms
