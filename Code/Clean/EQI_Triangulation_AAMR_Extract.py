@@ -35,6 +35,10 @@ NDD_ABBR_MAP: Dict[str, str] = {}
 NDD_ALL_CODES: List[str] = []
 ICD_SHORTNAME_MAP: Dict[str, str] = {}
 
+OTHER_KIDNEY_CODE = "N16_N17_N20_N29"
+OTHER_CRD_CODE = "J40_J42_J45_J46_J47_J60_J70"
+OTHER_CLD_CODE = "K72_K75"
+
 
 def _build_shortname_map(config: Dict) -> Dict[str, str]:
     """Build {icd_code: shortname} for every disease entry in config."""
@@ -185,6 +189,17 @@ def calculate_aamr_ci(aamr: float, stats: Dict) -> Tuple[float, float]:
     return aamr_lower, aamr_upper
 
 
+def _sort_stratum_values(values) -> List:
+    """Sort numeric strata first, then nonnumeric labels."""
+    def _key(value):
+        try:
+            return (0, float(value))
+        except (ValueError, TypeError):
+            return (1, str(value))
+
+    return sorted(values, key=_key)
+
+
 def load_stratification_data(
     project_root: Path, config: Dict
 ) -> Dict[str, pd.DataFrame]:
@@ -309,8 +324,12 @@ def process_file(
     year_range, icd_code = parse_filename(file_path.name) or (None, None)
     if not year_range or not icd_code:
         return {}
-    icd_code_norm = icd_code.replace("-", "_")
+    df = load_subtracted_for_table(file_path)
+    return process_prepared_df(df, year_range, icd_code, strat_data, config)
 
+
+def load_subtracted_for_table(file_path: Path) -> pd.DataFrame:
+    """Load a subtracted county-age file and normalize columns for table aggregation."""
     df = pd.read_csv(file_path, dtype={"County Code": str})
     df = df[df["County Code"].notna() & (df["Population"] != "Missing")]
     df["Deaths"] = pd.to_numeric(df["Deaths"], errors="coerce").fillna(0)
@@ -319,8 +338,27 @@ def process_file(
         columns={"County Code": "COUNTY_FIPS", "Ten-Year Age Groups": "Age_Group"}
     )
     df["COUNTY_FIPS"] = df["COUNTY_FIPS"].str.zfill(5)
+    return df
 
-    results = {"RUCC": [], "Climate": [], "Cluster": [], "Typology": [], "EQI": []}
+
+def process_prepared_df(
+    df: pd.DataFrame,
+    year_range: str,
+    icd_code: str,
+    strat_data: Dict[str, pd.DataFrame],
+    config: Dict,
+) -> Dict[str, List[Dict]]:
+    """Calculate stratified AAMRs from an already-normalized county-age dataframe."""
+    icd_code_norm = icd_code.replace("-", "_")
+
+    results = {
+        "National": [],
+        "RUCC": [],
+        "Climate": [],
+        "Cluster": [],
+        "Typology": [],
+        "EQI": [],
+    }
 
     # Helper to add result
     def add_result(
@@ -365,6 +403,21 @@ def process_file(
             }
         )
 
+    nat_agg = df.groupby("Age_Group")[["Deaths", "Population"]].sum()
+    nat_aamr, nat_stats = calculate_aamr_point(nat_agg)
+    nat_se = calculate_aamr_standard_error(nat_agg)
+    nat_lower, nat_upper = calculate_aamr_ci(nat_aamr, nat_stats)
+    add_result(
+        results["National"],
+        "National",
+        "National",
+        nat_aamr,
+        nat_se,
+        nat_lower,
+        nat_upper,
+        nat_stats,
+    )
+
     cluster_sub_cols = [c for c in CLUSTER_COLS if c in strat_data["Cluster"].columns]
 
     for strat_key, sub_cols in [
@@ -380,6 +433,10 @@ def process_file(
         sub_cols = [c for c in sub_cols if c in merge_df.columns]
         if not sub_cols:
             continue
+        if strat_key == "RUCC":
+            merge_df[sub_cols] = merge_df[sub_cols].fillna(4)
+        else:
+            merge_df[sub_cols] = merge_df[sub_cols].fillna("Unclassified")
         # Drop rows missing any sub_col
         merge_df = merge_df.dropna(subset=sub_cols)
 
@@ -412,10 +469,10 @@ def process_file(
             )
 
             # Stratum-level for this column
-            grouped = merge_df.groupby([col, "Age_Group"])[
+            grouped = merge_df.groupby([col, "Age_Group"], sort=False)[
                 ["Deaths", "Population"]
             ].sum()
-            strata = sorted(grouped.index.get_level_values(0).unique())
+            strata = _sort_stratum_values(grouped.index.get_level_values(0).unique())
             for stratum in strata:
                 stratum_agg = grouped.loc[stratum]
                 aamr, stats = calculate_aamr_point(stratum_agg)
@@ -437,7 +494,7 @@ def process_file(
 
     if not eqi_df.empty:
         eqi_merged = df.merge(eqi_df, on="COUNTY_FIPS", how="left")
-        eqi_merged = eqi_merged.dropna(subset=["EQI"])
+        eqi_merged["EQI"] = eqi_merged["EQI"].fillna("Unclassified")
 
         nat_agg = eqi_merged.groupby("Age_Group")[["Deaths", "Population"]].sum()
         nat_aamr, nat_stats = calculate_aamr_point(nat_agg)
@@ -454,22 +511,301 @@ def process_file(
             nat_stats,
         )
 
-        grouped = eqi_merged.groupby(["EQI", "Age_Group"])[
+        grouped = eqi_merged.groupby(["EQI", "Age_Group"], sort=False)[
             ["Deaths", "Population"]
         ].sum()
-        for q in sorted(eqi_merged["EQI"].dropna().unique()):
-            q_int = int(q)
+        for q in _sort_stratum_values(eqi_merged["EQI"].dropna().unique()):
             try:
-                q_agg = grouped.loc[q_int]
+                q_agg = grouped.loc[q]
             except KeyError:
                 continue
             aamr, stats = calculate_aamr_point(q_agg)
             se = calculate_aamr_standard_error(q_agg)
             lower, upper = calculate_aamr_ci(aamr, stats)
+            try:
+                q_label = f"Q{int(float(q))}"
+            except (ValueError, TypeError):
+                q_label = str(q)
             add_result(
-                results["EQI"], "EQI", f"Q{q_int}", aamr, se, lower, upper, stats
+                results["EQI"], "EQI", q_label, aamr, se, lower, upper, stats
             )
 
+    return results
+
+
+def synthesize_other_kidney_df(input_dir: Path, year_range: str) -> pd.DataFrame | None:
+    """
+    Synthesize other non-cancer kidney disease:
+    N00-N29 minus N00-N15 minus N18-N19.
+
+    The row uses N00-N29 population because it is a residual subtype within the
+    non-cancer kidney disease component.
+    """
+    required = {
+        "N00_N29": input_dir / f"{year_range}_N00_N29.csv",
+        "N00_N15": input_dir / f"{year_range}_N00_N15.csv",
+        "N18_N19": input_dir / f"{year_range}_N18_N19.csv",
+    }
+    if any(not path.exists() for path in required.values()):
+        missing = [code for code, path in required.items() if not path.exists()]
+        print(f"Skipping {OTHER_KIDNEY_CODE} {year_range}: missing {missing}")
+        return None
+
+    n29 = load_subtracted_for_table(required["N00_N29"]).rename(
+        columns={"Deaths": "Deaths_N29", "Population": "Population_N29"}
+    )
+    n15 = load_subtracted_for_table(required["N00_N15"]).rename(
+        columns={"Deaths": "Deaths_N15"}
+    )
+    rf = load_subtracted_for_table(required["N18_N19"]).rename(
+        columns={"Deaths": "Deaths_RF"}
+    )
+
+    key_cols = ["COUNTY_FIPS", "Age_Group"]
+    merged = (
+        n29[
+            key_cols
+            + [
+                "Ten-Year Age Groups Code",
+                "Deaths_N29",
+                "Population_N29",
+            ]
+        ]
+        .merge(n15[key_cols + ["Deaths_N15"]], on=key_cols, how="left")
+        .merge(rf[key_cols + ["Deaths_RF"]], on=key_cols, how="left")
+    )
+    merged[["Deaths_N15", "Deaths_RF"]] = (
+        merged[["Deaths_N15", "Deaths_RF"]].fillna(0)
+    )
+    merged["Deaths"] = merged["Deaths_N29"] - merged["Deaths_N15"] - merged["Deaths_RF"]
+    merged["Population"] = merged["Population_N29"]
+
+    return merged[
+        [
+            "COUNTY_FIPS",
+            "Age_Group",
+            "Ten-Year Age Groups Code",
+            "Deaths",
+            "Population",
+        ]
+    ].copy()
+
+
+def process_other_kidney(
+    input_dir: Path,
+    strat_data: Dict[str, pd.DataFrame],
+    config: Dict,
+) -> Dict[str, List[Dict]]:
+    """Build table rows for the derived other kidney disease subtype."""
+    results = {
+        "National": [],
+        "RUCC": [],
+        "Climate": [],
+        "Cluster": [],
+        "Typology": [],
+        "EQI": [],
+    }
+    for year_range in ["2006-2010", "2011-2015", "2016-2020", "2021-2024"]:
+        df = synthesize_other_kidney_df(input_dir, year_range)
+        if df is None:
+            continue
+        year_results = process_prepared_df(
+            df, year_range, OTHER_KIDNEY_CODE, strat_data, config
+        )
+        for key in results:
+            if key in year_results:
+                results[key].extend(year_results[key])
+    return results
+
+
+def synthesize_other_crd_df(input_dir: Path, year_range: str) -> pd.DataFrame | None:
+    """
+    Synthesize other CRD:
+    CRD minus COPD minus ILD minus lung cancer.
+    """
+    required = {
+        "J40_J47_J60_J70_J84_D86_C34": input_dir
+        / f"{year_range}_J40_J47_J60_J70_J84_D86_C34.csv",
+        "J43_J44": input_dir / f"{year_range}_J43_J44.csv",
+        "J84_D86": input_dir / f"{year_range}_J84_D86.csv",
+        "C34": input_dir / f"{year_range}_C34.csv",
+    }
+    if any(not path.exists() for path in required.values()):
+        missing = [code for code, path in required.items() if not path.exists()]
+        print(f"Skipping {OTHER_CRD_CODE} {year_range}: missing {missing}")
+        return None
+
+    crd = load_subtracted_for_table(
+        required["J40_J47_J60_J70_J84_D86_C34"]
+    ).rename(columns={"Deaths": "Deaths_CRD", "Population": "Population_CRD"})
+    copd = load_subtracted_for_table(required["J43_J44"]).rename(
+        columns={"Deaths": "Deaths_COPD"}
+    )
+    ild = load_subtracted_for_table(required["J84_D86"]).rename(
+        columns={"Deaths": "Deaths_ILD"}
+    )
+    lung_cancer = load_subtracted_for_table(required["C34"]).rename(
+        columns={"Deaths": "Deaths_Lung_Cancer"}
+    )
+
+    key_cols = ["COUNTY_FIPS", "Age_Group"]
+    merged = (
+        crd[
+            key_cols
+            + [
+                "Ten-Year Age Groups Code",
+                "Deaths_CRD",
+                "Population_CRD",
+            ]
+        ]
+        .merge(copd[key_cols + ["Deaths_COPD"]], on=key_cols, how="left")
+        .merge(ild[key_cols + ["Deaths_ILD"]], on=key_cols, how="left")
+        .merge(lung_cancer[key_cols + ["Deaths_Lung_Cancer"]], on=key_cols, how="left")
+    )
+    subtract_cols = ["Deaths_COPD", "Deaths_ILD", "Deaths_Lung_Cancer"]
+    merged[subtract_cols] = merged[subtract_cols].fillna(0)
+    merged["Deaths"] = merged["Deaths_CRD"] - merged[subtract_cols].sum(axis=1)
+    merged["Population"] = merged["Population_CRD"]
+
+    return merged[
+        [
+            "COUNTY_FIPS",
+            "Age_Group",
+            "Ten-Year Age Groups Code",
+            "Deaths",
+            "Population",
+        ]
+    ].copy()
+
+
+def process_other_crd(
+    input_dir: Path,
+    strat_data: Dict[str, pd.DataFrame],
+    config: Dict,
+) -> Dict[str, List[Dict]]:
+    """Build table rows for the derived other CRD subtype."""
+    results = {
+        "National": [],
+        "RUCC": [],
+        "Climate": [],
+        "Cluster": [],
+        "Typology": [],
+        "EQI": [],
+    }
+    for year_range in ["2006-2010", "2011-2015", "2016-2020", "2021-2024"]:
+        df = synthesize_other_crd_df(input_dir, year_range)
+        if df is None:
+            continue
+        year_results = process_prepared_df(
+            df, year_range, OTHER_CRD_CODE, strat_data, config
+        )
+        for key in results:
+            if key in year_results:
+                results[key].extend(year_results[key])
+    return results
+
+
+def synthesize_other_cld_df(input_dir: Path, year_range: str) -> pd.DataFrame | None:
+    """
+    Synthesize other CLD:
+    CLD minus liver cancer minus toxic/chronic minus alcoholic minus non-alcoholic.
+    """
+    required = {
+        "K70_K76_C22": input_dir / f"{year_range}_K70_K76_C22.csv",
+        "C22": input_dir / f"{year_range}_C22.csv",
+        "K71_K73_K74": input_dir / f"{year_range}_K71_K73_K74.csv",
+        "K70": input_dir / f"{year_range}_K70.csv",
+        "K76": input_dir / f"{year_range}_K76.csv",
+    }
+    if any(not path.exists() for path in required.values()):
+        missing = [code for code, path in required.items() if not path.exists()]
+        print(f"Skipping {OTHER_CLD_CODE} {year_range}: missing {missing}")
+        return None
+
+    cld = load_subtracted_for_table(required["K70_K76_C22"]).rename(
+        columns={"Deaths": "Deaths_CLD", "Population": "Population_CLD"}
+    )
+    liver_cancer = load_subtracted_for_table(required["C22"]).rename(
+        columns={"Deaths": "Deaths_Liver_Cancer"}
+    )
+    toxic_chronic = load_subtracted_for_table(required["K71_K73_K74"]).rename(
+        columns={"Deaths": "Deaths_Toxic_Chronic"}
+    )
+    alcoholic = load_subtracted_for_table(required["K70"]).rename(
+        columns={"Deaths": "Deaths_Alcoholic"}
+    )
+    non_alcoholic = load_subtracted_for_table(required["K76"]).rename(
+        columns={"Deaths": "Deaths_Non_Alcoholic"}
+    )
+
+    key_cols = ["COUNTY_FIPS", "Age_Group"]
+    merged = (
+        cld[
+            key_cols
+            + [
+                "Ten-Year Age Groups Code",
+                "Deaths_CLD",
+                "Population_CLD",
+            ]
+        ]
+        .merge(liver_cancer[key_cols + ["Deaths_Liver_Cancer"]], on=key_cols, how="left")
+        .merge(
+            toxic_chronic[key_cols + ["Deaths_Toxic_Chronic"]],
+            on=key_cols,
+            how="left",
+        )
+        .merge(alcoholic[key_cols + ["Deaths_Alcoholic"]], on=key_cols, how="left")
+        .merge(
+            non_alcoholic[key_cols + ["Deaths_Non_Alcoholic"]],
+            on=key_cols,
+            how="left",
+        )
+    )
+    subtract_cols = [
+        "Deaths_Liver_Cancer",
+        "Deaths_Toxic_Chronic",
+        "Deaths_Alcoholic",
+        "Deaths_Non_Alcoholic",
+    ]
+    merged[subtract_cols] = merged[subtract_cols].fillna(0)
+    merged["Deaths"] = merged["Deaths_CLD"] - merged[subtract_cols].sum(axis=1)
+    merged["Population"] = merged["Population_CLD"]
+
+    return merged[
+        [
+            "COUNTY_FIPS",
+            "Age_Group",
+            "Ten-Year Age Groups Code",
+            "Deaths",
+            "Population",
+        ]
+    ].copy()
+
+
+def process_other_cld(
+    input_dir: Path,
+    strat_data: Dict[str, pd.DataFrame],
+    config: Dict,
+) -> Dict[str, List[Dict]]:
+    """Build table rows for the derived other CLD subtype."""
+    results = {
+        "National": [],
+        "RUCC": [],
+        "Climate": [],
+        "Cluster": [],
+        "Typology": [],
+        "EQI": [],
+    }
+    for year_range in ["2006-2010", "2011-2015", "2016-2020", "2021-2024"]:
+        df = synthesize_other_cld_df(input_dir, year_range)
+        if df is None:
+            continue
+        year_results = process_prepared_df(
+            df, year_range, OTHER_CLD_CODE, strat_data, config
+        )
+        for key in results:
+            if key in year_results:
+                results[key].extend(year_results[key])
     return results
 
 
@@ -501,6 +837,7 @@ def _build_disease_groups(config: Dict) -> Dict:
             "overall_code": overall_code,
             "display_codes": display_codes,
             "display_codes_simplified": display_codes_simplified,
+            "emit_simplified": bool(group_cfg.get("simplified_table", False)),
             "hidden_codes": hidden_codes,
             "abbr_map": abbr_map,
         }
@@ -528,6 +865,7 @@ STRATA_DISPLAY_CONFIG = [
             2: "Non-metropolitan urbanized",
             3: "Less urbanized",
             4: "Thinly populated",
+            "Unclassified": "Unclassified",
         },
     ),
     (
@@ -538,6 +876,7 @@ STRATA_DISPLAY_CONFIG = [
             2: "Midwest",
             3: "South",
             4: "West",
+            "Unclassified": "Unclassified",
         },
     ),
     (
@@ -547,6 +886,7 @@ STRATA_DISPLAY_CONFIG = [
             "B": "Dry",
             "C": "Temperate",
             "D": "Continental",
+            "Unclassified": "Unclassified",
         },
     ),
     (
@@ -556,6 +896,7 @@ STRATA_DISPLAY_CONFIG = [
             "A": "Low-burden",
             "B": "Mixed-burden",
             "C": "High-burden",
+            "Unclassified": "Unclassified",
         },
     ),
     (
@@ -566,6 +907,7 @@ STRATA_DISPLAY_CONFIG = [
             "B": "Water-sensitive",
             "C": "Agricultural",
             "D": "Urban",
+            "Unclassified": "Unclassified",
         },
     ),
     (
@@ -578,6 +920,7 @@ STRATA_DISPLAY_CONFIG = [
             4: "Government",
             5: "Services",
             6: "Nonspecialized",
+            "Unclassified": "Unclassified",
         },
     ),
     (
@@ -589,6 +932,7 @@ STRATA_DISPLAY_CONFIG = [
             "Q3": "Q3",
             "Q4": "Q4",
             "Q5": "Q5",
+            "Unclassified": "Unclassified",
         },
     ),
 ]
@@ -625,12 +969,13 @@ def create_disease_aamr_table(
     Within each stratum block, diseases are sorted by their 2006-2010 AAMR descending.
     For the ndd group, a Sex / Race section is inserted after National.
 
-    If any disease has show=false in config, a second _Simplified file is written
-    that omits those diseases. The full file always includes all display_codes.
+    A second _Simplified file is written only for groups with simplified_table: true.
+    The full file always includes all display_codes.
     """
     shortname = group_info["shortname"]
     display_codes = group_info["display_codes"]
     display_codes_simplified = group_info.get("display_codes_simplified", display_codes)
+    emit_simplified = group_info.get("emit_simplified", False)
     hidden_codes = group_info.get("hidden_codes", set())
     abbr_map = group_info["abbr_map"]
     time_periods = ["2006-2010", "2011-2015", "2016-2020", "2021-2024"]
@@ -675,8 +1020,8 @@ def create_disease_aamr_table(
         # Determine code sort order once (by 2006-2010 national AAMR) for reuse below
         sorted_codes: List[str] = list(codes_to_use)
         national_df: pd.DataFrame = pd.DataFrame()
-        if all_results.get("RUCC"):
-            nat_df = pd.DataFrame(all_results["RUCC"])
+        if all_results.get("National"):
+            nat_df = pd.DataFrame(all_results["National"])
             national_df = nat_df[
                 (nat_df["Stratum_Value"] == "National")
                 & (nat_df["ICD-10 Code"].isin(codes_to_use))
@@ -773,10 +1118,7 @@ def create_disease_aamr_table(
             strata_values = [
                 v for v in filtered["Stratum_Value"].unique() if v != "National"
             ]
-            try:
-                strata_values = sorted(strata_values, key=lambda x: float(x))
-            except (ValueError, TypeError):
-                strata_values = sorted(strata_values)
+            strata_values = _sort_stratum_values(strata_values)
             for stratum_val in strata_values:
                 sub_label = _get_stratum_name(strat_type, str(stratum_val), name_map)
                 category = STRAT_TYPE_TO_CATEGORY.get(strat_type, strat_type)
@@ -799,12 +1141,16 @@ def create_disease_aamr_table(
     # Full version (always written)
     write_table(build_rows(display_codes), output_dir / f"AAMR_{shortname}.csv")
 
-    # Simplified version: omit show=false diseases (written only when any are hidden)
-    if hidden_codes:
+    # Simplified version: omit show=false diseases only for explicitly opted-in groups.
+    simplified_path = output_dir / f"AAMR_{shortname}_Simplified.csv"
+    if emit_simplified and hidden_codes:
         write_table(
             build_rows(display_codes_simplified),
-            output_dir / f"AAMR_{shortname}_Simplified.csv",
+            simplified_path,
         )
+    elif simplified_path.exists():
+        simplified_path.unlink()
+        print(f"  Removed stale {simplified_path.name}")
 
 
 def process_stratified_ndd_files_sex_only(
@@ -824,8 +1170,8 @@ def process_stratified_ndd_files_sex_only(
 
     # Get national totals from all_results
     national_totals = {}
-    if all_results and all_results.get("RUCC"):
-        df = pd.DataFrame(all_results["RUCC"])
+    if all_results and all_results.get("National"):
+        df = pd.DataFrame(all_results["National"])
         ndd_national = df[
             (df["Stratum_Value"] == "National")
             & (df["ICD-10 Code"] == "G20_G30_G12.2_F01_F03")
@@ -928,8 +1274,8 @@ def process_sex_stratified_for_code(
 
     # Get national totals for this ICD code from all_results
     national_totals = {}
-    if all_results and all_results.get("RUCC"):
-        df = pd.DataFrame(all_results["RUCC"])
+    if all_results and all_results.get("National"):
+        df = pd.DataFrame(all_results["National"])
         ndd_national = df[
             (df["Stratum_Value"] == "National") & (df["ICD-10 Code"] == icd_code)
         ].copy()
@@ -1034,8 +1380,8 @@ def process_sex_stratified_all_codes(
 
     # Pre-fetch national death totals for all codes (used for Male = Total - Female)
     national_totals: Dict[str, Dict[str, int]] = {}
-    if all_results and all_results.get("RUCC"):
-        nat_df = pd.DataFrame(all_results["RUCC"])
+    if all_results and all_results.get("National"):
+        nat_df = pd.DataFrame(all_results["National"])
         nat_df = nat_df[nat_df["Stratum_Value"] == "National"]
         for code in codes_to_process:
             code_df = nat_df[nat_df["ICD-10 Code"] == code]
@@ -1131,6 +1477,7 @@ def process_sex_stratified_all_codes(
 
 def process_race_stratified_all_codes(
     project_root: Path,
+    all_results: Dict[str, List[Dict]],
     codes: List[str] = None,
 ) -> List[Dict]:
     """
@@ -1146,9 +1493,41 @@ def process_race_stratified_all_codes(
     race_strata = ["White", "Black", "Others"]
     results = []
 
-    for code in codes_to_process:
-        for race in race_strata:
+    national_totals: Dict[str, Dict[str, int]] = {}
+    if all_results and all_results.get("National"):
+        nat_df = pd.DataFrame(all_results["National"])
+        nat_df = nat_df[nat_df["Stratum_Value"] == "National"]
+        for code in codes_to_process:
+            code_df = nat_df[nat_df["ICD-10 Code"] == code]
+            national_totals[code] = {}
             for period in time_periods:
+                period_df = code_df[code_df["Time_Period"] == period]
+                if not period_df.empty:
+                    national_totals[code][period] = int(
+                        period_df["Total_Deaths"].iloc[0]
+                    )
+
+    def _scale_counts_to_total(counts: List[int], target_total: int) -> List[int]:
+        current_total = sum(counts)
+        if current_total == 0:
+            return counts
+        scaled = [count * target_total / current_total for count in counts]
+        rounded = [int(value) for value in scaled]
+        remainder = target_total - sum(rounded)
+        if remainder > 0:
+            order = sorted(
+                range(len(scaled)),
+                key=lambda i: scaled[i] - rounded[i],
+                reverse=True,
+            )
+            for i in order[:remainder]:
+                rounded[i] += 1
+        return rounded
+
+    for code in codes_to_process:
+        for period in time_periods:
+            period_rows: List[Dict] = []
+            for race in race_strata:
                 file_path = input_dir / f"{period}_{code}_{race}.csv"
                 if not file_path.exists():
                     continue
@@ -1163,7 +1542,7 @@ def process_race_stratified_all_codes(
                 aamr, stats = calculate_aamr_point(agg_df)
                 se = calculate_aamr_standard_error(agg_df)
                 lower, upper = calculate_aamr_ci(aamr, stats)
-                results.append(
+                period_rows.append(
                     {
                         "Time_Period": period,
                         "ICD-10 Code": code,
@@ -1179,6 +1558,22 @@ def process_race_stratified_all_codes(
                         "AAMRSE": f"{round(aamr, 2):.2f} ± {round(se, 2):.2f}",
                     }
                 )
+
+            if (
+                len(period_rows) == len(race_strata)
+                and code in national_totals
+                and period in national_totals[code]
+            ):
+                target_total = national_totals[code][period]
+                current_counts = [int(row["Total_Deaths"]) for row in period_rows]
+                if sum(current_counts) != target_total:
+                    adjusted_counts = _scale_counts_to_total(
+                        current_counts, target_total
+                    )
+                    for row, adjusted_deaths in zip(period_rows, adjusted_counts):
+                        row["Total_Deaths"] = adjusted_deaths
+
+            results.extend(period_rows)
 
     return results
 
@@ -1267,6 +1662,7 @@ def main():
 
     subtracted_files = list(input_dir.glob("*.csv"))
     all_results = {
+        "National": [],
         "RUCC": [],
         "Climate": [],
         "Cluster": [],
@@ -1282,6 +1678,21 @@ def main():
             if key in file_results:
                 all_results[key].extend(file_results[key])
 
+    other_kidney_results = process_other_kidney(input_dir, strat_data, config)
+    for key in all_results:
+        if key in other_kidney_results:
+            all_results[key].extend(other_kidney_results[key])
+
+    other_crd_results = process_other_crd(input_dir, strat_data, config)
+    for key in all_results:
+        if key in other_crd_results:
+            all_results[key].extend(other_crd_results[key])
+
+    other_cld_results = process_other_cld(input_dir, strat_data, config)
+    for key in all_results:
+        if key in other_cld_results:
+            all_results[key].extend(other_cld_results[key])
+
     # Collect all overall disease codes that have stratified files
     all_strat_codes = [
         info["overall_code"]
@@ -1294,13 +1705,13 @@ def main():
         project_root, all_results, codes=all_strat_codes
     )
     all_results["Race"] = process_race_stratified_all_codes(
-        project_root, codes=all_strat_codes
+        project_root, all_results, codes=all_strat_codes
     )
 
     # Write raw stratified AAMR data
     # Sex and Race are not written as separate files.
     # Climate is split: census_region → Census Region, Climate_Zone → Climate Zone.
-    SKIP_STRAT = {"Sex", "Race"}
+    SKIP_STRAT = {"National", "Sex", "Race"}
     for strat_key, results_list in all_results.items():
         if strat_key in SKIP_STRAT or not results_list:
             continue

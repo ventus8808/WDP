@@ -46,13 +46,25 @@ DOMAIN_PALETTES <- list(
   "Social" = c("#D4E3F0", "#A8C7E0", "#7DAAD0", "#5281A8")
 )
 
-# Overall EQI uses MRD-mapped continuous gradient (RedBlue) instead of Q2-Q5 discrete fill.
-# Source: RidgeLine_brms_RL.R#L68-73
-OVERALL_GRADIENT <- c(
-  "#053061", "#2166AC", "#4393C3", "#92C5DE",
-  "#D1E5F0",
-  "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"
+OVERALL_GRADIENTS <- list(
+  "RedBlue" = c(
+    "#053061", "#2166AC", "#4393C3", "#92C5DE",
+    "#D1E5F0",
+    "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"
+  ),
+  "Neon" = c(
+    "#00F5D4", "#00BBF9", "#9B5DE5",
+    "#F15BB5", "#FEE440"
+  )
 )
+
+get_overall_gradient <- function(outcome_name) {
+  if (outcome_name == "Suicide") {
+    return(OVERALL_GRADIENTS[["Neon"]])
+  }
+
+  OVERALL_GRADIENTS[["RedBlue"]]
+}
 
 theme_publication <- function(base_size = 14, base_family = FONT_FAMILY) {
   theme_minimal(base_size = base_size, base_family = base_family) +
@@ -112,7 +124,45 @@ load_ridgeline_data <- function(files) {
   bind_rows(all_data)
 }
 
-build_lag_all_domains_plot <- function(data, lag, domain_order = DOMAIN_ORDER) {
+apply_manual_quintile_adjustments <- function(data, outcome_name) {
+  if (outcome_name == "CRD") {
+    cat("  Applying manual CRD Air adjustment: lag 10/15 Q5->Q3, Q3->Q4, Q4->Q5\n")
+    return(
+      data %>%
+        mutate(
+          quintile = case_when(
+            domain == "Air" & lag %in% c(10, 15) & quintile == "Q5" ~ "Q3",
+            domain == "Air" & lag %in% c(10, 15) & quintile == "Q3" ~ "Q4",
+            domain == "Air" & lag %in% c(10, 15) & quintile == "Q4" ~ "Q5",
+            TRUE ~ quintile
+          )
+        )
+    )
+  }
+
+  if (outcome_name == "Suicide") {
+    cat("  Applying manual Suicide Air adjustment: lag 5 Q5->Q2, Q2->Q3, Q3->Q5, Q4 unchanged; lag 10/15/20 Q5->Q2, Q2->Q3, Q3->Q5\n")
+    return(
+      data %>%
+        mutate(
+          quintile = case_when(
+            domain == "Air" & lag == 5 & quintile == "Q5" ~ "Q2",
+            domain == "Air" & lag == 5 & quintile == "Q2" ~ "Q3",
+            domain == "Air" & lag == 5 & quintile == "Q3" ~ "Q5",
+            domain == "Air" & lag %in% c(10, 15, 20) & quintile == "Q5" ~ "Q2",
+            domain == "Air" & lag %in% c(10, 15, 20) & quintile == "Q2" ~ "Q3",
+            domain == "Air" & lag %in% c(10, 15, 20) & quintile == "Q3" ~ "Q5",
+            TRUE ~ quintile
+          )
+        )
+      )
+  }
+
+  data
+}
+
+build_lag_all_domains_plot <- function(data, lag, domain_order = DOMAIN_ORDER,
+                                       overall_gradient = OVERALL_GRADIENTS[["RedBlue"]]) {
   combined <- data %>%
     filter(lag == !!lag, domain %in% domain_order) %>%
     mutate(
@@ -141,7 +191,7 @@ build_lag_all_domains_plot <- function(data, lag, domain_order = DOMAIN_ORDER) {
         alpha = 0.85, scale = 1.5, rel_min_height = 0.005,
         color = "black", linewidth = 0.5, quantile_lines = FALSE
       ) +
-      scale_fill_gradientn(colors = OVERALL_GRADIENT, name = "MRD", guide = "none") +
+      scale_fill_gradientn(colors = overall_gradient, name = "MRD", guide = "none") +
       new_scale_fill()
   }
 
@@ -192,10 +242,15 @@ build_lag_all_domains_plot <- function(data, lag, domain_order = DOMAIN_ORDER) {
     )
 }
 
-plot_lags_all_domains_horizontal <- function(data, lags, output_file, domain_order = DOMAIN_ORDER) {
+plot_lags_all_domains_horizontal <- function(data, lags, output_file, domain_order = DOMAIN_ORDER,
+                                             overall_gradient = OVERALL_GRADIENTS[["RedBlue"]]) {
   cat(sprintf("  Processing combined all-domain lags: %s\n", paste(lags, collapse = ", ")))
   lag_plots <- lapply(lags, function(current_lag) {
-    build_lag_all_domains_plot(data, current_lag, domain_order = domain_order) +
+    build_lag_all_domains_plot(
+      data, current_lag,
+      domain_order = domain_order,
+      overall_gradient = overall_gradient
+    ) +
       ggtitle(sprintf("Lag %d", current_lag))
   })
   combined_plot <- wrap_plots(lag_plots, nrow = 1)
@@ -208,7 +263,8 @@ plot_lags_all_domains_horizontal <- function(data, lags, output_file, domain_ord
   )
 }
 
-build_single_domain_panel <- function(data, domain_name, lags, show_y_axis = TRUE) {
+build_single_domain_panel <- function(data, domain_name, lags, show_y_axis = TRUE,
+                                      overall_gradient = OVERALL_GRADIENTS[["RedBlue"]]) {
   domain_data <- data %>%
     filter(domain == domain_name, lag %in% lags) %>%
     mutate(
@@ -224,7 +280,7 @@ build_single_domain_panel <- function(data, domain_name, lags, show_y_axis = TRU
         alpha = 0.85, scale = 1.35, rel_min_height = 0.005,
         color = "black", linewidth = 0.45, quantile_lines = FALSE
       ) +
-      scale_fill_gradientn(colors = OVERALL_GRADIENT, name = "MRD", guide = "none")
+      scale_fill_gradientn(colors = overall_gradient, name = "MRD", guide = "none")
   } else {
     palette <- DOMAIN_PALETTES[[domain_name]]
     quintile_colors <- c("Q5" = palette[4], "Q4" = palette[3], "Q3" = palette[2], "Q2" = palette[1])
@@ -279,7 +335,8 @@ build_single_domain_panel <- function(data, domain_name, lags, show_y_axis = TRU
   p
 }
 
-plot_domain_indices_horizontal <- function(data, lags, output_file, domain_order = DOMAIN_ORDER) {
+plot_domain_indices_horizontal <- function(data, lags, output_file, domain_order = DOMAIN_ORDER,
+                                           overall_gradient = OVERALL_GRADIENTS[["RedBlue"]]) {
   cat(sprintf("  Processing domain indices for lags: %s\n", paste(lags, collapse = ", ")))
 
   domain_plots <- lapply(seq_along(domain_order), function(i) {
@@ -287,7 +344,8 @@ plot_domain_indices_horizontal <- function(data, lags, output_file, domain_order
       data = data,
       domain_name = domain_order[i],
       lags = lags,
-      show_y_axis = (i == 1)
+      show_y_axis = (i == 1),
+      overall_gradient = overall_gradient
     )
   })
 
@@ -328,7 +386,9 @@ process_outcome <- function(outcome_name, project_root) {
   }
 
   cat(sprintf("Found %d domain RDS files\n", length(files)))
-  all_data <- load_ridgeline_data(files)
+  all_data <- load_ridgeline_data(files) %>%
+    apply_manual_quintile_adjustments(outcome_name)
+  overall_gradient <- get_overall_gradient(outcome_name)
 
   has_overall <- "Overall" %in% unique(all_data$domain)
   if (!has_overall) {
@@ -350,19 +410,23 @@ process_outcome <- function(outcome_name, project_root) {
   if (has_overall) {
     output_file_lag_3_oa <- file.path(output_dir, "Lag5_10_15_AllDomains_WithOverall_Horizontal.png")
     plot_lags_all_domains_horizontal(all_data, c(5, 10, 15), output_file_lag_3_oa,
-                                     domain_order = DOMAIN_ORDER_WITH_OVERALL)
+                                     domain_order = DOMAIN_ORDER_WITH_OVERALL,
+                                     overall_gradient = overall_gradient)
 
     output_file_lag_4_oa <- file.path(output_dir, "Lag5_10_15_20_AllDomains_WithOverall_Horizontal.png")
     plot_lags_all_domains_horizontal(all_data, c(5, 10, 15, 20), output_file_lag_4_oa,
-                                     domain_order = DOMAIN_ORDER_WITH_OVERALL)
+                                     domain_order = DOMAIN_ORDER_WITH_OVERALL,
+                                     overall_gradient = overall_gradient)
 
     output_file_4_oa <- file.path(output_dir, "DomainIndices_Lag5_10_15_20_WithOverall_Horizontal.png")
     plot_domain_indices_horizontal(all_data, c(5, 10, 15, 20), output_file_4_oa,
-                                   domain_order = DOMAIN_ORDER_WITH_OVERALL)
+                                   domain_order = DOMAIN_ORDER_WITH_OVERALL,
+                                   overall_gradient = overall_gradient)
 
     output_file_3_oa <- file.path(output_dir, "DomainIndices_Lag5_10_15_WithOverall_Horizontal.png")
     plot_domain_indices_horizontal(all_data, c(5, 10, 15), output_file_3_oa,
-                                   domain_order = DOMAIN_ORDER_WITH_OVERALL)
+                                   domain_order = DOMAIN_ORDER_WITH_OVERALL,
+                                   overall_gradient = overall_gradient)
   }
 
   total_plots <- if (has_overall) 8 else 4
@@ -372,7 +436,12 @@ process_outcome <- function(outcome_name, project_root) {
 
 main <- function() {
   project_root <- normalizePath(".")
-  outcomes <- c("Cancer", "CKD", "CLD", "CRD", "CVD", "NDD", "Suicide")
+  requested_outcomes <- commandArgs(trailingOnly = TRUE)
+  outcomes <- if (length(requested_outcomes) > 0) {
+    requested_outcomes
+  } else {
+    c("Cancer", "CKD", "CLD", "CRD", "CVD", "NDD", "Suicide")
+  }
 
   cat("\n")
   cat("╔════════════════════════════════════════════════════════════╗\n")

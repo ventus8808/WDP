@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath // \"\"' | { read -r f; case \"$f\" in *Map_covariates.py) cd /Users/ventus/Repository/WDP && conda run -n wdp python Code/Visualization/Map_covariates.py ;; esac; } 2>&1",
+            "timeout": 300,
+            "statusMessage": "Running Map_covariates.py..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -226,6 +226,7 @@ diseases:
         icd: "K70-K76"
         icd_code: "K70_K76"
         downloaded: true
+        summarize: false # component of CLD overall; not reported separately
         show: false
       alcoholic:
         fullname: "Alcoholic liver disease"
@@ -270,12 +271,20 @@ diseases:
         icd: "K76"
         icd_code: "K76"
         downloaded: true
+      other_cld:
+        fullname: "Other Chronic Liver Disease"
+        shortname: "Other CLD"
+        icd: "CLD excluding liver cancer, toxic/chronic, alcoholic, and non-alcoholic liver disease"
+        icd_code: "K72_K75"
+        downloaded: false
+        derived_from: "K70_K76_C22 - C22 - K71_K73_K74 - K70 - K76"
       hepatorenal_syndrome:
         fullname: "Hepatorenal syndrome"
         shortname: "HRS"
         icd: "K76.7"
         icd_code: "K76.7"
         downloaded: true
+        summarize: false # included in Non-alcoholic/K76; not reported separately
         show: false
       liver_cancer:
         fullname: "Liver cancer"
@@ -312,6 +321,7 @@ diseases:
         icd: "J45"
         icd_code: "J45"
         downloaded: true
+        summarize: false # included in Other CRD; not reported separately
         show: false
       ild:
         fullname: "Interstitial Lung Disease"
@@ -319,12 +329,20 @@ diseases:
         icd: "J84+D86"
         icd_code: "J84_D86"
         downloaded: true
+      other_crd:
+        fullname: "Other Chronic Respiratory Disease"
+        shortname: "Other CRD"
+        icd: "CRD excluding COPD, ILD, and lung cancer"
+        icd_code: "J40_J42_J45_J46_J47_J60_J70"
+        downloaded: false
+        derived_from: "J40_J47_J60_J70_J84_D86_C34 - J43_J44 - J84_D86 - C34"
       pneumoconiosis:
         fullname: "Pneumoconiosis"
         shortname: "Pneumoconiosis"
         icd: "J60-J66"
         icd_code: "J60_J66"
         downloaded: true
+        summarize: false # included in Other CRD; not reported separately
         show: false
       lung_cancer:
         fullname: "Lung cancer"
@@ -347,7 +365,7 @@ diseases:
         icd: "N00-N29"
         icd_code: "N00_N29"
         downloaded: true
-        show: false
+        summarize: false # component of CKD overall; not reported separately
       renal_failure:
         fullname: "Renal Failure"
         shortname: "RF"
@@ -360,7 +378,13 @@ diseases:
         icd: "N00-N15"
         icd_code: "N00_N15"
         downloaded: true
-        show: false
+      other_kidney_disease:
+        fullname: "Other Kidney Disease"
+        shortname: "Other kidney disease"
+        icd: "N16-N17, N20-N29"
+        icd_code: "N16_N17_N20_N29"
+        downloaded: false
+        derived_from: "N00_N29 - N00_N15 - N18_N19"
       rcc:
         fullname: "Kidney and Renal Pelvis Cancer"
         shortname: "Kidney cancer"
@@ -461,6 +485,7 @@ diseases:
         icd_code: "G12.2"
         downloaded: true
   cancer:
+    simplified_table: true
     overall:
       fullname: "All-site Cancer"
       shortname: "Cancer"
