@@ -19,8 +19,8 @@ Lag_15 <- 1
 Lag_20 <- 1
 
 # ─── MRR type switches (generates one plot per enabled type) ──────────────────
-MRR_LagRef <- 0
-MRR_SameRef <- 1
+MRR_LagRef <- 1
+MRR_SameRef <-0
 
 # ─── Overall-disease panel switch (1 = include top panel, 0 = others only) ────
 Show_Overall <- 1
@@ -51,6 +51,13 @@ LAGS <- ALL_LAGS[LAG_ON == 1]
 N_LAGS <- length(LAGS)
 LAG_LABELS <- paste0(LAGS, "-year lag")
 LAG_COLORS <- c("#2A9D8F", "#a98467", "#1685a9", "#1D3557")[seq_len(N_LAGS)]
+
+# Sub-outcomes displayed for selected groups (the overall row is handled separately).
+DISPLAY_SUBTYPE_ICDS <- list(
+  CLD = c("K70", "K71_K73_K74", "K76", "C22"),
+  CRD = c("J43_J44", "J84_D86", "C34"),
+  CKD = c("N18_N19", "N00_N15", "C64_C65")
+)
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 parse_cell <- function(x) {
@@ -396,6 +403,10 @@ for (group in SELECTED) {
   all_icds <- unique(mrd_df$ICD_Code)
   overall_icd <- all_icds[1] # first ICD is the overall disease (e.g., I00_I99 for CVD)
   other_icds <- all_icds[-1]
+  if (group %in% names(DISPLAY_SUBTYPE_ICDS)) {
+    display_icds <- DISPLAY_SUBTYPE_ICDS[[group]]
+    other_icds <- display_icds[display_icds %in% all_icds]
+  }
   has_others <- length(other_icds) > 0
 
   show_overall <- isTRUE(Show_Overall == 1)
