@@ -462,7 +462,10 @@ load_main_combined_data <- function(input_dir, disease, lags, max_draws) {
   if (!is.null(df_main) && nrow(df_main) > 0) {
     df_main <- df_main[df_main$Strat_Level == "National", ]
     if (nrow(df_main) > 0) {
-      df_main$Strat_Group <- "National"
+      # Keep the overall EQI separate from its five component domains.
+      df_main$Strat_Group <- if_else(
+        df_main$Domain == "EQI", "EQI", "Environment"
+      )
       df_main$Strat_Label <- as.character(df_main$Domain)
       rows[["Main"]] <- df_main
     }
@@ -725,7 +728,7 @@ for (disease in diseases) {
       lags_used = lags_used,
       output_path = file.path(output_dir, paste0(disease, "_Combined.png")),
       width = 12, height = h_mc,
-      strat_group_levels = c("National", "Regime EQI", "Land Use EQI"),
+      strat_group_levels = c("EQI", "Environment", "Regime EQI", "Land Use EQI"),
       strat_label_levels = unique(c(rev(DOMAIN_LEVELS), rev(unname(LABEL_EQI)), rev(unname(LABEL_NLCD)))),
       show_all_y_labels = TRUE
     )
